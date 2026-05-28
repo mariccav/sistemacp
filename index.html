@@ -129,9 +129,79 @@ tbody tr:hover{background:#eef8f6;}
 /* FOOTER */
 footer{background:var(--v1);color:var(--bege);text-align:center;padding:18px;font-size:11px;margin-top:16px;}
 footer strong{color:var(--br);}
+
+/* SEÇÕES EDITÁVEIS */
+.edit-section{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);margin-bottom:22px;}
+.edit-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+.edit-section-header h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);}
+.btn-add{background:var(--v1);color:var(--br);border:none;padding:8px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s;}
+.btn-add:hover{background:var(--v2);}
+.btn-edit{background:none;border:1px solid #dde8e8;color:var(--v2);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:.15s;}
+.btn-edit:hover{background:#eef3f3;}
+.btn-del{background:none;border:1px solid #f4d0d0;color:var(--verm);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:.15s;}
+.btn-del:hover{background:#fdf0f0;}
+.col-acoes{text-align:right !important;white-space:nowrap;}
+.col-acoes button{margin-left:4px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.55);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--br);border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v1);margin-bottom:24px;}
+.form-row{margin-bottom:16px;}
+.form-row label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-bottom:6px;}
+.form-row input,.form-row select{width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);background:var(--br);outline:none;transition:.15s;}
+.form-row input:focus,.form-row select:focus{border-color:var(--v2);box-shadow:0 0 0 3px rgba(43,80,80,.08);}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;}
+.btn-cancel{background:none;border:1px solid #dde8e8;color:#4a6868;padding:10px 20px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
+.btn-save{background:var(--v1);color:var(--br);border:none;padding:10px 24px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+.btn-save:hover{background:var(--v2);}
 </style>
 </head>
 <body>
+
+<!-- MODAL REPASSE -->
+<div class="modal-overlay" id="modal-repasse">
+  <div class="modal">
+    <h2 id="modal-rep-titulo">Lançar Repasse</h2>
+    <input type="hidden" id="rep-id">
+    <div class="form-row"><label>Data</label><input type="text" id="rep-data" placeholder="28/04"></div>
+    <div class="form-row"><label>Parceiro</label><input type="text" id="rep-parceiro" placeholder="Nome do parceiro"></div>
+    <div class="form-row"><label>Conta</label>
+      <select id="rep-conta">
+        <option>Asaas Pessoal</option><option>Asaas Empresa</option>
+        <option>Itaú</option><option>Banco do Brasil</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="rep-valor" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharModal('modal-repasse')">Cancelar</button>
+      <button class="btn-save" onclick="salvarRepasse()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA -->
+<div class="modal-overlay" id="modal-despesa">
+  <div class="modal">
+    <h2 id="modal-des-titulo">Lançar Despesa</h2>
+    <input type="hidden" id="des-id">
+    <div class="form-row"><label>Data</label><input type="text" id="des-data" placeholder="14/04"></div>
+    <div class="form-row"><label>Categoria</label>
+      <select id="des-categoria">
+        <option>Pessoal e Prestadores</option><option>Contas e Utilidades</option>
+        <option>Impostos</option><option>Tecnologia e Software</option>
+        <option>Marketing</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Descrição</label><input type="text" id="des-descricao" placeholder="Ex: Aurum Softmatic"></div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="des-valor" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharModal('modal-despesa')">Cancelar</button>
+      <button class="btn-save" onclick="salvarDespesa()">Salvar</button>
+    </div>
+  </div>
+</div>
 
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-spinner"></div>
@@ -219,14 +289,44 @@ footer strong{color:var(--br);}
     </table>
   </div>
 
-  <!-- REPASSES TABLE -->
+  <!-- REPASSES TABLE (abas históricas) -->
   <div class="section-lbl">Repasses a Parceiros</div>
-  <div class="tcard gap-lg">
+  <div class="tcard gap-lg" id="secao-rep-estatica">
     <h3>Repasses</h3>
     <table>
       <thead><tr><th>Data</th><th>Parceiro</th><th>Conta</th><th>Valor</th></tr></thead>
       <tbody id="tbody-rep"></tbody>
     </table>
+  </div>
+
+  <!-- REPASSES EDITÁVEIS (aba ao vivo) -->
+  <div id="secao-rep-vivo" style="display:none">
+    <div class="section-lbl">Repasses a Parceiros</div>
+    <div class="edit-section">
+      <div class="edit-section-header">
+        <h3>Repasses do Mês</h3>
+        <button class="btn-add" onclick="abrirModalRepasse(null)">+ Adicionar repasse</button>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Parceiro</th><th>Conta</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="tbody-rep-vivo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DESPESAS EDITÁVEIS (aba ao vivo) -->
+  <div id="secao-des-vivo" style="display:none">
+    <div class="section-lbl">Despesas do Escritório</div>
+    <div class="edit-section">
+      <div class="edit-section-header">
+        <h3>Despesas do Mês</h3>
+        <button class="btn-add" onclick="abrirModalDespesa(null)">+ Adicionar despesa</button>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="tbody-des-vivo"></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -459,6 +559,15 @@ function render(tab) {
   const d = dados[tab];
   const resultado = d.honorarios - d.repasses - d.despesas;
 
+  // Alternar seções estáticas vs editáveis
+  const isVivo = tab === 'vivo';
+  document.getElementById('secao-rep-estatica').style.display = isVivo ? 'none' : '';
+  document.getElementById('secao-rep-vivo').style.display     = isVivo ? '' : 'none';
+  document.getElementById('secao-des-vivo').style.display     = isVivo ? '' : 'none';
+  // Ocultar tabela de despesas estática na aba ao vivo
+  const desTcard = document.querySelector('.section-lbl + .tcard');
+  // (gerenciado abaixo pelo display das seções)
+
   // Header period
   const periodos = {abril:'Abril 2026', maio:'Maio 2026', total:'Abril e Maio 2026', vivo: d.mesTitulo || 'Ao Vivo'};
   document.getElementById('hd-period').textContent = periodos[tab];
@@ -595,6 +704,143 @@ function toggleCat(catId) {
 }
 
 // ─────────────────────────────────────────
+// SUPABASE — REPASSES E DESPESAS
+// ─────────────────────────────────────────
+const SB_URL  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SB_KEY  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SB_HEAD = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+async function sbGet(tabela, mes, ano) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?mes=eq.${mes}&ano=eq.${ano}&order=criado_em.asc`, { headers: SB_HEAD });
+  return r.ok ? r.json() : [];
+}
+async function sbInsert(tabela, dados) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}`, { method:'POST', headers: SB_HEAD, body: JSON.stringify(dados) });
+  return r.json();
+}
+async function sbUpdate(tabela, id, dados) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, { method:'PATCH', headers: SB_HEAD, body: JSON.stringify(dados) });
+  return r.json();
+}
+async function sbDelete(tabela, id) {
+  await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, { method:'DELETE', headers: SB_HEAD });
+}
+
+// Modal helpers
+function abrirModalRepasse(item) {
+  document.getElementById('modal-rep-titulo').textContent = item ? 'Editar Repasse' : 'Lançar Repasse';
+  document.getElementById('rep-id').value      = item?.id || '';
+  document.getElementById('rep-data').value    = item?.data_pagamento || '';
+  document.getElementById('rep-parceiro').value= item?.parceiro || '';
+  document.getElementById('rep-conta').value   = item?.conta || 'Asaas Pessoal';
+  document.getElementById('rep-valor').value   = item?.valor || '';
+  document.getElementById('modal-repasse').classList.add('show');
+}
+function abrirModalDespesa(item) {
+  document.getElementById('modal-des-titulo').textContent = item ? 'Editar Despesa' : 'Lançar Despesa';
+  document.getElementById('des-id').value       = item?.id || '';
+  document.getElementById('des-data').value     = item?.data_pagamento || '';
+  document.getElementById('des-categoria').value= item?.categoria || 'Pessoal e Prestadores';
+  document.getElementById('des-descricao').value= item?.descricao || '';
+  document.getElementById('des-valor').value    = item?.valor || '';
+  document.getElementById('modal-despesa').classList.add('show');
+}
+function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function salvarRepasse() {
+  const id    = document.getElementById('rep-id').value;
+  const dados = {
+    mes: vivoMes, ano: vivoAno,
+    data_pagamento: document.getElementById('rep-data').value.trim(),
+    parceiro: document.getElementById('rep-parceiro').value.trim(),
+    conta:    document.getElementById('rep-conta').value,
+    valor:    parseFloat(document.getElementById('rep-valor').value) || 0
+  };
+  if (!dados.parceiro || !dados.valor) { alert('Preencha o parceiro e o valor.'); return; }
+  if (id) await sbUpdate('repasses', id, dados);
+  else    await sbInsert('repasses', dados);
+  fecharModal('modal-repasse');
+  carregarVivo();
+}
+
+async function salvarDespesa() {
+  const id    = document.getElementById('des-id').value;
+  const dados = {
+    mes: vivoMes, ano: vivoAno,
+    data_pagamento: document.getElementById('des-data').value.trim(),
+    categoria: document.getElementById('des-categoria').value,
+    descricao: document.getElementById('des-descricao').value.trim(),
+    valor:     parseFloat(document.getElementById('des-valor').value) || 0
+  };
+  if (!dados.descricao || !dados.valor) { alert('Preencha a descrição e o valor.'); return; }
+  if (id) await sbUpdate('despesas', id, dados);
+  else    await sbInsert('despesas', dados);
+  fecharModal('modal-despesa');
+  carregarVivo();
+}
+
+async function excluirRepasse(id) {
+  if (!confirm('Excluir este repasse?')) return;
+  await sbDelete('repasses', id);
+  carregarVivo();
+}
+async function excluirDespesa(id) {
+  if (!confirm('Excluir esta despesa?')) return;
+  await sbDelete('despesas', id);
+  carregarVivo();
+}
+
+// Render especial das seções editáveis da aba ao vivo
+function renderSecaoEditavel(repasses, despesas) {
+  // Tabela repasses
+  const totalRep = repasses.reduce((s,r) => s + Number(r.valor), 0);
+  let repHTML = repasses.map(r => `
+    <tr>
+      <td>${r.data_pagamento||'—'}</td>
+      <td>${r.parceiro}</td>
+      <td>${CONTAS_BADGE[r.conta]||r.conta}</td>
+      <td>${fmt(Number(r.valor))}</td>
+      <td class="col-acoes">
+        <button class="btn-edit" onclick='abrirModalRepasse(${JSON.stringify(r)})'>Editar</button>
+        <button class="btn-del"  onclick="excluirRepasse('${r.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+  repHTML += `<tr class="tr-total"><td colspan="3">TOTAL REPASSES</td><td>${fmt(totalRep)}</td><td></td></tr>`;
+  document.getElementById('tbody-rep-vivo').innerHTML = repHTML;
+
+  // Tabela despesas
+  const totalDes = despesas.reduce((s,d) => s + Number(d.valor), 0);
+  let desHTML = despesas.map(d => `
+    <tr>
+      <td>${d.data_pagamento||'—'}</td>
+      <td><strong>${d.categoria}</strong></td>
+      <td>${d.descricao}</td>
+      <td>${fmt(Number(d.valor))}</td>
+      <td class="col-acoes">
+        <button class="btn-edit" onclick='abrirModalDespesa(${JSON.stringify(d)})'>Editar</button>
+        <button class="btn-del"  onclick="excluirDespesa('${d.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+  desHTML += `<tr class="tr-total"><td colspan="3">TOTAL DESPESAS</td><td>${fmt(totalDes)}</td><td></td></tr>`;
+  document.getElementById('tbody-des-vivo').innerHTML = desHTML;
+
+  // Atualizar KPIs com repasses e despesas reais
+  const hon = dados['vivo'].honorarios;
+  const resultado = hon - totalRep - totalDes;
+  document.getElementById('k-rep').textContent = fmt(totalRep);
+  document.getElementById('k-des').textContent = fmt(totalDes);
+  document.getElementById('k-res').textContent = fmt(resultado);
+  document.getElementById('k-rep-sub').textContent = `${repasses.length} repasse(s)`;
+  document.getElementById('k-des-sub').textContent = `${despesas.length} lançamento(s)`;
+  document.getElementById('k-res-sub').textContent = resultado >= 0 ? 'Resultado positivo' : 'Resultado negativo';
+  document.getElementById('eq-rep').textContent = fmt(totalRep);
+  document.getElementById('eq-des').textContent = fmt(totalDes);
+  const resEl = document.getElementById('eq-res');
+  resEl.textContent = fmt(resultado);
+  resEl.style.color = resultado >= 0 ? '#7de8c4' : '#f4a4a4';
+}
+
+// ─────────────────────────────────────────
 // ABA AO VIVO — ASAAS
 // ─────────────────────────────────────────
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -660,10 +906,19 @@ async function carregarVivo() {
       mesTitulo: nomeMes
     };
 
+    // Buscar repasses e despesas do Supabase
+    const [repasses, despesas] = await Promise.all([
+      sbGet('repasses', vivoMes, vivoAno),
+      sbGet('despesas', vivoMes, vivoAno)
+    ]);
+
     const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     document.getElementById('mes-atualizado').textContent = `Atualizado às ${agora}`;
     document.getElementById('loading-overlay').classList.remove('show');
     render('vivo');
+
+    // Renderizar seções editáveis após render
+    setTimeout(() => renderSecaoEditavel(repasses, despesas), 50);
 
   } catch(err) {
     document.getElementById('loading-overlay').classList.remove('show');
