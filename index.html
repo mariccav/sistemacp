@@ -126,6 +126,21 @@ tbody tr:hover{background:#eef8f6;}
   .tabs-wrap{padding:0 20px;}
 }
 
+/* TELA DE LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--v1);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-screen.hide{display:none;}
+.login-box{width:100%;max-width:380px;padding:48px 40px;text-align:center;}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--br);letter-spacing:.5px;margin-bottom:6px;}
+.login-sub{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:2px;margin-bottom:40px;}
+.login-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--bege);text-align:left;margin-bottom:8px;}
+.login-input{width:100%;padding:14px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.3);border-radius:10px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--br);outline:none;transition:.2s;margin-bottom:8px;}
+.login-input:focus{border-color:var(--bege);background:rgba(255,255,255,.12);}
+.login-input::placeholder{color:rgba(255,255,255,.3);}
+.login-btn{width:100%;padding:14px;background:var(--bege);color:var(--v1);border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;cursor:pointer;margin-top:8px;transition:.2s;}
+.login-btn:hover{background:#c4c9b5;}
+.login-erro{color:#f4a4a4;font-size:12px;margin-top:10px;min-height:18px;}
+.login-divider{width:40px;height:2px;background:var(--bege);opacity:.3;margin:32px auto;}
+
 /* FOOTER */
 footer{background:var(--v1);color:var(--bege);text-align:center;padding:18px;font-size:11px;margin-top:16px;}
 footer strong{color:var(--br);}
@@ -159,6 +174,20 @@ footer strong{color:var(--br);}
 </style>
 </head>
 <body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Cavalcante Pinheiro</div>
+    <div class="login-sub">Advocacia · Área Restrita</div>
+    <div class="login-divider"></div>
+    <label class="login-label">Senha de acesso</label>
+    <input class="login-input" type="password" id="login-senha" placeholder="••••••••••"
+      onkeydown="if(event.key==='Enter') verificarSenha()">
+    <button class="login-btn" onclick="verificarSenha()">Entrar</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
 
 <!-- MODAL REPASSE -->
 <div class="modal-overlay" id="modal-repasse">
@@ -213,9 +242,12 @@ footer strong{color:var(--br);}
     <h1>Cavalcante Pinheiro Advocacia</h1>
     <p>Dashboard Financeiro · Mariana Pinheiro — OAB/BA nº 49.675</p>
   </div>
-  <div class="hd-right" style="text-align:right">
-    <div class="lbl">Período</div>
-    <div class="val" id="hd-period">Abril e Maio 2026</div>
+  <div class="hd-right" style="text-align:right;display:flex;align-items:center;gap:24px;">
+    <div>
+      <div class="lbl">Período</div>
+      <div class="val" id="hd-period">Abril e Maio 2026</div>
+    </div>
+    <button onclick="sair()" style="background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.4);color:var(--bege);padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;cursor:pointer;letter-spacing:.5px;">Sair</button>
   </div>
 </header>
 
@@ -701,6 +733,36 @@ function toggleCat(catId) {
   const subs = document.querySelectorAll(`[data-parent="${catId}"]`);
   row.classList.toggle('open');
   subs.forEach(s => s.classList.toggle('show'));
+}
+
+// ─────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────
+const SENHA_HASH = 'TWFqdTIwMjVA'; // hash interno
+
+function verificarSenha() {
+  const entrada = document.getElementById('login-senha').value;
+  if (btoa(entrada) === SENHA_HASH) {
+    sessionStorage.setItem('cp_auth', SENHA_HASH);
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('login-erro').textContent = '';
+  } else {
+    document.getElementById('login-erro').textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+  }
+}
+
+function sair() {
+  sessionStorage.removeItem('cp_auth');
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-senha').focus();
+}
+
+// Verificar sessão ao carregar
+if (sessionStorage.getItem('cp_auth') === SENHA_HASH) {
+  document.getElementById('login-screen').classList.add('hide');
 }
 
 // ─────────────────────────────────────────
