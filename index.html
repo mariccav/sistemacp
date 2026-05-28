@@ -92,6 +92,17 @@ tbody tr:hover{background:#eef8f6;}
 .gap{margin-bottom:22px;}
 .gap-lg{margin-bottom:32px;}
 
+/* BADGE AO VIVO */
+.badge-vivo{display:inline-block;background:#2a8f6e;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;letter-spacing:.5px;vertical-align:middle;}
+.tab-vivo{border-left:1px solid rgba(167,168,151,.2);margin-left:8px;}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.6);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading-overlay.show{display:flex;}
+.loading-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#a7a897;border-radius:50%;animation:spin .8s linear infinite;}
+.loading-text{color:#fff;font-family:'Nunito',sans-serif;font-size:14px;letter-spacing:.5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
 /* FADE */
 .tab-panel{animation:fadeIn .2s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
@@ -114,6 +125,11 @@ footer strong{color:var(--br);}
 </head>
 <body>
 
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Buscando dados do Asaas...</div>
+</div>
+
 <header>
   <div>
     <h1>Cavalcante Pinheiro Advocacia</h1>
@@ -130,6 +146,7 @@ footer strong{color:var(--br);}
   <button class="tab active" onclick="setTab('abril')">Abril 2026</button>
   <button class="tab" onclick="setTab('maio')">Maio 2026</button>
   <button class="tab" onclick="setTab('total')">Período Completo</button>
+  <button class="tab tab-vivo" onclick="setTabVivo(event, 6, 2026)">Junho 2026 <span class="badge-vivo">● ao vivo</span></button>
 </div>
 
 <div class="main" id="panel">
@@ -426,7 +443,7 @@ function render(tab) {
   const resultado = d.honorarios - d.repasses - d.despesas;
 
   // Header period
-  const periodos = {abril:'Abril 2026', maio:'Maio 2026', total:'Abril e Maio 2026'};
+  const periodos = {abril:'Abril 2026', maio:'Maio 2026', total:'Abril e Maio 2026', vivo: d.mesTitulo || 'Ao Vivo'};
   document.getElementById('hd-period').textContent = periodos[tab];
 
   // KPIs
@@ -558,6 +575,72 @@ function toggleCat(catId) {
   const subs = document.querySelectorAll(`[data-parent="${catId}"]`);
   row.classList.toggle('open');
   subs.forEach(s => s.classList.toggle('show'));
+}
+
+// ─────────────────────────────────────────
+// ABA AO VIVO — ASAAS
+// ─────────────────────────────────────────
+async function setTabVivo(e, mes, ano) {
+  currentTab = 'vivo';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+
+  document.getElementById('loading-overlay').classList.add('show');
+
+  try {
+    const resp = await fetch(`/.netlify/functions/honorarios?mes=${mes}&ano=${ano}`);
+    if (!resp.ok) throw new Error(`Erro ${resp.status}`);
+    const api = await resp.json();
+
+    // Formatar data dd/mm
+    const fmtData = s => {
+      if (!s) return '—';
+      const [a,m,d] = s.split('-');
+      return `${d}/${m}`;
+    };
+
+    // Montar lançamentos das duas contas
+    const lancamentos = [
+      ...(api.pessoal.pagamentos||[]).map(p => ({
+        data: fmtData(p.dataPagamento),
+        cliente: p.cliente,
+        conta: 'Asaas Pessoal',
+        valor: p.valor
+      })),
+      ...(api.escritorio.pagamentos||[]).map(p => ({
+        data: fmtData(p.dataPagamento),
+        cliente: p.cliente,
+        conta: 'Asaas Empresa',
+        valor: p.valor
+      }))
+    ].sort((a,b) => a.data.localeCompare(b.data));
+
+    // Agrupar por cliente
+    const mapa = {};
+    lancamentos.forEach(l => { mapa[l.cliente] = (mapa[l.cliente]||0) + l.valor; });
+    const porCliente = Object.entries(mapa)
+      .map(([nome, valor]) => ({nome, valor}))
+      .sort((a,b) => b.valor - a.valor);
+
+    dados['vivo'] = {
+      honorarios: api.totalHonorarios,
+      repasses: 0,
+      despesas: 0,
+      lancamentos,
+      porCliente,
+      categoriasDespesa: [],
+      repassesItems: [],
+      isVivo: true,
+      mesTitulo: `Junho ${ano}`
+    };
+
+    document.getElementById('loading-overlay').classList.remove('show');
+    render('vivo');
+
+  } catch(err) {
+    document.getElementById('loading-overlay').classList.remove('show');
+    alert('Não foi possível buscar os dados do Asaas.\n\nDetalhe: ' + err.message);
+  }
 }
 
 // Inicializar com Abril

@@ -72,7 +72,7 @@ async function buscarPagamentos(chave, dataInicio, dataFim) {
     quantidade: pagamentos.length,
     pagamentos: pagamentos.map(p => ({
       id: p.id,
-      cliente: p.customer,
+      cliente: p.customerName || p.description || "Cliente",
       valor: p.value,
       dataPagamento: p.paymentDate,
       descricao: p.description || ""
