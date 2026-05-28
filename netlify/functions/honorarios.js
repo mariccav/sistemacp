@@ -49,7 +49,13 @@ exports.handler = async (event) => {
 async function buscarPagamentos(chave, dataInicio, dataFim) {
   if (!chave) throw new Error("Chave de API não configurada.");
 
-  const url = `https://api.asaas.com/api/v3/payments?status=RECEIVED&paymentDate[ge]=${dataInicio}&paymentDate[le]=${dataFim}&limit=100`;
+  const params = new URLSearchParams({
+    status: 'RECEIVED',
+    'paymentDate[ge]': dataInicio,
+    'paymentDate[le]': dataFim,
+    limit: '100'
+  });
+  const url = `https://api.asaas.com/v3/payments?${params}`;
 
   const response = await fetch(url, {
     headers: {
