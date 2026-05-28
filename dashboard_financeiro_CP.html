@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Financeiro — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --v1:#1f3e3c; --v2:#2b5050; --v3:#214949;
+  --bg:#f2fdff; --bege:#a7a897; --begealt:#a9a791;
+  --br:#ffffff; --verde:#2a8f6e; --verm:#c25e5e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;line-height:1.5;}
+
+/* HEADER */
+header{background:var(--v1);color:var(--br);padding:22px 48px;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+header p{font-size:12px;color:var(--bege);margin-top:3px;}
+.hd-right .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1.5px;}
+.hd-right .val{font-family:'Cormorant Garamond',serif;font-size:18px;margin-top:2px;}
+
+/* TABS */
+.tabs-wrap{background:var(--v2);display:flex;padding:0 48px;gap:4px;}
+.tab{padding:14px 28px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--bege);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;letter-spacing:.3px;}
+.tab:hover{color:var(--br);}
+.tab.active{color:var(--br);border-bottom-color:var(--bege);}
+
+/* MAIN */
+.main{max-width:1380px;margin:0 auto;padding:32px 48px;}
+.section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--bege);margin-bottom:14px;margin-top:36px;}
+.section-lbl:first-child{margin-top:0;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.kpi{background:var(--br);border-radius:12px;padding:22px 20px;border:1px solid #dde8e8;border-left:5px solid var(--v1);box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.kpi.k-rec{border-left-color:var(--verde);}
+.kpi.k-rep{border-left-color:var(--begealt);}
+.kpi.k-des{border-left-color:var(--verm);}
+.kpi.k-res{border-left-color:var(--v1);}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--bege);margin-bottom:8px;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1;}
+.kpi-val.c-rec{color:var(--verde);}
+.kpi-val.c-rep{color:var(--begealt);}
+.kpi-val.c-des{color:var(--verm);}
+.kpi-val.c-res{color:var(--v1);}
+.kpi-sub{font-size:11px;color:#9aadad;margin-top:5px;}
+
+/* EQUATION BAR */
+.eq{background:var(--v1);border-radius:12px;padding:24px 32px;display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:center;text-align:center;}
+.eq-item .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px;}
+.eq-item .val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+.eq-item .val.pos{color:#7de8c4;}
+.eq-item .val.neg{color:#f4a4a4;}
+.eq-item .val.eq-sign{color:var(--br);font-size:20px;}
+.eq-sep{font-size:26px;color:var(--bege);padding:0 4px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;}
+.card{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.card h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+.card-full{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.card-full h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+
+/* TABLES */
+.tcard{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);overflow-x:auto;}
+.tcard h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--v2);color:var(--br);padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+thead th:last-child{text-align:right;}
+tbody td{padding:10px 16px;border-bottom:1px solid #eef3f3;color:var(--v1);}
+tbody td:last-child{text-align:right;font-weight:600;}
+tbody tr:nth-child(even){background:#f9fdfd;}
+tbody tr:hover{background:#eef8f6;}
+.tr-cat td{background:#e8f0ef !important;font-weight:700;cursor:pointer;user-select:none;}
+.tr-cat td:first-child::before{content:'▶ ';font-size:10px;color:var(--bege);}
+.tr-cat.open td:first-child::before{content:'▼ ';}
+.tr-sub{display:none;}
+.tr-sub.show{display:table-row;}
+.tr-sub td{color:#4a6868;font-weight:400;font-style:italic;}
+.tr-sub td:first-child{padding-left:36px;}
+.tr-total td{background:var(--v1) !important;color:var(--br) !important;font-weight:700;font-size:14px;}
+.tr-hvote td{background:var(--v1);color:var(--br);font-weight:700;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.ba{background:#e0f4ee;color:#1e7a58;}
+.bi{background:#fff0e4;color:#b06030;}
+.bb{background:#e4e8f8;color:#2840a0;}
+
+/* GAP UTILS */
+.gap{margin-bottom:22px;}
+.gap-lg{margin-bottom:32px;}
+
+/* FADE */
+.tab-panel{animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .charts-row{grid-template-columns:1fr;}
+  .eq{grid-template-columns:1fr 1fr;}
+  .eq-sep{display:none;}
+  .main{padding:20px;}
+  header{padding:20px;flex-direction:column;gap:10px;text-align:center;}
+  .tabs-wrap{padding:0 20px;}
+}
+
+/* FOOTER */
+footer{background:var(--v1);color:var(--bege);text-align:center;padding:18px;font-size:11px;margin-top:16px;}
+footer strong{color:var(--br);}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Cavalcante Pinheiro Advocacia</h1>
+    <p>Dashboard Financeiro · Mariana Pinheiro — OAB/BA nº 49.675</p>
+  </div>
+  <div class="hd-right" style="text-align:right">
+    <div class="lbl">Período</div>
+    <div class="val" id="hd-period">Abril e Maio 2026</div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <button class="tab active" onclick="setTab('abril')">Abril 2026</button>
+  <button class="tab" onclick="setTab('maio')">Maio 2026</button>
+  <button class="tab" onclick="setTab('total')">Período Completo</button>
+</div>
+
+<div class="main" id="panel">
+
+  <!-- KPIs -->
+  <div class="section-lbl">Resultado</div>
+  <div class="kpi-grid gap">
+    <div class="kpi k-rec"><div class="kpi-lbl">Honorários</div><div class="kpi-val c-rec" id="k-hon">—</div><div class="kpi-sub" id="k-hon-sub"></div></div>
+    <div class="kpi k-rep"><div class="kpi-lbl">Repasses a Parceiros</div><div class="kpi-val c-rep" id="k-rep">—</div><div class="kpi-sub" id="k-rep-sub"></div></div>
+    <div class="kpi k-des"><div class="kpi-lbl">Despesas do Escritório</div><div class="kpi-val c-des" id="k-des">—</div><div class="kpi-sub" id="k-des-sub"></div></div>
+    <div class="kpi k-res"><div class="kpi-lbl">Resultado Líquido</div><div class="kpi-val c-res" id="k-res">—</div><div class="kpi-sub" id="k-res-sub"></div></div>
+  </div>
+
+  <div class="eq gap-lg">
+    <div class="eq-item"><div class="lbl">Honorários</div><div class="val pos" id="eq-hon">—</div></div>
+    <div class="eq-sep">−</div>
+    <div class="eq-item"><div class="lbl">Repasses</div><div class="val neg" id="eq-rep">—</div></div>
+    <div class="eq-sep">−</div>
+    <div class="eq-item"><div class="lbl">Despesas</div><div class="val neg" id="eq-des">—</div></div>
+    <div class="eq-sep">=</div>
+    <div class="eq-item"><div class="lbl">Resultado</div><div class="val eq-sign" id="eq-res">—</div></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-lbl">Análise</div>
+  <div class="charts-row gap">
+    <div class="card">
+      <h3 id="chart-cli-title">Honorários por Cliente</h3>
+      <canvas id="chartClientes" height="260"></canvas>
+    </div>
+    <div class="card">
+      <h3>Despesas por Categoria</h3>
+      <canvas id="chartDespesas" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- HONORÁRIOS TABLE -->
+  <div class="section-lbl">Honorários — Lançamentos</div>
+  <div class="tcard gap">
+    <h3 id="hon-table-title">Lançamentos do Mês</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Conta</th><th>Valor</th></tr></thead>
+      <tbody id="tbody-hon"></tbody>
+    </table>
+  </div>
+
+  <!-- DESPESAS TABLE -->
+  <div class="section-lbl">Despesas — Detalhamento</div>
+  <div class="tcard gap">
+    <h3>Despesas do Escritório por Categoria <span style="font-size:11px;color:var(--bege);font-weight:400">(clique na categoria para expandir)</span></h3>
+    <table>
+      <thead><tr><th>Categoria</th><th>Itens</th><th>Total</th></tr></thead>
+      <tbody id="tbody-des"></tbody>
+    </table>
+  </div>
+
+  <!-- REPASSES TABLE -->
+  <div class="section-lbl">Repasses a Parceiros</div>
+  <div class="tcard gap-lg">
+    <h3>Repasses</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Parceiro</th><th>Conta</th><th>Valor</th></tr></thead>
+      <tbody id="tbody-rep"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  <strong>Cavalcante Pinheiro Advocacia</strong> · Mariana Pinheiro — OAB/BA nº 49.675<br>
+  Empresarial Mundo Plaza, sala 1006, Caminho das Árvores, Salvador/BA · (71) 99129-2322
+</footer>
+
+<script>
+// ─────────────────────────────────────────
+// DADOS
+// ─────────────────────────────────────────
+const dados = {
+  abril: {
+    honorarios: 95627.68,
+    repasses: 19976.98,
+    despesas: 15758.91,
+    lancamentos: [
+      {data:'07/04', cliente:'Delivery88 Ltda',                             conta:'Asaas Pessoal', valor:3236.00},
+      {data:'10/04', cliente:'Amaro Bezerra da Silva Segundo',               conta:'Asaas Pessoal', valor:1518.00},
+      {data:'10/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Pessoal', valor:6000.00},
+      {data:'10/04', cliente:'Alvará — SEFAZ/BA (30% de R$ 32.420)',        conta:'Banco do Brasil', valor:9726.00},
+      {data:'13/04', cliente:'Alvará — TJ (30% de R$ 11.924,13)',           conta:'Itaú', valor:3577.24},
+      {data:'14/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Empresa', valor:23267.62},
+      {data:'15/04', cliente:'Alvará — TJ (30% de R$ 5.259,06)',            conta:'Itaú', valor:1577.72},
+      {data:'20/04', cliente:'Jessica Pereira Andrade',                      conta:'Asaas Pessoal', valor:647.72},
+      {data:'27/04', cliente:'Thais Maria Paranhos Silveira do Nascimento',  conta:'Asaas Pessoal', valor:2419.61},
+      {data:'27/04', cliente:'Nordeste EPI Comércio de Equipamentos',        conta:'Asaas Pessoal', valor:17648.77},
+      {data:'27/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Empresa', valor:23267.61},
+      {data:'28/04', cliente:'Susana Oliveira Papini',                       conta:'Asaas Pessoal', valor:2246.00},
+      {data:'30/04', cliente:'Alvará — TJ (30% de R$ 1.651,30)',            conta:'Itaú', valor:495.39},
+    ],
+    porCliente: [
+      {nome:'Lima Diniz Construções', valor:52535.23},
+      {nome:'Nordeste EPI', valor:17648.77},
+      {nome:'Alvarás TJ / SEFAZ-BA', valor:15376.35},
+      {nome:'Thais Paranhos', valor:2419.61},
+      {nome:'Delivery88 Ltda', valor:3236.00},
+      {nome:'Amaro Bezerra', valor:1518.00},
+      {nome:'Susana Papini', valor:2246.00},
+      {nome:'Jessica Pereira', valor:647.72},
+    ],
+    categoriasDespesa: [
+      {nome:'Pessoal e Prestadores', total:8991.50, items:[
+        {desc:'Mariana Menezes de Andrade',    valor:4000.00},
+        {desc:'Diana Carina Macedo Jordan',    valor:3400.00},
+        {desc:'Jade Lima Ferreira',            valor:841.50},
+        {desc:'Ionete de Jesus Santos',        valor:500.00},
+        {desc:'Juliana Silva dos Santos',      valor:250.00},
+      ]},
+      {nome:'Contas e Utilidades', total:4080.75, items:[
+        {desc:'Pagamento de conta — 14/04 (Mundo Plaza e outros)', valor:992.63},
+        {desc:'Pagamento de conta — 17/04',   valor:2934.91},
+        {desc:'Pagamento de conta — 23/04',   valor:153.21},
+      ]},
+      {nome:'Marketing', total:1500.00, items:[
+        {desc:'Comarka Marketing e Assessoria', valor:1500.00},
+      ]},
+      {nome:'Tecnologia e Software', total:423.00, items:[
+        {desc:'Aurum Softmatic (sistema jurídico)', valor:373.00},
+        {desc:'Google Cloud',                       valor:50.00},
+      ]},
+      {nome:'Impostos', total:763.66, items:[
+        {desc:'Município de Salvador (ISS)', valor:763.66},
+      ]},
+    ],
+    repassesItems: [
+      {data:'28/04', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:3706.24},
+      {data:'28/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:3706.24},
+      {data:'29/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Empresa', valor:12564.50},
+    ],
+  },
+
+  maio: {
+    honorarios: 20394.11,
+    repasses: 759.00,
+    despesas: 17622.04,
+    lancamentos: [
+      {data:'11/05', cliente:'Amaro Bezerra da Silva Segundo',              conta:'Asaas Pessoal', valor:1518.00},
+      {data:'12/05', cliente:'Lima Diniz Construções Ltda',                 conta:'Asaas Pessoal', valor:6000.00},
+      {data:'14/05', cliente:'Pedras (empresa)',                             conta:'Itaú', valor:3795.00},
+      {data:'18/05', cliente:'Alvará — TJ (30% de R$ 1.854,83)',           conta:'Itaú', valor:556.45},
+      {data:'20/05', cliente:'Jessica Pereira Andrade',                     conta:'Asaas Pessoal', valor:647.72},
+      {data:'20/05', cliente:'Sinba',                                        conta:'Itaú', valor:3242.00},
+      {data:'20/05', cliente:'Alvará — TJ (30% de R$ 3.149,26)',           conta:'Itaú', valor:944.78},
+      {data:'26/05', cliente:'Ednalva',                                      conta:'Itaú', valor:1807.50},
+      {data:'27/05', cliente:'Thais Maria Paranhos Silveira do Nascimento', conta:'Asaas Pessoal', valor:1882.66},
+    ],
+    porCliente: [
+      {nome:'Lima Diniz Construções', valor:6000.00},
+      {nome:'Pedras (empresa)',        valor:3795.00},
+      {nome:'Sinba',                   valor:3242.00},
+      {nome:'Alvarás TJ',              valor:1501.23},
+      {nome:'Thais Paranhos',          valor:1882.66},
+      {nome:'Amaro Bezerra',           valor:1518.00},
+      {nome:'Ednalva',                 valor:1807.50},
+      {nome:'Jessica Pereira',         valor:647.72},
+    ],
+    categoriasDespesa: [
+      {nome:'Pessoal e Prestadores', total:10782.00, items:[
+        {desc:'Mariana Menezes de Andrade',           valor:4000.00},
+        {desc:'Diana Carina Macedo Jordan',           valor:4000.00},
+        {desc:'Maria Luisa Albieri Costa (estagiária)', valor:900.00},
+        {desc:'Jade Lima Ferreira',                   valor:900.00},
+        {desc:'Ionete de Jesus Santos',               valor:500.00},
+        {desc:'Juliana Silva dos Santos',             valor:482.00},
+      ]},
+      {nome:'Contas e Utilidades', total:2948.96, items:[
+        {desc:'Pagamento de conta — 06/05 (×2)',      valor:138.77},
+        {desc:'Pagamento de conta — 14/05',           valor:992.63},
+        {desc:'Pagamento de conta — 15/05',           valor:1500.00},
+        {desc:'ITS Telecomunicações (internet)',      valor:153.39},
+        {desc:'Neoenergia Coelba (luz)',              valor:164.17},
+      ]},
+      {nome:'Impostos', total:2743.37, items:[
+        {desc:'Simples Nacional', valor:2743.37},
+      ]},
+      {nome:'Tecnologia e Software', total:577.71, items:[
+        {desc:'Aurum Softmatic (sistema jurídico)', valor:373.00},
+        {desc:'Certisign (certificado digital)',    valor:99.90},
+        {desc:'Pagar.me',                           valor:59.90},
+        {desc:'Meucase',                            valor:44.91},
+      ]},
+      {nome:'Marketing', total:570.00, items:[
+        {desc:'Facebook Ads', valor:570.00},
+      ]},
+    ],
+    repassesItems: [
+      {data:'15/05', parceiro:'Jose Humberto L. de Almeida', conta:'Banco do Brasil', valor:759.00},
+    ],
+  },
+};
+
+// Período total (combinação)
+dados.total = {
+  honorarios: dados.abril.honorarios + dados.maio.honorarios,
+  repasses: 3760.00 + dados.abril.repasses + dados.maio.repasses,
+  despesas: dados.abril.despesas + dados.maio.despesas,
+  lancamentos: [
+    ...dados.abril.lancamentos.map(l => ({...l, mes:'Abril'})),
+    ...dados.maio.lancamentos.map(l => ({...l, mes:'Maio'})),
+  ],
+  porCliente: [
+    {nome:'Lima Diniz Construções', valor:58535.23},
+    {nome:'Nordeste EPI',           valor:17648.77},
+    {nome:'Alvarás TJ / SEFAZ-BA', valor:16877.58},
+    {nome:'Thais Paranhos',         valor:4302.27},
+    {nome:'Pedras (empresa)',        valor:3795.00},
+    {nome:'Delivery88 Ltda',        valor:3236.00},
+    {nome:'Sinba',                   valor:3242.00},
+    {nome:'Amaro Bezerra',           valor:3036.00},
+    {nome:'Susana Papini',           valor:2246.00},
+    {nome:'Ednalva',                 valor:1807.50},
+    {nome:'Jessica Pereira',         valor:1295.44},
+  ],
+  categoriasDespesa: [
+    {nome:'Pessoal e Prestadores', total:19773.50, items:[
+      {desc:'Mariana Menezes de Andrade',            valor:8000.00},
+      {desc:'Diana Carina Macedo Jordan',            valor:7400.00},
+      {desc:'Maria Luisa Albieri Costa (estagiária)', valor:900.00},
+      {desc:'Jade Lima Ferreira',                    valor:1741.50},
+      {desc:'Ionete de Jesus Santos',                valor:1000.00},
+      {desc:'Juliana Silva dos Santos',              valor:732.00},
+    ]},
+    {nome:'Contas e Utilidades', total:7029.71, items:[
+      {desc:'Pagamentos de conta abril (Mundo Plaza e outros)', valor:4080.75},
+      {desc:'Pagamentos de conta maio',              valor:2631.40},
+      {desc:'ITS Telecomunicações (internet)',       valor:153.39},
+      {desc:'Neoenergia Coelba (luz)',               valor:164.17},
+    ]},
+    {nome:'Impostos', total:3507.03, items:[
+      {desc:'Simples Nacional',             valor:2743.37},
+      {desc:'Município de Salvador (ISS)',  valor:763.66},
+    ]},
+    {nome:'Tecnologia e Software', total:1000.71, items:[
+      {desc:'Aurum Softmatic (×2 meses)', valor:746.00},
+      {desc:'Certisign',                  valor:99.90},
+      {desc:'Pagar.me',                   valor:59.90},
+      {desc:'Google Cloud',               valor:50.00},
+      {desc:'Meucase',                    valor:44.91},
+    ]},
+    {nome:'Marketing', total:2070.00, items:[
+      {desc:'Comarka Marketing e Assessoria', valor:1500.00},
+      {desc:'Facebook Ads',                   valor:570.00},
+    ]},
+  ],
+  repassesItems: [
+    {data:'30/03', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:1880.00},
+    {data:'30/03', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:1880.00},
+    {data:'28/04', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:3706.24},
+    {data:'28/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:3706.24},
+    {data:'29/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Empresa', valor:12564.50},
+    {data:'15/05', parceiro:'Jose Humberto L. de Almeida',      conta:'Banco do Brasil', valor:759.00},
+  ],
+};
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+const PALETTE = ['#1f3e3c','#2b6052','#3d8070','#4a9a88','#a7a897','#c4c9b5','#5a7a78','#8fafa8','#7a9e9c','#2b5050','#6b8f8c'];
+const PALETTE_DES = ['#1f3e3c','#2b5050','#4a7a70','#a7a897','#c25e5e'];
+
+const CONTAS_BADGE = {
+  'Asaas Pessoal': '<span class="badge ba">Asaas Pessoal</span>',
+  'Asaas Empresa': '<span class="badge ba">Asaas Empresa</span>',
+  'Itaú':          '<span class="badge bi">Itaú</span>',
+  'Banco do Brasil':'<span class="badge bb">Banco do Brasil</span>',
+};
+
+let chartCli = null, chartDes = null;
+let currentTab = 'abril';
+
+// ─────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  render(tab);
+  document.getElementById('panel').classList.add('tab-panel');
+  setTimeout(() => document.getElementById('panel').classList.remove('tab-panel'), 300);
+}
+
+function render(tab) {
+  const d = dados[tab];
+  const resultado = d.honorarios - d.repasses - d.despesas;
+
+  // Header period
+  const periodos = {abril:'Abril 2026', maio:'Maio 2026', total:'Abril e Maio 2026'};
+  document.getElementById('hd-period').textContent = periodos[tab];
+
+  // KPIs
+  document.getElementById('k-hon').textContent  = fmt(d.honorarios);
+  document.getElementById('k-rep').textContent  = fmt(d.repasses);
+  document.getElementById('k-des').textContent  = fmt(d.despesas);
+  document.getElementById('k-res').textContent  = fmt(resultado);
+  document.getElementById('k-hon-sub').textContent = tab === 'total' ? 'Soma do período completo' : `${d.lancamentos.length} lançamentos no mês`;
+  document.getElementById('k-rep-sub').textContent = `${d.repassesItems.length} repasse(s)`;
+  document.getElementById('k-des-sub').textContent = `${d.categoriasDespesa.length} categorias`;
+  document.getElementById('k-res-sub').textContent = resultado >= 0 ? 'Resultado positivo' : 'Resultado negativo';
+
+  // Equation
+  document.getElementById('eq-hon').textContent = '+ ' + fmt(d.honorarios);
+  document.getElementById('eq-rep').textContent = fmt(d.repasses);
+  document.getElementById('eq-des').textContent = fmt(d.despesas);
+  const resEl = document.getElementById('eq-res');
+  resEl.textContent = fmt(resultado);
+  resEl.style.color = resultado >= 0 ? '#7de8c4' : '#f4a4a4';
+
+  // Chart título
+  document.getElementById('chart-cli-title').textContent =
+    tab === 'total' ? 'Honorários por Cliente — Período Completo' : 'Honorários por Cliente';
+
+  // Chart clientes
+  const cliLabels = d.porCliente.map(c => c.nome);
+  const cliValues = d.porCliente.map(c => c.valor);
+  if (!chartCli) {
+    chartCli = new Chart(document.getElementById('chartClientes'), {
+      type: 'doughnut',
+      data: { labels: cliLabels, datasets: [{ data: cliValues, backgroundColor: PALETTE, borderWidth: 2, borderColor: '#fff' }] },
+      options: {
+        cutout: '60%',
+        plugins: {
+          legend: { position:'right', labels:{ font:{family:'Nunito',size:11}, boxWidth:12, padding:8 } },
+          tooltip: { callbacks: { label: c => c.label + ': ' + fmt(c.raw) } }
+        }
+      }
+    });
+  } else {
+    chartCli.data.labels = cliLabels;
+    chartCli.data.datasets[0].data = cliValues;
+    chartCli.update();
+  }
+
+  // Chart despesas
+  const desLabels = d.categoriasDespesa.map(c => c.nome);
+  const desValues = d.categoriasDespesa.map(c => c.total);
+  if (!chartDes) {
+    chartDes = new Chart(document.getElementById('chartDespesas'), {
+      type: 'bar',
+      data: {
+        labels: desLabels,
+        datasets: [{ data: desValues, backgroundColor: PALETTE_DES, borderRadius: 8, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => fmt(c.raw) } }
+        },
+        scales: {
+          x: { ticks:{ callback: v => 'R$ '+(v/1000).toFixed(0)+'k', font:{family:'Nunito',size:11} }, grid:{color:'#e8f0f0'} },
+          y: { ticks:{ font:{family:'Nunito',size:12} }, grid:{display:false} }
+        }
+      }
+    });
+  } else {
+    chartDes.data.labels = desLabels;
+    chartDes.data.datasets[0].data = desValues;
+    chartDes.update();
+  }
+
+  // Tabela honorários
+  const tbHon = document.getElementById('tbody-hon');
+  document.getElementById('hon-table-title').textContent =
+    tab === 'total' ? `Todos os Lançamentos — ${d.lancamentos.length} entradas` : `Lançamentos de ${periodos[tab]}`;
+
+  let honHTML = '';
+  if (tab === 'total') {
+    // Agrupar por mês
+    ['Abril','Maio'].forEach(mes => {
+      const itens = d.lancamentos.filter(l => l.mes === mes);
+      const total = itens.reduce((s,l) => s + l.valor, 0);
+      honHTML += `<tr class="tr-hvote"><td colspan="3"><strong>${mes} 2026</strong></td><td>${fmt(total)}</td></tr>`;
+      itens.forEach(l => {
+        honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
+      });
+    });
+  } else {
+    d.lancamentos.forEach(l => {
+      honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
+    });
+  }
+  honHTML += `<tr class="tr-total"><td colspan="3">TOTAL</td><td>${fmt(d.honorarios)}</td></tr>`;
+  tbHon.innerHTML = honHTML;
+
+  // Tabela despesas (com categorias expansíveis)
+  const tbDes = document.getElementById('tbody-des');
+  let desHTML = '';
+  d.categoriasDespesa.forEach((cat, i) => {
+    const catId = `cat-${tab}-${i}`;
+    desHTML += `<tr class="tr-cat" data-cat="${catId}" onclick="toggleCat('${catId}')">
+      <td>${cat.nome}</td>
+      <td style="color:#4a6868;font-weight:400">${cat.items.length} item(ns)</td>
+      <td>${fmt(cat.total)}</td>
+    </tr>`;
+    cat.items.forEach(item => {
+      desHTML += `<tr class="tr-sub" data-parent="${catId}">
+        <td>${item.desc}</td><td></td><td>${fmt(item.valor)}</td>
+      </tr>`;
+    });
+  });
+  desHTML += `<tr class="tr-total"><td colspan="2">TOTAL DESPESAS DO ESCRITÓRIO</td><td>${fmt(d.despesas)}</td></tr>`;
+  tbDes.innerHTML = desHTML;
+
+  // Tabela repasses
+  const tbRep = document.getElementById('tbody-rep');
+  let repHTML = '';
+  d.repassesItems.forEach(r => {
+    repHTML += `<tr><td>${r.data}</td><td>${r.parceiro}</td><td>${CONTAS_BADGE[r.conta]||r.conta}</td><td>${fmt(r.valor)}</td></tr>`;
+  });
+  repHTML += `<tr class="tr-total"><td colspan="3">TOTAL REPASSES</td><td>${fmt(d.repasses)}</td></tr>`;
+  tbRep.innerHTML = repHTML;
+}
+
+function toggleCat(catId) {
+  const row = document.querySelector(`[data-cat="${catId}"]`);
+  const subs = document.querySelectorAll(`[data-parent="${catId}"]`);
+  row.classList.toggle('open');
+  subs.forEach(s => s.classList.toggle('show'));
+}
+
+// Inicializar com Abril
+render('abril');
+</script>
+</body>
+</html>
