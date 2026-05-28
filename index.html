@@ -92,6 +92,14 @@ tbody tr:hover{background:#eef8f6;}
 .gap{margin-bottom:22px;}
 .gap-lg{margin-bottom:32px;}
 
+/* BARRA DE MÊS AO VIVO */
+.mes-nav-bar{display:none;background:var(--v3);padding:12px 48px;align-items:center;gap:20px;}
+.mes-nav-bar.show{display:flex;}
+.mes-nav-btn{background:rgba(255,255,255,.12);border:none;color:var(--br);font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;line-height:1;}
+.mes-nav-btn:hover{background:rgba(255,255,255,.25);}
+.mes-nav-titulo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--br);min-width:180px;text-align:center;}
+.mes-atualizado{font-size:11px;color:var(--bege);margin-left:8px;}
+
 /* BADGE AO VIVO */
 .badge-vivo{display:inline-block;background:#2a8f6e;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;letter-spacing:.5px;vertical-align:middle;}
 .tab-vivo{border-left:1px solid rgba(167,168,151,.2);margin-left:8px;}
@@ -146,7 +154,15 @@ footer strong{color:var(--br);}
   <button class="tab active" onclick="setTab('abril')">Abril 2026</button>
   <button class="tab" onclick="setTab('maio')">Maio 2026</button>
   <button class="tab" onclick="setTab('total')">Período Completo</button>
-  <button class="tab tab-vivo" onclick="setTabVivo(event, 6, 2026)">Junho 2026 <span class="badge-vivo">● ao vivo</span></button>
+  <button class="tab tab-vivo" id="tab-vivo-btn" onclick="ativarVivo(event)">Ao Vivo <span class="badge-vivo">●</span></button>
+</div>
+
+<!-- BARRA DE NAVEGAÇÃO DE MÊS (só aparece na aba ao vivo) -->
+<div class="mes-nav-bar" id="mes-nav-bar">
+  <button class="mes-nav-btn" onclick="navegarMes(-1)">&#8249;</button>
+  <span class="mes-nav-titulo" id="mes-nav-titulo">—</span>
+  <button class="mes-nav-btn" onclick="navegarMes(1)">&#8250;</button>
+  <span class="mes-atualizado" id="mes-atualizado"></span>
 </div>
 
 <div class="main" id="panel">
@@ -433,6 +449,7 @@ function setTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.remove('show');
   render(tab);
   document.getElementById('panel').classList.add('tab-panel');
   setTimeout(() => document.getElementById('panel').classList.remove('tab-panel'), 300);
@@ -580,42 +597,55 @@ function toggleCat(catId) {
 // ─────────────────────────────────────────
 // ABA AO VIVO — ASAAS
 // ─────────────────────────────────────────
-async function setTabVivo(e, mes, ano) {
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let vivoMes = new Date().getMonth() + 1;
+let vivoAno = new Date().getFullYear();
+
+function ativarVivo(e) {
   currentTab = 'vivo';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   e.currentTarget.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.add('show');
+  carregarVivo();
+}
 
+function navegarMes(delta) {
+  vivoMes += delta;
+  if (vivoMes > 12) { vivoMes = 1; vivoAno++; }
+  if (vivoMes < 1)  { vivoMes = 12; vivoAno--; }
+  carregarVivo();
+}
+
+async function carregarVivo() {
+  const nomeMes = `${MESES[vivoMes - 1]} ${vivoAno}`;
+  document.getElementById('mes-nav-titulo').textContent = nomeMes;
+  document.getElementById('mes-atualizado').textContent = '';
   document.getElementById('loading-overlay').classList.add('show');
 
   try {
-    const resp = await fetch(`/.netlify/functions/honorarios?mes=${mes}&ano=${ano}`);
+    const resp = await fetch(`/.netlify/functions/honorarios?mes=${vivoMes}&ano=${vivoAno}`);
     if (!resp.ok) throw new Error(`Erro ${resp.status}`);
     const api = await resp.json();
 
-    // Formatar data dd/mm
     const fmtData = s => {
       if (!s) return '—';
-      const [a,m,d] = s.split('-');
+      const [,m,d] = s.split('-');
       return `${d}/${m}`;
     };
 
-    // Montar lançamentos das duas contas
     const lancamentos = [
       ...(api.pessoal.pagamentos||[]).map(p => ({
-        data: fmtData(p.dataPagamento),
-        cliente: p.cliente,
-        conta: 'Asaas Pessoal',
-        valor: p.valor
+        data: fmtData(p.dataPagamento), cliente: p.cliente,
+        conta: 'Asaas Pessoal', valor: p.valor
       })),
       ...(api.escritorio.pagamentos||[]).map(p => ({
-        data: fmtData(p.dataPagamento),
-        cliente: p.cliente,
-        conta: 'Asaas Empresa',
-        valor: p.valor
+        data: fmtData(p.dataPagamento), cliente: p.cliente,
+        conta: 'Asaas Empresa', valor: p.valor
       }))
     ].sort((a,b) => a.data.localeCompare(b.data));
 
-    // Agrupar por cliente
     const mapa = {};
     lancamentos.forEach(l => { mapa[l.cliente] = (mapa[l.cliente]||0) + l.valor; });
     const porCliente = Object.entries(mapa)
@@ -624,16 +654,14 @@ async function setTabVivo(e, mes, ano) {
 
     dados['vivo'] = {
       honorarios: api.totalHonorarios,
-      repasses: 0,
-      despesas: 0,
-      lancamentos,
-      porCliente,
-      categoriasDespesa: [],
-      repassesItems: [],
-      isVivo: true,
-      mesTitulo: `Junho ${ano}`
+      repasses: 0, despesas: 0,
+      lancamentos, porCliente,
+      categoriasDespesa: [], repassesItems: [],
+      mesTitulo: nomeMes
     };
 
+    const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('mes-atualizado').textContent = `Atualizado às ${agora}`;
     document.getElementById('loading-overlay').classList.remove('show');
     render('vivo');
 
