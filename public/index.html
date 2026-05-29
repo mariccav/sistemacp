@@ -417,6 +417,8 @@ function brl2(v)    { return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFrac
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Nome completo *</label><input id="cli-nome" type="text" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
         <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">WhatsApp / Telefone *</label><input id="cli-contato" type="text" placeholder="(71) 99999-9999" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+        <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">CPF / CNPJ *</label><input id="cli-cpf" type="text" placeholder="000.000.000-00" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+        <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">E-mail</label><input id="cli-email" type="email" placeholder="cliente@email.com" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button onclick="toggleNovoCliente()" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:8px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>
@@ -508,7 +510,7 @@ function renderClientes(lista) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f7f7;gap:12px;">
       <div style="flex:1;min-width:0;">
         <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#1f3e3c;">${c.nome}</div>
-        <div style="font-size:12px;color:#a7a897;">${c.contato||'—'} ${c.asaas_id?'<span style=\'color:#27ae60;font-size:10px;\'>● Asaas</span>':''}</div>
+        <div style="font-size:12px;color:#a7a897;">${c.cpf_cnpj?c.cpf_cnpj+' · ':''} ${c.contato||'—'} ${c.email?'· '+c.email:''} ${c.asaas_id?'<span style=\'color:#27ae60;font-size:10px;\'>● Asaas</span>':''}</div>
       </div>
       <button onclick="abrirCobrar('${c.id}','${c.nome.replace(/'/g,"\'")}')"
         style="background:#1f3e3c;color:#fff;border:none;padding:6px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -519,7 +521,7 @@ function renderClientes(lista) {
 
 function filtrarClientes() {
   const q = document.getElementById('cli-busca').value.toLowerCase();
-  renderClientes(todosClientes.filter(c => c.nome.toLowerCase().includes(q)||(c.contato||'').includes(q)));
+  renderClientes(todosClientes.filter(c => c.nome.toLowerCase().includes(q)||(c.contato||'').includes(q)||(c.email||'').toLowerCase().includes(q)||(c.cpf_cnpj||'').includes(q)));
 }
 
 function toggleNovoCliente() {
@@ -528,19 +530,21 @@ function toggleNovoCliente() {
 }
 
 async function salvarCliente() {
-  const nome    = document.getElementById('cli-nome').value.trim();
-  const contato = document.getElementById('cli-contato').value.trim();
+  const nome      = document.getElementById('cli-nome').value.trim();
+  const contato   = document.getElementById('cli-contato').value.trim();
+  const cpf_cnpj  = document.getElementById('cli-cpf').value.trim();
+  const email     = document.getElementById('cli-email').value.trim();
   if (!nome) { alert('Informe o nome do cliente.'); return; }
+  if (!cpf_cnpj) { alert('Informe o CPF ou CNPJ do cliente.'); return; }
   const btn = document.querySelector('#form-novo-cli button:last-child');
   btn.textContent = 'Salvando...'; btn.disabled = true;
   const r = await fetch('/api/clientes', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ nome, contato })
+    body: JSON.stringify({ nome, contato, cpf_cnpj, email: email || null })
   });
   btn.textContent = 'Salvar'; btn.disabled = false;
   if (r.ok) {
-    document.getElementById('cli-nome').value='';
-    document.getElementById('cli-contato').value='';
+    ['cli-nome','cli-contato','cli-cpf','cli-email'].forEach(id => document.getElementById(id).value='');
     toggleNovoCliente();
     carregarClientes();
   } else { alert('Erro ao salvar cliente.'); }
