@@ -933,7 +933,7 @@ async function carregarVivo() {
   document.getElementById('loading-overlay').classList.add('show');
 
   try {
-    const resp = await fetch(`/.netlify/functions/honorarios?mes=${vivoMes}&ano=${vivoAno}`);
+    const resp = await fetch(`/api/honorarios?mes=${vivoMes}&ano=${vivoAno}`);
     if (!resp.ok) throw new Error(`Erro ${resp.status}`);
     const api = await resp.json();
 
