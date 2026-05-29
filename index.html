@@ -171,6 +171,41 @@ footer strong{color:var(--br);}
 .btn-cancel{background:none;border:1px solid #dde8e8;color:#4a6868;padding:10px 20px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
 .btn-save{background:var(--v1);color:var(--br);border:none;padding:10px 24px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
 .btn-save:hover{background:var(--v2);}
+
+/* AGENTE IA */
+.tab-agente{border-left:1px solid rgba(167,168,151,.2);margin-left:8px;}
+.badge-ia{display:inline-block;background:var(--bege);color:var(--v1);font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;letter-spacing:.5px;vertical-align:middle;}
+#panel-agente{display:none;max-width:820px;margin:32px auto;padding:0 32px 32px;}
+#panel-agente.show{display:block;}
+.chat-wrap{background:var(--br);border-radius:16px;border:1px solid #dde8e8;overflow:hidden;box-shadow:0 4px 24px rgba(31,62,60,.08);}
+.chat-header{background:var(--v1);padding:20px 28px;display:flex;align-items:center;gap:14px;}
+.chat-header-icon{width:40px;height:40px;background:rgba(167,168,151,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--bege);flex-shrink:0;}
+.chat-header-info h3{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--br);font-weight:600;margin:0;}
+.chat-header-info p{font-size:11px;color:var(--bege);margin:2px 0 0;}
+.chat-msgs{height:440px;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;background:#fafefe;}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:#dde8e8;border-radius:4px;}
+.cmsg{max-width:80%;display:flex;flex-direction:column;gap:3px;}
+.cmsg.user{align-self:flex-end;align-items:flex-end;}
+.cmsg.agent{align-self:flex-start;align-items:flex-start;}
+.cmsg-bubble{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;word-break:break-word;}
+.cmsg.user .cmsg-bubble{background:var(--v1);color:var(--br);border-bottom-right-radius:4px;}
+.cmsg.agent .cmsg-bubble{background:var(--br);color:var(--v1);border:1px solid #dde8e8;border-bottom-left-radius:4px;}
+.cmsg-label{font-size:10px;color:#9aafaf;letter-spacing:.3px;}
+.chat-sugs{padding:12px 24px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid #f0f7f7;background:var(--br);}
+.sug-btn{background:#f0f7f7;border:1px solid #dde8e8;color:var(--v2);padding:7px 14px;border-radius:20px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;transition:.15s;}
+.sug-btn:hover{background:#ddeee8;border-color:var(--v2);}
+.chat-input-area{padding:16px 24px;border-top:1px solid #dde8e8;display:flex;gap:10px;align-items:flex-end;background:var(--br);}
+.chat-input{flex:1;padding:12px 16px;border:1px solid #dde8e8;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);resize:none;outline:none;transition:.15s;max-height:120px;min-height:44px;line-height:1.5;}
+.chat-input:focus{border-color:var(--v2);box-shadow:0 0 0 3px rgba(43,80,80,.08);}
+.chat-send{background:var(--v1);color:var(--br);border:none;width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;}
+.chat-send:hover{background:var(--v2);}
+.chat-send:disabled{opacity:.4;cursor:not-allowed;}
+.typing-dots{display:flex;gap:5px;align-items:center;padding:4px 2px;}
+.dot{width:7px;height:7px;background:var(--bege);border-radius:50%;animation:bounce .9s ease infinite;}
+.dot:nth-child(2){animation-delay:.18s;}
+.dot:nth-child(3){animation-delay:.36s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-7px);}}
 </style>
 </head>
 <body>
@@ -257,6 +292,7 @@ footer strong{color:var(--br);}
   <button class="tab" onclick="setTab('maio')">Maio 2026</button>
   <button class="tab" onclick="setTab('total')">Período Completo</button>
   <button class="tab tab-vivo" id="tab-vivo-btn" onclick="ativarVivo(event)">Ao Vivo <span class="badge-vivo">●</span></button>
+  <button class="tab tab-agente" id="tab-agente-btn" onclick="ativarAgente(event)">Agente IA <span class="badge-ia">✦</span></button>
 </div>
 
 <!-- BARRA DE NAVEGAÇÃO DE MÊS (só aparece na aba ao vivo) -->
@@ -361,6 +397,38 @@ footer strong{color:var(--br);}
     </div>
   </div>
 
+</div>
+
+<!-- PAINEL AGENTE IA -->
+<div id="panel-agente">
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-header-icon">✦</div>
+      <div class="chat-header-info">
+        <h3>Agente Financeiro CP</h3>
+        <p>Dados em tempo real · Asaas + Supabase</p>
+      </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="cmsg agent">
+        <div class="cmsg-bubble">Olá, Mariana. Sou seu agente financeiro. Posso consultar honorários, repasses e despesas do escritório em tempo real.<br><br>O que você precisa saber?</div>
+        <div class="cmsg-label">Agente CP</div>
+      </div>
+    </div>
+    <div class="chat-sugs" id="chat-sugs">
+      <button class="sug-btn" onclick="usarSugestao(this)">Qual o resultado de maio 2026?</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Liste os honorários recebidos este mês</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Quais são as despesas de maio?</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Quanto foi repassado a parceiros em maio?</button>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input" rows="1"
+        placeholder="Pergunte sobre o financeiro do escritório..."
+        onkeydown="chatKeyDown(event)"
+        oninput="autoResize(this)"></textarea>
+      <button class="chat-send" id="chat-send" onclick="enviarMensagem()" title="Enviar">&#8594;</button>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -582,6 +650,8 @@ function setTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('mes-nav-bar').classList.remove('show');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
   render(tab);
   document.getElementById('panel').classList.add('tab-panel');
   setTimeout(() => document.getElementById('panel').classList.remove('tab-panel'), 300);
@@ -916,6 +986,8 @@ function ativarVivo(e) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   e.currentTarget.classList.add('active');
   document.getElementById('mes-nav-bar').classList.add('show');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
   carregarVivo();
 }
 
@@ -986,6 +1058,109 @@ async function carregarVivo() {
     document.getElementById('loading-overlay').classList.remove('show');
     alert('Não foi possível buscar os dados do Asaas.\n\nDetalhe: ' + err.message);
   }
+}
+
+// ─────────────────────────────────────────
+// AGENTE IA
+// ─────────────────────────────────────────
+let chatHistorico = [];
+
+function ativarAgente(e) {
+  currentTab = 'agente';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.remove('show');
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('panel-agente').classList.add('show');
+}
+
+function chatKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    enviarMensagem();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function usarSugestao(btn) {
+  document.getElementById('chat-input').value = btn.textContent.trim();
+  document.getElementById('chat-sugs').style.display = 'none';
+  enviarMensagem();
+}
+
+async function enviarMensagem() {
+  const input = document.getElementById('chat-input');
+  const mensagem = input.value.trim();
+  if (!mensagem) return;
+
+  const sendBtn = document.getElementById('chat-send');
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  document.getElementById('chat-sugs').style.display = 'none';
+
+  adicionarMensagem('user', mensagem);
+  const typingEl = adicionarTyping();
+
+  try {
+    const resp = await fetch('/api/agente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem, historico: chatHistorico })
+    });
+
+    const data = await resp.json();
+    typingEl.remove();
+
+    const textoResposta = data.resposta || data.erro || 'Não consegui processar. Tente novamente.';
+    adicionarMensagem('agent', textoResposta);
+
+    if (data.resposta) {
+      chatHistorico.push({ role: 'user', content: mensagem });
+      chatHistorico.push({ role: 'assistant', content: data.resposta });
+      if (chatHistorico.length > 20) chatHistorico = chatHistorico.slice(-20);
+    }
+  } catch (err) {
+    typingEl.remove();
+    adicionarMensagem('agent', 'Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function adicionarMensagem(tipo, texto) {
+  const msgs = document.getElementById('chat-msgs');
+  const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = `cmsg ${tipo}`;
+
+  // Renderizar negrito e quebras de linha
+  const html = texto
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  div.innerHTML = `
+    <div class="cmsg-bubble">${html}</div>
+    <div class="cmsg-label">${tipo === 'user' ? 'Você' : 'Agente CP'} · ${agora}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function adicionarTyping() {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'cmsg agent';
+  div.innerHTML = '<div class="cmsg-bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
 }
 
 // Inicializar com Abril
