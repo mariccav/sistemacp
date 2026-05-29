@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Financeiro — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --v1:#1f3e3c; --v2:#2b5050; --v3:#214949;
+  --bg:#f2fdff; --bege:#a7a897; --begealt:#a9a791;
+  --br:#ffffff; --verde:#2a8f6e; --verm:#c25e5e;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;line-height:1.5;}
+
+/* HEADER */
+header{background:var(--v1);color:var(--br);padding:22px 48px;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+header p{font-size:12px;color:var(--bege);margin-top:3px;}
+.hd-right .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1.5px;}
+.hd-right .val{font-family:'Cormorant Garamond',serif;font-size:18px;margin-top:2px;}
+
+/* TABS */
+.tabs-wrap{background:var(--v2);display:flex;padding:0 48px;gap:4px;}
+.tab{padding:14px 28px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--bege);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;letter-spacing:.3px;}
+.tab:hover{color:var(--br);}
+.tab.active{color:var(--br);border-bottom-color:var(--bege);}
+
+/* MAIN */
+.main{max-width:1380px;margin:0 auto;padding:32px 48px;}
+.section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--bege);margin-bottom:14px;margin-top:36px;}
+.section-lbl:first-child{margin-top:0;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+.kpi{background:var(--br);border-radius:12px;padding:22px 20px;border:1px solid #dde8e8;border-left:5px solid var(--v1);box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.kpi.k-rec{border-left-color:var(--verde);}
+.kpi.k-rep{border-left-color:var(--begealt);}
+.kpi.k-des{border-left-color:var(--verm);}
+.kpi.k-res{border-left-color:var(--v1);}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--bege);margin-bottom:8px;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1;}
+.kpi-val.c-rec{color:var(--verde);}
+.kpi-val.c-rep{color:var(--begealt);}
+.kpi-val.c-des{color:var(--verm);}
+.kpi-val.c-res{color:var(--v1);}
+.kpi-sub{font-size:11px;color:#9aadad;margin-top:5px;}
+
+/* EQUATION BAR */
+.eq{background:var(--v1);border-radius:12px;padding:24px 32px;display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:center;text-align:center;}
+.eq-item .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px;}
+.eq-item .val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;}
+.eq-item .val.pos{color:#7de8c4;}
+.eq-item .val.neg{color:#f4a4a4;}
+.eq-item .val.eq-sign{color:var(--br);font-size:20px;}
+.eq-sep{font-size:26px;color:var(--bege);padding:0 4px;}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;}
+.card{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.card h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+.card-full{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);}
+.card-full h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+
+/* TABLES */
+.tcard{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);overflow-x:auto;}
+.tcard h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--v2);color:var(--br);padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+thead th:last-child{text-align:right;}
+tbody td{padding:10px 16px;border-bottom:1px solid #eef3f3;color:var(--v1);}
+tbody td:last-child{text-align:right;font-weight:600;}
+tbody tr:nth-child(even){background:#f9fdfd;}
+tbody tr:hover{background:#eef8f6;}
+.tr-cat td{background:#e8f0ef !important;font-weight:700;cursor:pointer;user-select:none;}
+.tr-cat td:first-child::before{content:'▶ ';font-size:10px;color:var(--bege);}
+.tr-cat.open td:first-child::before{content:'▼ ';}
+.tr-sub{display:none;}
+.tr-sub.show{display:table-row;}
+.tr-sub td{color:#4a6868;font-weight:400;font-style:italic;}
+.tr-sub td:first-child{padding-left:36px;}
+.tr-total td{background:var(--v1) !important;color:var(--br) !important;font-weight:700;font-size:14px;}
+.tr-hvote td{background:var(--v1);color:var(--br);font-weight:700;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.ba{background:#e0f4ee;color:#1e7a58;}
+.bi{background:#fff0e4;color:#b06030;}
+.bb{background:#e4e8f8;color:#2840a0;}
+
+/* GAP UTILS */
+.gap{margin-bottom:22px;}
+.gap-lg{margin-bottom:32px;}
+
+/* BARRA DE MÊS AO VIVO */
+.mes-nav-bar{display:none;background:var(--v3);padding:12px 48px;align-items:center;gap:20px;}
+.mes-nav-bar.show{display:flex;}
+.mes-nav-btn{background:rgba(255,255,255,.12);border:none;color:var(--br);font-size:22px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;line-height:1;}
+.mes-nav-btn:hover{background:rgba(255,255,255,.25);}
+.mes-nav-titulo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--br);min-width:180px;text-align:center;}
+.mes-atualizado{font-size:11px;color:var(--bege);margin-left:8px;}
+
+/* BADGE AO VIVO */
+.badge-vivo{display:inline-block;background:#2a8f6e;color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;letter-spacing:.5px;vertical-align:middle;}
+.tab-vivo{border-left:1px solid rgba(167,168,151,.2);margin-left:8px;}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.6);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading-overlay.show{display:flex;}
+.loading-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:#a7a897;border-radius:50%;animation:spin .8s linear infinite;}
+.loading-text{color:#fff;font-family:'Nunito',sans-serif;font-size:14px;letter-spacing:.5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* FADE */
+.tab-panel{animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .charts-row{grid-template-columns:1fr;}
+  .eq{grid-template-columns:1fr 1fr;}
+  .eq-sep{display:none;}
+  .main{padding:20px;}
+  header{padding:20px;flex-direction:column;gap:10px;text-align:center;}
+  .tabs-wrap{padding:0 20px;}
+}
+
+/* TELA DE LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--v1);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-screen.hide{display:none;}
+.login-box{width:100%;max-width:380px;padding:48px 40px;text-align:center;}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--br);letter-spacing:.5px;margin-bottom:6px;}
+.login-sub{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:2px;margin-bottom:40px;}
+.login-label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--bege);text-align:left;margin-bottom:8px;}
+.login-input{width:100%;padding:14px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.3);border-radius:10px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--br);outline:none;transition:.2s;margin-bottom:8px;}
+.login-input:focus{border-color:var(--bege);background:rgba(255,255,255,.12);}
+.login-input::placeholder{color:rgba(255,255,255,.3);}
+.login-btn{width:100%;padding:14px;background:var(--bege);color:var(--v1);border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;cursor:pointer;margin-top:8px;transition:.2s;}
+.login-btn:hover{background:#c4c9b5;}
+.login-erro{color:#f4a4a4;font-size:12px;margin-top:10px;min-height:18px;}
+.login-divider{width:40px;height:2px;background:var(--bege);opacity:.3;margin:32px auto;}
+
+/* FOOTER */
+footer{background:var(--v1);color:var(--bege);text-align:center;padding:18px;font-size:11px;margin-top:16px;}
+footer strong{color:var(--br);}
+
+/* SEÇÕES EDITÁVEIS */
+.edit-section{background:var(--br);border-radius:12px;padding:24px;border:1px solid #dde8e8;box-shadow:0 2px 8px rgba(31,62,60,.06);margin-bottom:22px;}
+.edit-section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #eef3f3;}
+.edit-section-header h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);}
+.btn-add{background:var(--v1);color:var(--br);border:none;padding:8px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s;}
+.btn-add:hover{background:var(--v2);}
+.btn-edit{background:none;border:1px solid #dde8e8;color:var(--v2);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:.15s;}
+.btn-edit:hover{background:#eef3f3;}
+.btn-del{background:none;border:1px solid #f4d0d0;color:var(--verm);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:.15s;}
+.btn-del:hover{background:#fdf0f0;}
+.col-acoes{text-align:right !important;white-space:nowrap;}
+.col-acoes button{margin-left:4px;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.55);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--br);border-radius:16px;padding:32px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v1);margin-bottom:24px;}
+.form-row{margin-bottom:16px;}
+.form-row label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-bottom:6px;}
+.form-row input,.form-row select{width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);background:var(--br);outline:none;transition:.15s;}
+.form-row input:focus,.form-row select:focus{border-color:var(--v2);box-shadow:0 0 0 3px rgba(43,80,80,.08);}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;}
+.btn-cancel{background:none;border:1px solid #dde8e8;color:#4a6868;padding:10px 20px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
+.btn-save{background:var(--v1);color:var(--br);border:none;padding:10px 24px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+.btn-save:hover{background:var(--v2);}
+
+/* AGENTE IA */
+.tab-agente{border-left:1px solid rgba(167,168,151,.2);margin-left:8px;}
+.badge-ia{display:inline-block;background:var(--bege);color:var(--v1);font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:6px;letter-spacing:.5px;vertical-align:middle;}
+#panel-agente{display:none;max-width:820px;margin:32px auto;padding:0 32px 32px;}
+#panel-agente.show{display:block;}
+.chat-wrap{background:var(--br);border-radius:16px;border:1px solid #dde8e8;overflow:hidden;box-shadow:0 4px 24px rgba(31,62,60,.08);}
+.chat-header{background:var(--v1);padding:20px 28px;display:flex;align-items:center;gap:14px;}
+.chat-header-icon{width:40px;height:40px;background:rgba(167,168,151,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--bege);flex-shrink:0;}
+.chat-header-info h3{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--br);font-weight:600;margin:0;}
+.chat-header-info p{font-size:11px;color:var(--bege);margin:2px 0 0;}
+.chat-msgs{height:440px;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;background:#fafefe;}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:#dde8e8;border-radius:4px;}
+.cmsg{max-width:80%;display:flex;flex-direction:column;gap:3px;}
+.cmsg.user{align-self:flex-end;align-items:flex-end;}
+.cmsg.agent{align-self:flex-start;align-items:flex-start;}
+.cmsg-bubble{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.6;word-break:break-word;}
+.cmsg.user .cmsg-bubble{background:var(--v1);color:var(--br);border-bottom-right-radius:4px;}
+.cmsg.agent .cmsg-bubble{background:var(--br);color:var(--v1);border:1px solid #dde8e8;border-bottom-left-radius:4px;}
+.cmsg-label{font-size:10px;color:#9aafaf;letter-spacing:.3px;}
+.chat-sugs{padding:12px 24px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid #f0f7f7;background:var(--br);}
+.sug-btn{background:#f0f7f7;border:1px solid #dde8e8;color:var(--v2);padding:7px 14px;border-radius:20px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;transition:.15s;}
+.sug-btn:hover{background:#ddeee8;border-color:var(--v2);}
+.chat-input-area{padding:16px 24px;border-top:1px solid #dde8e8;display:flex;gap:10px;align-items:flex-end;background:var(--br);}
+.chat-input{flex:1;padding:12px 16px;border:1px solid #dde8e8;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);resize:none;outline:none;transition:.15s;max-height:120px;min-height:44px;line-height:1.5;}
+.chat-input:focus{border-color:var(--v2);box-shadow:0 0 0 3px rgba(43,80,80,.08);}
+.chat-send{background:var(--v1);color:var(--br);border:none;width:44px;height:44px;border-radius:12px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;}
+.chat-send:hover{background:var(--v2);}
+.chat-send:disabled{opacity:.4;cursor:not-allowed;}
+.typing-dots{display:flex;gap:5px;align-items:center;padding:4px 2px;}
+.dot{width:7px;height:7px;background:var(--bege);border-radius:50%;animation:bounce .9s ease infinite;}
+.dot:nth-child(2){animation-delay:.18s;}
+.dot:nth-child(3){animation-delay:.36s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-7px);}}
+</style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Cavalcante Pinheiro</div>
+    <div class="login-sub">Advocacia · Área Restrita</div>
+    <div class="login-divider"></div>
+    <label class="login-label">Senha de acesso</label>
+    <input class="login-input" type="password" id="login-senha" placeholder="••••••••••"
+      onkeydown="if(event.key==='Enter') verificarSenha()">
+    <button class="login-btn" onclick="verificarSenha()">Entrar</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<!-- MODAL REPASSE -->
+<div class="modal-overlay" id="modal-repasse">
+  <div class="modal">
+    <h2 id="modal-rep-titulo">Lançar Repasse</h2>
+    <input type="hidden" id="rep-id">
+    <div class="form-row"><label>Data</label><input type="text" id="rep-data" placeholder="28/04"></div>
+    <div class="form-row"><label>Parceiro</label><input type="text" id="rep-parceiro" placeholder="Nome do parceiro"></div>
+    <div class="form-row"><label>Conta</label>
+      <select id="rep-conta">
+        <option>Asaas Pessoal</option><option>Asaas Empresa</option>
+        <option>Itaú</option><option>Banco do Brasil</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="rep-valor" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharModal('modal-repasse')">Cancelar</button>
+      <button class="btn-save" onclick="salvarRepasse()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESPESA -->
+<div class="modal-overlay" id="modal-despesa">
+  <div class="modal">
+    <h2 id="modal-des-titulo">Lançar Despesa</h2>
+    <input type="hidden" id="des-id">
+    <div class="form-row"><label>Data</label><input type="text" id="des-data" placeholder="14/04"></div>
+    <div class="form-row"><label>Categoria</label>
+      <select id="des-categoria">
+        <option>Pessoal e Prestadores</option><option>Contas e Utilidades</option>
+        <option>Impostos</option><option>Tecnologia e Software</option>
+        <option>Marketing</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Descrição</label><input type="text" id="des-descricao" placeholder="Ex: Aurum Softmatic"></div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="des-valor" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharModal('modal-despesa')">Cancelar</button>
+      <button class="btn-save" onclick="salvarDespesa()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Buscando dados do Asaas...</div>
+</div>
+
+<header>
+  <div>
+    <h1>Cavalcante Pinheiro Advocacia</h1>
+    <p>Dashboard Financeiro · Mariana Pinheiro — OAB/BA nº 49.675</p>
+  </div>
+  <div class="hd-right" style="text-align:right;display:flex;align-items:center;gap:24px;">
+    <div>
+      <div class="lbl">Período</div>
+      <div class="val" id="hd-period">Abril e Maio 2026</div>
+    </div>
+    <button onclick="sair()" style="background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.4);color:var(--bege);padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;cursor:pointer;letter-spacing:.5px;">Sair</button>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <button class="tab active" onclick="setTab('abril')">Abril 2026</button>
+  <button class="tab" onclick="setTab('maio')">Maio 2026</button>
+  <button class="tab" onclick="setTab('total')">Período Completo</button>
+  <button class="tab tab-vivo" id="tab-vivo-btn" onclick="ativarVivo(event)">Ao Vivo <span class="badge-vivo">●</span></button>
+  <button class="tab tab-agente" id="tab-agente-btn" onclick="ativarAgente(event)">Agente IA <span class="badge-ia">✦</span></button>
+</div>
+
+<!-- BARRA DE NAVEGAÇÃO DE MÊS (só aparece na aba ao vivo) -->
+<div class="mes-nav-bar" id="mes-nav-bar">
+  <button class="mes-nav-btn" onclick="navegarMes(-1)">&#8249;</button>
+  <span class="mes-nav-titulo" id="mes-nav-titulo">—</span>
+  <button class="mes-nav-btn" onclick="navegarMes(1)">&#8250;</button>
+  <span class="mes-atualizado" id="mes-atualizado"></span>
+</div>
+
+<div class="main" id="panel">
+
+  <!-- KPIs -->
+  <div class="section-lbl">Resultado</div>
+  <div class="kpi-grid gap">
+    <div class="kpi k-rec"><div class="kpi-lbl">Honorários</div><div class="kpi-val c-rec" id="k-hon">—</div><div class="kpi-sub" id="k-hon-sub"></div></div>
+    <div class="kpi k-rep"><div class="kpi-lbl">Repasses a Parceiros</div><div class="kpi-val c-rep" id="k-rep">—</div><div class="kpi-sub" id="k-rep-sub"></div></div>
+    <div class="kpi k-des"><div class="kpi-lbl">Despesas do Escritório</div><div class="kpi-val c-des" id="k-des">—</div><div class="kpi-sub" id="k-des-sub"></div></div>
+    <div class="kpi k-res"><div class="kpi-lbl">Resultado Líquido</div><div class="kpi-val c-res" id="k-res">—</div><div class="kpi-sub" id="k-res-sub"></div></div>
+  </div>
+
+  <div class="eq gap-lg">
+    <div class="eq-item"><div class="lbl">Honorários</div><div class="val pos" id="eq-hon">—</div></div>
+    <div class="eq-sep">−</div>
+    <div class="eq-item"><div class="lbl">Repasses</div><div class="val neg" id="eq-rep">—</div></div>
+    <div class="eq-sep">−</div>
+    <div class="eq-item"><div class="lbl">Despesas</div><div class="val neg" id="eq-des">—</div></div>
+    <div class="eq-sep">=</div>
+    <div class="eq-item"><div class="lbl">Resultado</div><div class="val eq-sign" id="eq-res">—</div></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section-lbl">Análise</div>
+  <div class="charts-row gap">
+    <div class="card">
+      <h3 id="chart-cli-title">Honorários por Cliente</h3>
+      <canvas id="chartClientes" height="260"></canvas>
+    </div>
+    <div class="card">
+      <h3>Despesas por Categoria</h3>
+      <canvas id="chartDespesas" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- HONORÁRIOS TABLE -->
+  <div class="section-lbl">Honorários — Lançamentos</div>
+  <div class="tcard gap">
+    <h3 id="hon-table-title">Lançamentos do Mês</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Conta</th><th>Valor</th></tr></thead>
+      <tbody id="tbody-hon"></tbody>
+    </table>
+  </div>
+
+  <!-- DESPESAS TABLE -->
+  <div class="section-lbl">Despesas — Detalhamento</div>
+  <div class="tcard gap">
+    <h3>Despesas do Escritório por Categoria <span style="font-size:11px;color:var(--bege);font-weight:400">(clique na categoria para expandir)</span></h3>
+    <table>
+      <thead><tr><th>Categoria</th><th>Itens</th><th>Total</th></tr></thead>
+      <tbody id="tbody-des"></tbody>
+    </table>
+  </div>
+
+  <!-- REPASSES TABLE (abas históricas) -->
+  <div class="section-lbl">Repasses a Parceiros</div>
+  <div class="tcard gap-lg" id="secao-rep-estatica">
+    <h3>Repasses</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Parceiro</th><th>Conta</th><th>Valor</th></tr></thead>
+      <tbody id="tbody-rep"></tbody>
+    </table>
+  </div>
+
+  <!-- REPASSES EDITÁVEIS (aba ao vivo) -->
+  <div id="secao-rep-vivo" style="display:none">
+    <div class="section-lbl">Repasses a Parceiros</div>
+    <div class="edit-section">
+      <div class="edit-section-header">
+        <h3>Repasses do Mês</h3>
+        <button class="btn-add" onclick="abrirModalRepasse(null)">+ Adicionar repasse</button>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Parceiro</th><th>Conta</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="tbody-rep-vivo"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DESPESAS EDITÁVEIS (aba ao vivo) -->
+  <div id="secao-des-vivo" style="display:none">
+    <div class="section-lbl">Despesas do Escritório</div>
+    <div class="edit-section">
+      <div class="edit-section-header">
+        <h3>Despesas do Mês</h3>
+        <button class="btn-add" onclick="abrirModalDespesa(null)">+ Adicionar despesa</button>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
+        <tbody id="tbody-des-vivo"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAINEL AGENTE IA -->
+<div id="panel-agente">
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-header-icon">✦</div>
+      <div class="chat-header-info">
+        <h3>Agente Financeiro CP</h3>
+        <p>Dados em tempo real · Asaas + Supabase</p>
+      </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="cmsg agent">
+        <div class="cmsg-bubble">Olá, Mariana. Sou seu agente financeiro operacional.<br><br>Posso <strong>consultar</strong> honorários, repasses e despesas — e também <strong>agir</strong>: criar cobranças no Asaas, registrar lançamentos, listar inadimplentes e cancelar boletos, tudo por aqui.<br><br>O que precisa?</div>
+        <div class="cmsg-label">Agente CP</div>
+      </div>
+    </div>
+    <div class="chat-sugs" id="chat-sugs">
+      <button class="sug-btn" onclick="usarSugestao(this)">Qual o resultado de maio 2026?</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Quem está com cobrança em aberto?</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Cria um boleto de R$ 5.000 para Lima Diniz, vencimento 10/06</button>
+      <button class="sug-btn" onclick="usarSugestao(this)">Quais assinaturas recorrentes estão ativas?</button>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input" rows="1"
+        placeholder="Pergunte sobre o financeiro do escritório..."
+        onkeydown="chatKeyDown(event)"
+        oninput="autoResize(this)"></textarea>
+      <button class="chat-send" id="chat-send" onclick="enviarMensagem()" title="Enviar">&#8594;</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <strong>Cavalcante Pinheiro Advocacia</strong> · Mariana Pinheiro — OAB/BA nº 49.675<br>
+  Empresarial Mundo Plaza, sala 1006, Caminho das Árvores, Salvador/BA · (71) 99129-2322
+</footer>
+
+<script>
+// ─────────────────────────────────────────
+// DADOS
+// ─────────────────────────────────────────
+const dados = {
+  abril: {
+    honorarios: 95627.68,
+    repasses: 19976.98,
+    despesas: 15758.91,
+    lancamentos: [
+      {data:'07/04', cliente:'Delivery88 Ltda',                             conta:'Asaas Pessoal', valor:3236.00},
+      {data:'10/04', cliente:'Amaro Bezerra da Silva Segundo',               conta:'Asaas Pessoal', valor:1518.00},
+      {data:'10/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Pessoal', valor:6000.00},
+      {data:'10/04', cliente:'Alvará — SEFAZ/BA (30% de R$ 32.420)',        conta:'Banco do Brasil', valor:9726.00},
+      {data:'13/04', cliente:'Alvará — TJ (30% de R$ 11.924,13)',           conta:'Itaú', valor:3577.24},
+      {data:'14/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Empresa', valor:23267.62},
+      {data:'15/04', cliente:'Alvará — TJ (30% de R$ 5.259,06)',            conta:'Itaú', valor:1577.72},
+      {data:'20/04', cliente:'Jessica Pereira Andrade',                      conta:'Asaas Pessoal', valor:647.72},
+      {data:'27/04', cliente:'Thais Maria Paranhos Silveira do Nascimento',  conta:'Asaas Pessoal', valor:2419.61},
+      {data:'27/04', cliente:'Nordeste EPI Comércio de Equipamentos',        conta:'Asaas Pessoal', valor:17648.77},
+      {data:'27/04', cliente:'Lima Diniz Construções Ltda',                  conta:'Asaas Empresa', valor:23267.61},
+      {data:'28/04', cliente:'Susana Oliveira Papini',                       conta:'Asaas Pessoal', valor:2246.00},
+      {data:'30/04', cliente:'Alvará — TJ (30% de R$ 1.651,30)',            conta:'Itaú', valor:495.39},
+    ],
+    porCliente: [
+      {nome:'Lima Diniz Construções', valor:52535.23},
+      {nome:'Nordeste EPI', valor:17648.77},
+      {nome:'Alvarás TJ / SEFAZ-BA', valor:15376.35},
+      {nome:'Thais Paranhos', valor:2419.61},
+      {nome:'Delivery88 Ltda', valor:3236.00},
+      {nome:'Amaro Bezerra', valor:1518.00},
+      {nome:'Susana Papini', valor:2246.00},
+      {nome:'Jessica Pereira', valor:647.72},
+    ],
+    categoriasDespesa: [
+      {nome:'Pessoal e Prestadores', total:8991.50, items:[
+        {desc:'Mariana Menezes de Andrade',    valor:4000.00},
+        {desc:'Diana Carina Macedo Jordan',    valor:3400.00},
+        {desc:'Jade Lima Ferreira',            valor:841.50},
+        {desc:'Ionete de Jesus Santos',        valor:500.00},
+        {desc:'Juliana Silva dos Santos',      valor:250.00},
+      ]},
+      {nome:'Contas e Utilidades', total:4080.75, items:[
+        {desc:'Pagamento de conta — 14/04 (Mundo Plaza e outros)', valor:992.63},
+        {desc:'Pagamento de conta — 17/04',   valor:2934.91},
+        {desc:'Pagamento de conta — 23/04',   valor:153.21},
+      ]},
+      {nome:'Marketing', total:1500.00, items:[
+        {desc:'Comarka Marketing e Assessoria', valor:1500.00},
+      ]},
+      {nome:'Tecnologia e Software', total:423.00, items:[
+        {desc:'Aurum Softmatic (sistema jurídico)', valor:373.00},
+        {desc:'Google Cloud',                       valor:50.00},
+      ]},
+      {nome:'Impostos', total:763.66, items:[
+        {desc:'Município de Salvador (ISS)', valor:763.66},
+      ]},
+    ],
+    repassesItems: [
+      {data:'28/04', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:3706.24},
+      {data:'28/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:3706.24},
+      {data:'29/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Empresa', valor:12564.50},
+    ],
+  },
+
+  maio: {
+    honorarios: 20394.11,
+    repasses: 759.00,
+    despesas: 17622.04,
+    lancamentos: [
+      {data:'11/05', cliente:'Amaro Bezerra da Silva Segundo',              conta:'Asaas Pessoal', valor:1518.00},
+      {data:'12/05', cliente:'Lima Diniz Construções Ltda',                 conta:'Asaas Pessoal', valor:6000.00},
+      {data:'14/05', cliente:'Pedras (empresa)',                             conta:'Itaú', valor:3795.00},
+      {data:'18/05', cliente:'Alvará — TJ (30% de R$ 1.854,83)',           conta:'Itaú', valor:556.45},
+      {data:'20/05', cliente:'Jessica Pereira Andrade',                     conta:'Asaas Pessoal', valor:647.72},
+      {data:'20/05', cliente:'Sinba',                                        conta:'Itaú', valor:3242.00},
+      {data:'20/05', cliente:'Alvará — TJ (30% de R$ 3.149,26)',           conta:'Itaú', valor:944.78},
+      {data:'26/05', cliente:'Ednalva',                                      conta:'Itaú', valor:1807.50},
+      {data:'27/05', cliente:'Thais Maria Paranhos Silveira do Nascimento', conta:'Asaas Pessoal', valor:1882.66},
+    ],
+    porCliente: [
+      {nome:'Lima Diniz Construções', valor:6000.00},
+      {nome:'Pedras (empresa)',        valor:3795.00},
+      {nome:'Sinba',                   valor:3242.00},
+      {nome:'Alvarás TJ',              valor:1501.23},
+      {nome:'Thais Paranhos',          valor:1882.66},
+      {nome:'Amaro Bezerra',           valor:1518.00},
+      {nome:'Ednalva',                 valor:1807.50},
+      {nome:'Jessica Pereira',         valor:647.72},
+    ],
+    categoriasDespesa: [
+      {nome:'Pessoal e Prestadores', total:10782.00, items:[
+        {desc:'Mariana Menezes de Andrade',           valor:4000.00},
+        {desc:'Diana Carina Macedo Jordan',           valor:4000.00},
+        {desc:'Maria Luisa Albieri Costa (estagiária)', valor:900.00},
+        {desc:'Jade Lima Ferreira',                   valor:900.00},
+        {desc:'Ionete de Jesus Santos',               valor:500.00},
+        {desc:'Juliana Silva dos Santos',             valor:482.00},
+      ]},
+      {nome:'Contas e Utilidades', total:2948.96, items:[
+        {desc:'Pagamento de conta — 06/05 (×2)',      valor:138.77},
+        {desc:'Pagamento de conta — 14/05',           valor:992.63},
+        {desc:'Pagamento de conta — 15/05',           valor:1500.00},
+        {desc:'ITS Telecomunicações (internet)',      valor:153.39},
+        {desc:'Neoenergia Coelba (luz)',              valor:164.17},
+      ]},
+      {nome:'Impostos', total:2743.37, items:[
+        {desc:'Simples Nacional', valor:2743.37},
+      ]},
+      {nome:'Tecnologia e Software', total:577.71, items:[
+        {desc:'Aurum Softmatic (sistema jurídico)', valor:373.00},
+        {desc:'Certisign (certificado digital)',    valor:99.90},
+        {desc:'Pagar.me',                           valor:59.90},
+        {desc:'Meucase',                            valor:44.91},
+      ]},
+      {nome:'Marketing', total:570.00, items:[
+        {desc:'Facebook Ads', valor:570.00},
+      ]},
+    ],
+    repassesItems: [
+      {data:'15/05', parceiro:'Jose Humberto L. de Almeida', conta:'Banco do Brasil', valor:759.00},
+    ],
+  },
+};
+
+// Período total (combinação)
+dados.total = {
+  honorarios: dados.abril.honorarios + dados.maio.honorarios,
+  repasses: 3760.00 + dados.abril.repasses + dados.maio.repasses,
+  despesas: dados.abril.despesas + dados.maio.despesas,
+  lancamentos: [
+    ...dados.abril.lancamentos.map(l => ({...l, mes:'Abril'})),
+    ...dados.maio.lancamentos.map(l => ({...l, mes:'Maio'})),
+  ],
+  porCliente: [
+    {nome:'Lima Diniz Construções', valor:58535.23},
+    {nome:'Nordeste EPI',           valor:17648.77},
+    {nome:'Alvarás TJ / SEFAZ-BA', valor:16877.58},
+    {nome:'Thais Paranhos',         valor:4302.27},
+    {nome:'Pedras (empresa)',        valor:3795.00},
+    {nome:'Delivery88 Ltda',        valor:3236.00},
+    {nome:'Sinba',                   valor:3242.00},
+    {nome:'Amaro Bezerra',           valor:3036.00},
+    {nome:'Susana Papini',           valor:2246.00},
+    {nome:'Ednalva',                 valor:1807.50},
+    {nome:'Jessica Pereira',         valor:1295.44},
+  ],
+  categoriasDespesa: [
+    {nome:'Pessoal e Prestadores', total:19773.50, items:[
+      {desc:'Mariana Menezes de Andrade',            valor:8000.00},
+      {desc:'Diana Carina Macedo Jordan',            valor:7400.00},
+      {desc:'Maria Luisa Albieri Costa (estagiária)', valor:900.00},
+      {desc:'Jade Lima Ferreira',                    valor:1741.50},
+      {desc:'Ionete de Jesus Santos',                valor:1000.00},
+      {desc:'Juliana Silva dos Santos',              valor:732.00},
+    ]},
+    {nome:'Contas e Utilidades', total:7029.71, items:[
+      {desc:'Pagamentos de conta abril (Mundo Plaza e outros)', valor:4080.75},
+      {desc:'Pagamentos de conta maio',              valor:2631.40},
+      {desc:'ITS Telecomunicações (internet)',       valor:153.39},
+      {desc:'Neoenergia Coelba (luz)',               valor:164.17},
+    ]},
+    {nome:'Impostos', total:3507.03, items:[
+      {desc:'Simples Nacional',             valor:2743.37},
+      {desc:'Município de Salvador (ISS)',  valor:763.66},
+    ]},
+    {nome:'Tecnologia e Software', total:1000.71, items:[
+      {desc:'Aurum Softmatic (×2 meses)', valor:746.00},
+      {desc:'Certisign',                  valor:99.90},
+      {desc:'Pagar.me',                   valor:59.90},
+      {desc:'Google Cloud',               valor:50.00},
+      {desc:'Meucase',                    valor:44.91},
+    ]},
+    {nome:'Marketing', total:2070.00, items:[
+      {desc:'Comarka Marketing e Assessoria', valor:1500.00},
+      {desc:'Facebook Ads',                   valor:570.00},
+    ]},
+  ],
+  repassesItems: [
+    {data:'30/03', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:1880.00},
+    {data:'30/03', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:1880.00},
+    {data:'28/04', parceiro:'Jose Humberto L. de Almeida',      conta:'Asaas Pessoal', valor:3706.24},
+    {data:'28/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Pessoal', valor:3706.24},
+    {data:'29/04', parceiro:'Contty Recuperação Tributária Ltda', conta:'Asaas Empresa', valor:12564.50},
+    {data:'15/05', parceiro:'Jose Humberto L. de Almeida',      conta:'Banco do Brasil', valor:759.00},
+  ],
+};
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+const PALETTE = ['#1f3e3c','#2b6052','#3d8070','#4a9a88','#a7a897','#c4c9b5','#5a7a78','#8fafa8','#7a9e9c','#2b5050','#6b8f8c'];
+const PALETTE_DES = ['#1f3e3c','#2b5050','#4a7a70','#a7a897','#c25e5e'];
+
+const CONTAS_BADGE = {
+  'Asaas Pessoal': '<span class="badge ba">Asaas Pessoal</span>',
+  'Asaas Empresa': '<span class="badge ba">Asaas Empresa</span>',
+  'Itaú':          '<span class="badge bi">Itaú</span>',
+  'Banco do Brasil':'<span class="badge bb">Banco do Brasil</span>',
+};
+
+let chartCli = null, chartDes = null;
+let currentTab = 'abril';
+
+// ─────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.remove('show');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
+  render(tab);
+  document.getElementById('panel').classList.add('tab-panel');
+  setTimeout(() => document.getElementById('panel').classList.remove('tab-panel'), 300);
+}
+
+function render(tab) {
+  const d = dados[tab];
+  const resultado = d.honorarios - d.repasses - d.despesas;
+
+  // Alternar seções estáticas vs editáveis
+  const isVivo = tab === 'vivo';
+  document.getElementById('secao-rep-estatica').style.display = isVivo ? 'none' : '';
+  document.getElementById('secao-rep-vivo').style.display     = isVivo ? '' : 'none';
+  document.getElementById('secao-des-vivo').style.display     = isVivo ? '' : 'none';
+  // Ocultar tabela de despesas estática na aba ao vivo
+  const desTcard = document.querySelector('.section-lbl + .tcard');
+  // (gerenciado abaixo pelo display das seções)
+
+  // Header period
+  const periodos = {abril:'Abril 2026', maio:'Maio 2026', total:'Abril e Maio 2026', vivo: d.mesTitulo || 'Ao Vivo'};
+  document.getElementById('hd-period').textContent = periodos[tab];
+
+  // KPIs
+  document.getElementById('k-hon').textContent  = fmt(d.honorarios);
+  document.getElementById('k-rep').textContent  = fmt(d.repasses);
+  document.getElementById('k-des').textContent  = fmt(d.despesas);
+  document.getElementById('k-res').textContent  = fmt(resultado);
+  document.getElementById('k-hon-sub').textContent = tab === 'total' ? 'Soma do período completo' : `${d.lancamentos.length} lançamentos no mês`;
+  document.getElementById('k-rep-sub').textContent = `${d.repassesItems.length} repasse(s)`;
+  document.getElementById('k-des-sub').textContent = `${d.categoriasDespesa.length} categorias`;
+  document.getElementById('k-res-sub').textContent = resultado >= 0 ? 'Resultado positivo' : 'Resultado negativo';
+
+  // Equation
+  document.getElementById('eq-hon').textContent = '+ ' + fmt(d.honorarios);
+  document.getElementById('eq-rep').textContent = fmt(d.repasses);
+  document.getElementById('eq-des').textContent = fmt(d.despesas);
+  const resEl = document.getElementById('eq-res');
+  resEl.textContent = fmt(resultado);
+  resEl.style.color = resultado >= 0 ? '#7de8c4' : '#f4a4a4';
+
+  // Chart título
+  document.getElementById('chart-cli-title').textContent =
+    tab === 'total' ? 'Honorários por Cliente — Período Completo' : 'Honorários por Cliente';
+
+  // Chart clientes
+  const cliLabels = d.porCliente.map(c => c.nome);
+  const cliValues = d.porCliente.map(c => c.valor);
+  if (!chartCli) {
+    chartCli = new Chart(document.getElementById('chartClientes'), {
+      type: 'doughnut',
+      data: { labels: cliLabels, datasets: [{ data: cliValues, backgroundColor: PALETTE, borderWidth: 2, borderColor: '#fff' }] },
+      options: {
+        cutout: '60%',
+        plugins: {
+          legend: { position:'right', labels:{ font:{family:'Nunito',size:11}, boxWidth:12, padding:8 } },
+          tooltip: { callbacks: { label: c => c.label + ': ' + fmt(c.raw) } }
+        }
+      }
+    });
+  } else {
+    chartCli.data.labels = cliLabels;
+    chartCli.data.datasets[0].data = cliValues;
+    chartCli.update();
+  }
+
+  // Chart despesas
+  const desLabels = d.categoriasDespesa.map(c => c.nome);
+  const desValues = d.categoriasDespesa.map(c => c.total);
+  if (!chartDes) {
+    chartDes = new Chart(document.getElementById('chartDespesas'), {
+      type: 'bar',
+      data: {
+        labels: desLabels,
+        datasets: [{ data: desValues, backgroundColor: PALETTE_DES, borderRadius: 8, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => fmt(c.raw) } }
+        },
+        scales: {
+          x: { ticks:{ callback: v => 'R$ '+(v/1000).toFixed(0)+'k', font:{family:'Nunito',size:11} }, grid:{color:'#e8f0f0'} },
+          y: { ticks:{ font:{family:'Nunito',size:12} }, grid:{display:false} }
+        }
+      }
+    });
+  } else {
+    chartDes.data.labels = desLabels;
+    chartDes.data.datasets[0].data = desValues;
+    chartDes.update();
+  }
+
+  // Tabela honorários
+  const tbHon = document.getElementById('tbody-hon');
+  document.getElementById('hon-table-title').textContent =
+    tab === 'total' ? `Todos os Lançamentos — ${d.lancamentos.length} entradas` : `Lançamentos de ${periodos[tab]}`;
+
+  let honHTML = '';
+  if (tab === 'total') {
+    // Agrupar por mês
+    ['Abril','Maio'].forEach(mes => {
+      const itens = d.lancamentos.filter(l => l.mes === mes);
+      const total = itens.reduce((s,l) => s + l.valor, 0);
+      honHTML += `<tr class="tr-hvote"><td colspan="3"><strong>${mes} 2026</strong></td><td>${fmt(total)}</td></tr>`;
+      itens.forEach(l => {
+        honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
+      });
+    });
+  } else {
+    d.lancamentos.forEach(l => {
+      honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
+    });
+  }
+  honHTML += `<tr class="tr-total"><td colspan="3">TOTAL</td><td>${fmt(d.honorarios)}</td></tr>`;
+  tbHon.innerHTML = honHTML;
+
+  // Tabela despesas (com categorias expansíveis)
+  const tbDes = document.getElementById('tbody-des');
+  let desHTML = '';
+  d.categoriasDespesa.forEach((cat, i) => {
+    const catId = `cat-${tab}-${i}`;
+    desHTML += `<tr class="tr-cat" data-cat="${catId}" onclick="toggleCat('${catId}')">
+      <td>${cat.nome}</td>
+      <td style="color:#4a6868;font-weight:400">${cat.items.length} item(ns)</td>
+      <td>${fmt(cat.total)}</td>
+    </tr>`;
+    cat.items.forEach(item => {
+      desHTML += `<tr class="tr-sub" data-parent="${catId}">
+        <td>${item.desc}</td><td></td><td>${fmt(item.valor)}</td>
+      </tr>`;
+    });
+  });
+  desHTML += `<tr class="tr-total"><td colspan="2">TOTAL DESPESAS DO ESCRITÓRIO</td><td>${fmt(d.despesas)}</td></tr>`;
+  tbDes.innerHTML = desHTML;
+
+  // Tabela repasses
+  const tbRep = document.getElementById('tbody-rep');
+  let repHTML = '';
+  d.repassesItems.forEach(r => {
+    repHTML += `<tr><td>${r.data}</td><td>${r.parceiro}</td><td>${CONTAS_BADGE[r.conta]||r.conta}</td><td>${fmt(r.valor)}</td></tr>`;
+  });
+  repHTML += `<tr class="tr-total"><td colspan="3">TOTAL REPASSES</td><td>${fmt(d.repasses)}</td></tr>`;
+  tbRep.innerHTML = repHTML;
+}
+
+function toggleCat(catId) {
+  const row = document.querySelector(`[data-cat="${catId}"]`);
+  const subs = document.querySelectorAll(`[data-parent="${catId}"]`);
+  row.classList.toggle('open');
+  subs.forEach(s => s.classList.toggle('show'));
+}
+
+// ─────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────
+const SENHA_HASH = 'TWFqdTIwMjVA'; // hash interno
+
+function verificarSenha() {
+  const entrada = document.getElementById('login-senha').value;
+  if (btoa(entrada) === SENHA_HASH) {
+    sessionStorage.setItem('cp_auth', SENHA_HASH);
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('login-erro').textContent = '';
+  } else {
+    document.getElementById('login-erro').textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('login-senha').value = '';
+    document.getElementById('login-senha').focus();
+  }
+}
+
+function sair() {
+  sessionStorage.removeItem('cp_auth');
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('login-senha').value = '';
+  document.getElementById('login-senha').focus();
+}
+
+// Verificar sessão ao carregar
+if (sessionStorage.getItem('cp_auth') === SENHA_HASH) {
+  document.getElementById('login-screen').classList.add('hide');
+}
+
+// ─────────────────────────────────────────
+// SUPABASE — REPASSES E DESPESAS
+// ─────────────────────────────────────────
+const SB_URL  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SB_KEY  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SB_HEAD = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+async function sbGet(tabela, mes, ano) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?mes=eq.${mes}&ano=eq.${ano}&order=criado_em.asc`, { headers: SB_HEAD });
+  return r.ok ? r.json() : [];
+}
+async function sbInsert(tabela, dados) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}`, { method:'POST', headers: SB_HEAD, body: JSON.stringify(dados) });
+  return r.json();
+}
+async function sbUpdate(tabela, id, dados) {
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, { method:'PATCH', headers: SB_HEAD, body: JSON.stringify(dados) });
+  return r.json();
+}
+async function sbDelete(tabela, id) {
+  await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`, { method:'DELETE', headers: SB_HEAD });
+}
+
+// Modal helpers
+function abrirModalRepasse(item) {
+  document.getElementById('modal-rep-titulo').textContent = item ? 'Editar Repasse' : 'Lançar Repasse';
+  document.getElementById('rep-id').value      = item?.id || '';
+  document.getElementById('rep-data').value    = item?.data_pagamento || '';
+  document.getElementById('rep-parceiro').value= item?.parceiro || '';
+  document.getElementById('rep-conta').value   = item?.conta || 'Asaas Pessoal';
+  document.getElementById('rep-valor').value   = item?.valor || '';
+  document.getElementById('modal-repasse').classList.add('show');
+}
+function abrirModalDespesa(item) {
+  document.getElementById('modal-des-titulo').textContent = item ? 'Editar Despesa' : 'Lançar Despesa';
+  document.getElementById('des-id').value       = item?.id || '';
+  document.getElementById('des-data').value     = item?.data_pagamento || '';
+  document.getElementById('des-categoria').value= item?.categoria || 'Pessoal e Prestadores';
+  document.getElementById('des-descricao').value= item?.descricao || '';
+  document.getElementById('des-valor').value    = item?.valor || '';
+  document.getElementById('modal-despesa').classList.add('show');
+}
+function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function salvarRepasse() {
+  const id    = document.getElementById('rep-id').value;
+  const dados = {
+    mes: vivoMes, ano: vivoAno,
+    data_pagamento: document.getElementById('rep-data').value.trim(),
+    parceiro: document.getElementById('rep-parceiro').value.trim(),
+    conta:    document.getElementById('rep-conta').value,
+    valor:    parseFloat(document.getElementById('rep-valor').value) || 0
+  };
+  if (!dados.parceiro || !dados.valor) { alert('Preencha o parceiro e o valor.'); return; }
+  if (id) await sbUpdate('repasses', id, dados);
+  else    await sbInsert('repasses', dados);
+  fecharModal('modal-repasse');
+  carregarVivo();
+}
+
+async function salvarDespesa() {
+  const id    = document.getElementById('des-id').value;
+  const dados = {
+    mes: vivoMes, ano: vivoAno,
+    data_pagamento: document.getElementById('des-data').value.trim(),
+    categoria: document.getElementById('des-categoria').value,
+    descricao: document.getElementById('des-descricao').value.trim(),
+    valor:     parseFloat(document.getElementById('des-valor').value) || 0
+  };
+  if (!dados.descricao || !dados.valor) { alert('Preencha a descrição e o valor.'); return; }
+  if (id) await sbUpdate('despesas', id, dados);
+  else    await sbInsert('despesas', dados);
+  fecharModal('modal-despesa');
+  carregarVivo();
+}
+
+async function excluirRepasse(id) {
+  if (!confirm('Excluir este repasse?')) return;
+  await sbDelete('repasses', id);
+  carregarVivo();
+}
+async function excluirDespesa(id) {
+  if (!confirm('Excluir esta despesa?')) return;
+  await sbDelete('despesas', id);
+  carregarVivo();
+}
+
+// Render especial das seções editáveis da aba ao vivo
+function renderSecaoEditavel(repasses, despesas) {
+  // Tabela repasses
+  const totalRep = repasses.reduce((s,r) => s + Number(r.valor), 0);
+  let repHTML = repasses.map(r => `
+    <tr>
+      <td>${r.data_pagamento||'—'}</td>
+      <td>${r.parceiro}</td>
+      <td>${CONTAS_BADGE[r.conta]||r.conta}</td>
+      <td>${fmt(Number(r.valor))}</td>
+      <td class="col-acoes">
+        <button class="btn-edit" onclick='abrirModalRepasse(${JSON.stringify(r)})'>Editar</button>
+        <button class="btn-del"  onclick="excluirRepasse('${r.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+  repHTML += `<tr class="tr-total"><td colspan="3">TOTAL REPASSES</td><td>${fmt(totalRep)}</td><td></td></tr>`;
+  document.getElementById('tbody-rep-vivo').innerHTML = repHTML;
+
+  // Tabela despesas
+  const totalDes = despesas.reduce((s,d) => s + Number(d.valor), 0);
+  let desHTML = despesas.map(d => `
+    <tr>
+      <td>${d.data_pagamento||'—'}</td>
+      <td><strong>${d.categoria}</strong></td>
+      <td>${d.descricao}</td>
+      <td>${fmt(Number(d.valor))}</td>
+      <td class="col-acoes">
+        <button class="btn-edit" onclick='abrirModalDespesa(${JSON.stringify(d)})'>Editar</button>
+        <button class="btn-del"  onclick="excluirDespesa('${d.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+  desHTML += `<tr class="tr-total"><td colspan="3">TOTAL DESPESAS</td><td>${fmt(totalDes)}</td><td></td></tr>`;
+  document.getElementById('tbody-des-vivo').innerHTML = desHTML;
+
+  // Atualizar KPIs com repasses e despesas reais
+  const hon = dados['vivo'].honorarios;
+  const resultado = hon - totalRep - totalDes;
+  document.getElementById('k-rep').textContent = fmt(totalRep);
+  document.getElementById('k-des').textContent = fmt(totalDes);
+  document.getElementById('k-res').textContent = fmt(resultado);
+  document.getElementById('k-rep-sub').textContent = `${repasses.length} repasse(s)`;
+  document.getElementById('k-des-sub').textContent = `${despesas.length} lançamento(s)`;
+  document.getElementById('k-res-sub').textContent = resultado >= 0 ? 'Resultado positivo' : 'Resultado negativo';
+  document.getElementById('eq-rep').textContent = fmt(totalRep);
+  document.getElementById('eq-des').textContent = fmt(totalDes);
+  const resEl = document.getElementById('eq-res');
+  resEl.textContent = fmt(resultado);
+  resEl.style.color = resultado >= 0 ? '#7de8c4' : '#f4a4a4';
+}
+
+// ─────────────────────────────────────────
+// ABA AO VIVO — ASAAS
+// ─────────────────────────────────────────
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+               'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let vivoMes = new Date().getMonth() + 1;
+let vivoAno = new Date().getFullYear();
+
+function ativarVivo(e) {
+  currentTab = 'vivo';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.add('show');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
+  carregarVivo();
+}
+
+function navegarMes(delta) {
+  vivoMes += delta;
+  if (vivoMes > 12) { vivoMes = 1; vivoAno++; }
+  if (vivoMes < 1)  { vivoMes = 12; vivoAno--; }
+  carregarVivo();
+}
+
+async function carregarVivo() {
+  const nomeMes = `${MESES[vivoMes - 1]} ${vivoAno}`;
+  document.getElementById('mes-nav-titulo').textContent = nomeMes;
+  document.getElementById('mes-atualizado').textContent = '';
+  document.getElementById('loading-overlay').classList.add('show');
+
+  try {
+    const resp = await fetch(`/api/honorarios?mes=${vivoMes}&ano=${vivoAno}`);
+    if (!resp.ok) throw new Error(`Erro ${resp.status}`);
+    const api = await resp.json();
+
+    const fmtData = s => {
+      if (!s) return '—';
+      const [,m,d] = s.split('-');
+      return `${d}/${m}`;
+    };
+
+    const lancamentos = [
+      ...(api.pessoal.pagamentos||[]).map(p => ({
+        data: fmtData(p.dataPagamento), cliente: p.cliente,
+        conta: 'Asaas Pessoal', valor: p.valor
+      })),
+      ...(api.escritorio.pagamentos||[]).map(p => ({
+        data: fmtData(p.dataPagamento), cliente: p.cliente,
+        conta: 'Asaas Empresa', valor: p.valor
+      }))
+    ].sort((a,b) => a.data.localeCompare(b.data));
+
+    const mapa = {};
+    lancamentos.forEach(l => { mapa[l.cliente] = (mapa[l.cliente]||0) + l.valor; });
+    const porCliente = Object.entries(mapa)
+      .map(([nome, valor]) => ({nome, valor}))
+      .sort((a,b) => b.valor - a.valor);
+
+    dados['vivo'] = {
+      honorarios: api.totalHonorarios,
+      repasses: 0, despesas: 0,
+      lancamentos, porCliente,
+      categoriasDespesa: [], repassesItems: [],
+      mesTitulo: nomeMes
+    };
+
+    // Buscar repasses e despesas do Supabase
+    const [repasses, despesas] = await Promise.all([
+      sbGet('repasses', vivoMes, vivoAno),
+      sbGet('despesas', vivoMes, vivoAno)
+    ]);
+
+    const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('mes-atualizado').textContent = `Atualizado às ${agora}`;
+    document.getElementById('loading-overlay').classList.remove('show');
+    render('vivo');
+
+    // Renderizar seções editáveis após render
+    setTimeout(() => renderSecaoEditavel(repasses, despesas), 50);
+
+  } catch(err) {
+    document.getElementById('loading-overlay').classList.remove('show');
+    alert('Não foi possível buscar os dados do Asaas.\n\nDetalhe: ' + err.message);
+  }
+}
+
+// ─────────────────────────────────────────
+// AGENTE IA
+// ─────────────────────────────────────────
+let chatHistorico = [];
+
+function ativarAgente(e) {
+  currentTab = 'agente';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('mes-nav-bar').classList.remove('show');
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('panel-agente').classList.add('show');
+}
+
+function chatKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    enviarMensagem();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function usarSugestao(btn) {
+  document.getElementById('chat-input').value = btn.textContent.trim();
+  document.getElementById('chat-sugs').style.display = 'none';
+  enviarMensagem();
+}
+
+async function enviarMensagem() {
+  const input = document.getElementById('chat-input');
+  const mensagem = input.value.trim();
+  if (!mensagem) return;
+
+  const sendBtn = document.getElementById('chat-send');
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  document.getElementById('chat-sugs').style.display = 'none';
+
+  adicionarMensagem('user', mensagem);
+  const typingEl = adicionarTyping();
+
+  try {
+    const resp = await fetch('/api/agente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem, historico: chatHistorico })
+    });
+
+    const data = await resp.json();
+    typingEl.remove();
+
+    const textoResposta = data.resposta || data.erro || 'Não consegui processar. Tente novamente.';
+    adicionarMensagem('agent', textoResposta);
+
+    if (data.resposta) {
+      chatHistorico.push({ role: 'user', content: mensagem });
+      chatHistorico.push({ role: 'assistant', content: data.resposta });
+      if (chatHistorico.length > 20) chatHistorico = chatHistorico.slice(-20);
+    }
+  } catch (err) {
+    typingEl.remove();
+    adicionarMensagem('agent', 'Erro de conexão. Verifique sua internet e tente novamente.');
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function adicionarMensagem(tipo, texto) {
+  const msgs = document.getElementById('chat-msgs');
+  const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = `cmsg ${tipo}`;
+
+  // Renderizar negrito e quebras de linha
+  const html = texto
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  div.innerHTML = `
+    <div class="cmsg-bubble">${html}</div>
+    <div class="cmsg-label">${tipo === 'user' ? 'Você' : 'Agente CP'} · ${agora}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function adicionarTyping() {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'cmsg agent';
+  div.innerHTML = '<div class="cmsg-bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// Inicializar com Abril
+render('abril');
+</script>
+</body>
+</html>

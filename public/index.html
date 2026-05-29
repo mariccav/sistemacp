@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema CP — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:#1f3e3c;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+
+.logo{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:.5px;text-align:center;margin-bottom:6px;}
+.sub{font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:2.5px;text-align:center;margin-bottom:60px;}
+.divider{width:40px;height:1px;background:#a7a897;opacity:.4;margin:0 auto 60px;}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:680px;width:100%;}
+
+.card{border-radius:20px;padding:44px 36px;text-decoration:none;transition:.25s;cursor:pointer;border:1px solid transparent;}
+.card:hover{transform:translateY(-4px);}
+
+/* Produtividade */
+.card-prod{background:rgba(255,255,255,.07);border-color:rgba(167,168,151,.2);}
+.card-prod:hover{background:rgba(255,255,255,.12);border-color:rgba(167,168,151,.5);}
+
+/* Financeiro */
+.card-fin{background:rgba(167,168,151,.12);border-color:rgba(167,168,151,.25);}
+.card-fin:hover{background:rgba(167,168,151,.2);border-color:#a7a897;}
+
+.card-icon{font-size:36px;margin-bottom:20px;display:block;}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:8px;}
+.card-desc{font-size:13px;color:#a7a897;line-height:1.6;}
+.card-badge{display:inline-block;margin-top:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;}
+.badge-prod{background:rgba(39,174,96,.2);color:#5edb9a;}
+.badge-fin{background:rgba(167,168,151,.2);color:#c4c9b5;}
+
+footer{margin-top:60px;font-size:11px;color:rgba(167,168,151,.5);text-align:center;}
+
+@media(max-width:600px){
+  .cards{grid-template-columns:1fr;}
+  .card{padding:32px 28px;}
+  .logo{font-size:26px;}
+}
+</style>
+</head>
+<body>
+
+<div class="logo">Cavalcante Pinheiro</div>
+<div class="sub">Advocacia · Sistema Interno</div>
+<div class="divider"></div>
+
+<div class="cards">
+  <a class="card card-prod" href="/produtividade.html">
+    <span class="card-icon">⏱</span>
+    <div class="card-title">Produtividade</div>
+    <p class="card-desc">Controle de sessões de trabalho, status da equipe ao vivo, mural e elogios.</p>
+    <span class="card-badge badge-prod">Acesso da Equipe</span>
+  </a>
+
+  <a class="card card-fin" href="/financeiro.html">
+    <span class="card-icon">🔒</span>
+    <div class="card-title">Financeiro</div>
+    <p class="card-desc">Dashboard financeiro, honorários via Asaas, repasses, despesas e agente IA.</p>
+    <span class="card-badge badge-fin">Área Restrita</span>
+  </a>
+</div>
+
+<footer>Cavalcante Pinheiro Advocacia · Mariana Pinheiro — OAB/BA nº 49.675</footer>
+
+</body>
+</html>
