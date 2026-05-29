@@ -82,15 +82,15 @@
       <div class="card-label">Financeiro</div>
       <div class="card-desc">Receita, repasses e sa&uacute;de financeira do escrit&oacute;rio em tempo real.</div>
     </div>
-    <div class="card">
+    <div class="card" onclick="abrirContratos()" style="cursor:pointer">
       <i class="ti ti-signature card-icon"></i>
-      <div class="card-label">Assinaturas</div>
-      <div class="card-desc">Contratos fechados com agilidade e seguran&ccedil;a jur&iacute;dica.</div>
+      <div class="card-label">Contratos</div>
+      <div class="card-desc">Registre contratos, anexe documentos e acompanhe status.</div>
     </div>
-    <div class="card">
+    <div class="card" onclick="abrirClientes()" style="cursor:pointer">
       <i class="ti ti-users card-icon"></i>
       <div class="card-label">Clientes</div>
-      <div class="card-desc">Relacionamentos que geram receita recorrente.</div>
+      <div class="card-desc">Base de clientes do escritório — busca, histórico e contratos.</div>
     </div>
     <div class="card">
       <i class="ti ti-file-text card-icon"></i>
@@ -148,6 +148,7 @@
     <button class="gtab active" id="gtab-prod" onclick="gtab('prod')">Produtividade</button>
     <button class="gtab" id="gtab-aovivo" onclick="gtab('aovivo')">Ao Vivo</button>
     <button class="gtab" id="gtab-fin" onclick="gtab('fin')">Financeiro</button>
+    <button class="gtab" id="gtab-contratos" onclick="gtab('contratos')">Contratos</button>
   </div>
 
   <div style="max-width:960px;margin:0 auto;padding:28px 36px 40px;">
@@ -179,6 +180,37 @@
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:20px;">Equipe ao Vivo</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;" id="eq-grid"></div>
       <p style="font-size:11px;color:rgba(167,168,151,.5);text-align:center;margin-top:14px;" id="eq-atualizado">Atualiza a cada 30s</p>
+    </div>
+
+    <!-- CONTRATOS -->
+    <div id="gpanel-contratos" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;">Contratos por Cliente</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="gc-busca" type="text" placeholder="Buscar cliente..." oninput="filtrarContratos()" style="padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#fff;background:rgba(255,255,255,.1);outline:none;">
+          <select id="gc-status" onchange="filtrarContratos()" style="padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:#fff;background:rgba(255,255,255,.1);outline:none;">
+            <option value="">Todos os status</option>
+            <option value="aguardando">Aguardando assinatura</option>
+            <option value="assinado">Assinado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:12px;border:1px solid rgba(167,168,151,.15);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Cliente</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Contato</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Valor</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Parcelas</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">1º Venc.</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Status</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Arquivo</th>
+            <th style="background:rgba(0,0,0,.25);color:#a7a897;padding:9px 14px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;">Ações</th>
+          </tr></thead>
+          <tbody id="gc-body"><tr><td colspan="8" style="text-align:center;color:#a7a897;padding:20px;">Carregando...</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- FINANCEIRO -->
@@ -260,7 +292,8 @@ function fecharPainel() {
   if (gPollInt) { clearInterval(gPollInt); gPollInt = null; }
 }
 function gtab(id) {
-  ['prod','aovivo','fin'].forEach(t => {
+  if(id==='contratos') carregarContratosGestao();
+  ['prod','aovivo','fin','contratos'].forEach(t => {
     document.getElementById('gpanel-'+t).style.display = t===id ? 'block' : 'none';
     document.getElementById('gtab-'+t).classList.toggle('active', t===id);
   });
@@ -364,5 +397,343 @@ function hmin2(m)   { if(!m||m<=0) return '—'; return m<60?`${m}min`:`${Math.f
 function hms2(t)    { const p=n=>String(n).padStart(2,'0'); return `${p(Math.floor(t/3600))}:${p(Math.floor(t%3600/60))}:${p(t%60)}`; }
 function brl2(v)    { return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
 </script>
+
+<!-- ═══ MODAL CLIENTES ═══ -->
+<div id="mod-clientes" style="display:none;position:fixed;inset:0;background:rgba(31,62,60,.85);z-index:2100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:100%;max-width:620px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1f3e3c;">Clientes</div>
+        <div style="font-size:11px;color:#a7a897;margin-top:2px;">Base de clientes do escritório</div>
+      </div>
+      <button onclick="fecharModal('mod-clientes')" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:6px 14px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;">✕ Fechar</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:20px;">
+      <input id="cli-busca" type="text" placeholder="Buscar por nome ou contato..." oninput="filtrarClientes()" style="flex:1;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+      <button onclick="toggleNovoCliente()" style="background:#1f3e3c;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Novo</button>
+    </div>
+    <div id="form-novo-cli" style="display:none;background:#f2fdff;border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #dde8e8;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#1f3e3c;margin-bottom:14px;">Novo Cliente</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Nome completo *</label><input id="cli-nome" type="text" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+        <div><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">WhatsApp / Telefone *</label><input id="cli-contato" type="text" placeholder="(71) 99999-9999" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button onclick="toggleNovoCliente()" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:8px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;">Cancelar</button>
+        <button onclick="salvarCliente()" style="background:#1f3e3c;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Salvar</button>
+      </div>
+    </div>
+    <div id="cli-lista" style="max-height:360px;overflow-y:auto;"><p style="text-align:center;color:#a7a897;padding:20px;">Carregando...</p></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CONTRATOS ═══ -->
+<div id="mod-contratos" style="display:none;position:fixed;inset:0;background:rgba(31,62,60,.85);z-index:2100;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1f3e3c;">Novo Contrato</div>
+        <div style="font-size:11px;color:#a7a897;margin-top:2px;">Registre e anexe o contrato assinado</div>
+      </div>
+      <button onclick="fecharModal('mod-contratos')" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:6px 14px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;">✕ Fechar</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Nome do Cliente *</label>
+      <input id="ct-nome" type="text" placeholder="Nome completo" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">WhatsApp / Telefone *</label>
+      <input id="ct-contato" type="text" placeholder="(71) 99999-9999" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+      <div>
+        <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Valor Total (R$) *</label>
+        <input id="ct-valor" type="number" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Parcelas</label>
+        <select id="ct-parcelas" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;background:#fff;">
+          <option value="1">À vista</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+          <option value="4">4x</option>
+          <option value="5">5x</option>
+          <option value="6">6x</option>
+          <option value="10">10x</option>
+          <option value="12">12x</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">1º Vencimento *</label>
+      <input id="ct-venc" type="date" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Observações</label>
+      <textarea id="ct-obs" placeholder="Tipo de serviço, condições especiais..." rows="2" style="width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;resize:none;"></textarea>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Contrato (PDF)</label>
+      <input id="ct-arquivo" type="file" accept=".pdf,.doc,.docx" style="width:100%;padding:10px;border:1px dashed #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;color:#a7a897;cursor:pointer;">
+    </div>
+    <div id="ct-progresso" style="display:none;margin-bottom:14px;font-size:12px;color:#2b5050;text-align:center;">Salvando...</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="fecharModal('mod-contratos')" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:10px 22px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarContrato()" style="background:#1f3e3c;color:#fff;border:none;padding:10px 28px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Salvar Contrato</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTES (reutiliza SB2/SK2/SH2 já definidos acima) ─────────
+let todosClientes   = [];
+let todosContratos  = [];
+
+// ── ABRIR MODAIS ──────────────────────────────────────────────────
+function abrirClientes()  { document.getElementById('mod-clientes').style.display='flex'; carregarClientes(); }
+function abrirContratos() { document.getElementById('mod-contratos').style.display='flex'; }
+function fecharModal(id)  { document.getElementById(id).style.display='none'; }
+
+// ── CLIENTES ──────────────────────────────────────────────────────
+async function carregarClientes() {
+  const r = await fetch(`${SB2}/rest/v1/clientes?order=nome.asc`, { headers:SH2 });
+  todosClientes = r.ok ? await r.json() : [];
+  renderClientes(todosClientes);
+}
+
+function renderClientes(lista) {
+  const el = document.getElementById('cli-lista');
+  if (!lista.length) { el.innerHTML='<p style="text-align:center;color:#a7a897;padding:20px;">Nenhum cliente cadastrado.</p>'; return; }
+  el.innerHTML = lista.map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f7f7;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#1f3e3c;">${c.nome}</div>
+        <div style="font-size:12px;color:#a7a897;">${c.contato||'—'} ${c.asaas_id?'<span style=\'color:#27ae60;font-size:10px;\'>● Asaas</span>':''}</div>
+      </div>
+      <button onclick="abrirCobrar('${c.id}','${c.nome.replace(/'/g,"\'")}')"
+        style="background:#1f3e3c;color:#fff;border:none;padding:6px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+        Cobrar
+      </button>
+    </div>`).join('');
+}
+
+function filtrarClientes() {
+  const q = document.getElementById('cli-busca').value.toLowerCase();
+  renderClientes(todosClientes.filter(c => c.nome.toLowerCase().includes(q)||(c.contato||'').includes(q)));
+}
+
+function toggleNovoCliente() {
+  const f = document.getElementById('form-novo-cli');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+async function salvarCliente() {
+  const nome    = document.getElementById('cli-nome').value.trim();
+  const contato = document.getElementById('cli-contato').value.trim();
+  if (!nome) { alert('Informe o nome do cliente.'); return; }
+  const btn = document.querySelector('#form-novo-cli button:last-child');
+  btn.textContent = 'Salvando...'; btn.disabled = true;
+  const r = await fetch('/api/clientes', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nome, contato })
+  });
+  btn.textContent = 'Salvar'; btn.disabled = false;
+  if (r.ok) {
+    document.getElementById('cli-nome').value='';
+    document.getElementById('cli-contato').value='';
+    toggleNovoCliente();
+    carregarClientes();
+  } else { alert('Erro ao salvar cliente.'); }
+}
+
+// ── CONTRATOS ─────────────────────────────────────────────────────
+async function salvarContrato() {
+  const nome    = document.getElementById('ct-nome').value.trim();
+  const contato = document.getElementById('ct-contato').value.trim();
+  const valor   = parseFloat(document.getElementById('ct-valor').value);
+  const parcelas= parseInt(document.getElementById('ct-parcelas').value);
+  const venc    = document.getElementById('ct-venc').value;
+  const obs     = document.getElementById('ct-obs').value.trim();
+  const arquivo = document.getElementById('ct-arquivo').files[0];
+
+  if (!nome||!contato||!valor||!venc) { alert('Preencha nome, contato, valor e vencimento.'); return; }
+
+  document.getElementById('ct-progresso').style.display='block';
+  document.getElementById('ct-progresso').textContent='Salvando cliente...';
+
+  // 1. Salvar/buscar cliente
+  let clienteId = null;
+  const rBusca = await fetch(`${SB2}/rest/v1/clientes?nome=eq.${encodeURIComponent(nome)}&limit=1`, { headers:SH2 });
+  const existentes = rBusca.ok ? await rBusca.json() : [];
+  if (existentes.length) {
+    clienteId = existentes[0].id;
+  } else {
+    const rCli = await fetch(`${SB2}/rest/v1/clientes`, { method:'POST', headers:SH2, body:JSON.stringify({ nome, contato }) });
+    if (rCli.ok) { const d = await rCli.json(); clienteId = (Array.isArray(d)?d[0]:d).id; }
+  }
+
+  // 2. Upload do arquivo (se houver)
+  let arquivoUrl = null; let arquivoNome = null;
+  if (arquivo) {
+    document.getElementById('ct-progresso').textContent='Enviando arquivo...';
+    const fname = `${Date.now()}_${nome.replace(/\s+/g,'_')}_${arquivo.name}`;
+    const rUp = await fetch(`${SB2}/storage/v1/object/contratos/${fname}`, {
+      method:'POST',
+      headers: { 'apikey':SK2, 'Authorization':'Bearer '+SK2, 'Content-Type':arquivo.type, 'x-upsert':'false' },
+      body: arquivo
+    });
+    if (rUp.ok) { arquivoUrl=`${SB2}/storage/v1/object/public/contratos/${fname}`; arquivoNome=arquivo.name; }
+  }
+
+  // 3. Salvar contrato
+  document.getElementById('ct-progresso').textContent='Registrando contrato...';
+  const payload = { cliente_id:clienteId, cliente_nome:nome, cliente_contato:contato, valor, parcelas, vencimento_primeira:venc, observacoes:obs, arquivo_url:arquivoUrl, arquivo_nome:arquivoNome };
+  const rCt = await fetch(`${SB2}/rest/v1/contratos`, { method:'POST', headers:SH2, body:JSON.stringify(payload) });
+
+  document.getElementById('ct-progresso').style.display='none';
+  if (rCt.ok) {
+    alert(`Contrato de ${nome} registrado com sucesso!`);
+    ['ct-nome','ct-contato','ct-valor','ct-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ct-parcelas').value='1';
+    document.getElementById('ct-venc').value='';
+    document.getElementById('ct-arquivo').value='';
+    fecharModal('mod-contratos');
+  } else { alert('Erro ao registrar contrato.'); }
+}
+
+// ── GESTÃO: CONTRATOS ─────────────────────────────────────────────
+async function carregarContratosGestao() {
+  const r = await fetch(`${SB2}/rest/v1/contratos?order=criado_em.desc`, { headers:SH2 });
+  todosContratos = r.ok ? await r.json() : [];
+  filtrarContratos();
+}
+
+function filtrarContratos() {
+  const q   = (document.getElementById('gc-busca')||{value:''}).value.toLowerCase();
+  const st  = (document.getElementById('gc-status')||{value:''}).value;
+  const lista = todosContratos.filter(c =>
+    (!q || c.cliente_nome.toLowerCase().includes(q)) &&
+    (!st || c.status===st)
+  );
+  const tbody = document.getElementById('gc-body');
+  if (!tbody) return;
+  if (!lista.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#a7a897;padding:20px;">Nenhum contrato encontrado.</td></tr>'; return; }
+
+  const statusMap = { aguardando:'Aguardando assinatura', assinado:'Assinado', cancelado:'Cancelado' };
+  const statusCor = { aguardando:'#d4841a', assinado:'#27ae60', cancelado:'#c25e5e' };
+
+  tbody.innerHTML = lista.map(ct=>{
+    const venc = ct.vencimento_primeira ? new Date(ct.vencimento_primeira+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const val  = 'R$ '+Number(ct.valor).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    const parc = ct.parcelas===1 ? 'À vista' : `${ct.parcelas}x`;
+    const st   = ct.status||'aguardando';
+    const stLabel = statusMap[st]||st;
+    const stCor   = statusCor[st]||'#a7a897';
+    const arq  = ct.arquivo_url
+      ? `<a href="${ct.arquivo_url}" target="_blank" style="color:#5edb9a;font-size:11px;text-decoration:none;">📄 Ver</a>`
+      : '—';
+    const dataCriacao = new Date(ct.criado_em).toLocaleDateString('pt-BR');
+    return `<tr>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.9);font-weight:600;">${ct.cliente_nome}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.7);">${ct.cliente_contato||'—'}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.9);">${val}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.7);">${parc}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.7);">${venc}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);">
+        <select onchange="atualizarStatus('${ct.id}',this.value)" style="background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.3);border-radius:6px;padding:3px 8px;font-family:'Nunito',sans-serif;font-size:11px;color:${stCor};cursor:pointer;">
+          <option value="aguardando" ${st==='aguardando'?'selected':''}>Aguardando</option>
+          <option value="assinado"   ${st==='assinado'?'selected':''}>Assinado</option>
+          <option value="cancelado"  ${st==='cancelado'?'selected':''}>Cancelado</option>
+        </select>
+      </td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);">${arq}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.4);font-size:11px;">${dataCriacao}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function atualizarStatus(id, novoStatus) {
+  await fetch(`${SB2}/rest/v1/contratos?id=eq.${id}`, {
+    method:'PATCH', headers:SH2,
+    body:JSON.stringify({ status:novoStatus })
+  });
+  const ct = todosContratos.find(x=>x.id===id);
+  if (ct) ct.status = novoStatus;
+}
+</script>
+
+<!-- ═══ MODAL COBRANÇA RÁPIDA ═══ -->
+<div id="mod-cobrar" style="display:none;position:fixed;inset:0;background:rgba(31,62,60,.85);z-index:2200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.3);">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1f3e3c;margin-bottom:4px;">Gerar Cobrança</div>
+    <div id="cobrar-cliente-nome" style="font-size:13px;color:#a7a897;margin-bottom:24px;"></div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Valor (R$) *</label>
+      <input id="cobrar-valor" type="number" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:11px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:15px;color:#1f3e3c;outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Vencimento *</label>
+      <input id="cobrar-venc" type="date" style="width:100%;padding:11px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Descrição (opcional)</label>
+      <input id="cobrar-desc" type="text" placeholder="Ex: Honorários — Recuperação ICMS" style="width:100%;padding:11px 14px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#1f3e3c;outline:none;">
+    </div>
+    <div id="cobrar-resultado" style="display:none;background:#f0f7f7;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#1f3e3c;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="fecharModal('mod-cobrar')" style="flex:1;background:none;border:1px solid #dde8e8;color:#a7a897;padding:11px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;">Cancelar</button>
+      <button id="cobrar-btn" onclick="confirmarCobranca()" style="flex:2;background:#1f3e3c;color:#fff;border:none;padding:11px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Gerar Boleto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cobrarClienteId = null;
+
+function abrirCobrar(id, nome) {
+  cobrarClienteId = id;
+  document.getElementById('cobrar-cliente-nome').textContent = nome;
+  document.getElementById('cobrar-valor').value = '';
+  document.getElementById('cobrar-venc').value = '';
+  document.getElementById('cobrar-desc').value = '';
+  document.getElementById('cobrar-resultado').style.display = 'none';
+  document.getElementById('cobrar-btn').textContent = 'Gerar Boleto';
+  document.getElementById('cobrar-btn').disabled = false;
+  document.getElementById('mod-cobrar').style.display = 'flex';
+  setTimeout(() => document.getElementById('cobrar-valor').focus(), 100);
+}
+
+async function confirmarCobranca() {
+  const valor    = document.getElementById('cobrar-valor').value;
+  const venc     = document.getElementById('cobrar-venc').value;
+  const descricao= document.getElementById('cobrar-desc').value.trim();
+  if (!valor || !venc) { alert('Informe o valor e o vencimento.'); return; }
+
+  const btn = document.getElementById('cobrar-btn');
+  btn.textContent = 'Gerando...'; btn.disabled = true;
+
+  const r = await fetch('/api/cobrar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ cliente_id: cobrarClienteId, valor, vencimento: venc, descricao })
+  });
+  const d = await r.json();
+
+  if (r.ok) {
+    const res = document.getElementById('cobrar-resultado');
+    res.style.display = 'block';
+    res.innerHTML = `
+      <div style="font-weight:700;color:#1f3e3c;margin-bottom:8px;">✅ Boleto gerado com sucesso!</div>
+      <div style="font-size:12px;color:#5a7878;">Valor: <strong>R$ ${Number(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> · Venc.: <strong>${new Date(d.vencimento+'T12:00:00').toLocaleDateString('pt-BR')}</strong></div>
+      ${d.linkPagamento?`<a href="${d.linkPagamento}" target="_blank" style="display:inline-block;margin-top:10px;background:#1f3e3c;color:#fff;padding:7px 18px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;">Ver Boleto ↗</a>`:''}`;
+    btn.textContent = 'Fechar';
+    btn.disabled = false;
+    btn.onclick = () => fecharModal('mod-cobrar');
+  } else {
+    btn.textContent = 'Gerar Boleto'; btn.disabled = false;
+    alert('Erro: ' + (d.erro || 'Falha ao gerar boleto.'));
+  }
+}
+</script>
+
 </body>
 </html>
