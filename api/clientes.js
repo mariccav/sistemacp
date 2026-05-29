@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ erro: "Método não permitido" });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-  const { nome, contato, cpf_cnpj, email } = body;
+  const { nome, contato, cpf_cnpj, email, tipo_servico } = body;
   if (!nome) return res.status(400).json({ erro: "Nome é obrigatório." });
 
   const ASAAS = process.env.ASAAS_KEY_PESSOAL;
@@ -39,7 +39,7 @@ module.exports = async (req, res) => {
   // 2. Criar no Supabase
   const r = await fetch(`${SB}/rest/v1/clientes`, {
     method: 'POST', headers: SH,
-    body: JSON.stringify({ nome, contato, cpf_cnpj: cpf_cnpj || null, email: email || null, asaas_id: asaasId })
+    body: JSON.stringify({ nome, contato, cpf_cnpj: cpf_cnpj || null, email: email || null, tipo_servico: tipo_servico || null, asaas_id: asaasId })
   });
   if (!r.ok) return res.status(500).json({ erro: 'Erro ao salvar cliente.' });
   const d = await r.json();
