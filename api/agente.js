@@ -190,6 +190,86 @@ module.exports = async (req, res) => {
         },
         required: ["tabela", "id"]
       }
+    },
+    {
+      name: "criar_cliente",
+      description: "Cadastra um novo cliente no Asaas. Use quando Mariana informar um cliente novo que ainda não está no sistema. ATENÇÃO: confirme os dados antes de criar.",
+      input_schema: {
+        type: "object",
+        properties: {
+          nome: { type: "string", description: "Nome completo ou razão social do cliente" },
+          cpfCnpj: { type: "string", description: "CPF ou CNPJ (opcional, mas recomendado)" },
+          email: { type: "string", description: "E-mail do cliente (opcional)" },
+          telefone: { type: "string", description: "Telefone ou celular com DDD, só números (opcional)" },
+          conta: {
+            type: "string",
+            enum: ["pessoal", "escritorio"],
+            description: "Conta Asaas onde cadastrar. Padrão: pessoal"
+          }
+        },
+        required: ["nome"]
+      }
+    },
+    {
+      name: "criar_assinatura",
+      description: "Cria uma cobrança recorrente (assinatura) no Asaas. O Asaas gera automaticamente o boleto/PIX a cada ciclo. ATENÇÃO: confirme os dados antes de criar.",
+      input_schema: {
+        type: "object",
+        properties: {
+          customer_id: { type: "string", description: "ID do cliente no Asaas (obtido via buscar_clientes)" },
+          valor: { type: "number", description: "Valor em reais por ciclo" },
+          primeiro_vencimento: { type: "string", description: "Data do primeiro vencimento no formato YYYY-MM-DD" },
+          ciclo: {
+            type: "string",
+            enum: ["MONTHLY", "WEEKLY", "BIWEEKLY", "QUARTERLY", "SEMIANNUALLY", "YEARLY"],
+            description: "Periodicidade. MONTHLY=mensal (padrão), QUARTERLY=trimestral, YEARLY=anual"
+          },
+          descricao: { type: "string", description: "Descrição da assinatura (ex: Honorários mensais — Contrato X)" },
+          tipo: {
+            type: "string",
+            enum: ["BOLETO", "PIX", "UNDEFINED"],
+            description: "Tipo de cobrança. BOLETO padrão."
+          },
+          conta: {
+            type: "string",
+            enum: ["pessoal", "escritorio"],
+            description: "Conta Asaas. Padrão: pessoal"
+          }
+        },
+        required: ["customer_id", "valor", "primeiro_vencimento", "descricao"]
+      }
+    },
+    {
+      name: "listar_assinaturas",
+      description: "Lista assinaturas (cobranças recorrentes) ativas no Asaas. Pode filtrar por cliente.",
+      input_schema: {
+        type: "object",
+        properties: {
+          conta: {
+            type: "string",
+            enum: ["pessoal", "escritorio", "ambas"],
+            description: "Conta Asaas onde buscar"
+          },
+          customer_id: { type: "string", description: "ID do cliente para filtrar (opcional)" }
+        },
+        required: ["conta"]
+      }
+    },
+    {
+      name: "cancelar_assinatura",
+      description: "Cancela uma assinatura recorrente no Asaas. O Asaas para de gerar cobranças futuras. ATENÇÃO: confirme com Mariana antes de executar.",
+      input_schema: {
+        type: "object",
+        properties: {
+          subscription_id: { type: "string", description: "ID da assinatura no Asaas (ex: sub_xxxxx)" },
+          conta: {
+            type: "string",
+            enum: ["pessoal", "escritorio"],
+            description: "Conta Asaas onde está a assinatura"
+          }
+        },
+        required: ["subscription_id", "conta"]
+      }
     }
   ];
 
@@ -210,39 +290,51 @@ CONTA PADRÃO: use sempre a conta PESSOAL do Asaas para criar cobranças e busca
 CAPACIDADES:
 - Consultar honorários, repasses e despesas por mês
 - Buscar clientes cadastrados no Asaas
-- Criar cobranças (boleto/PIX) para clientes
+- Cadastrar novo cliente no Asaas
+- Criar cobranças avulsas (boleto/PIX) para clientes
+- Criar assinaturas recorrentes (honorário mensal fixo)
+- Listar e cancelar assinaturas ativas
 - Listar cobranças pendentes e vencidas
-- Cancelar cobranças
+- Cancelar cobranças avulsas
 - Registrar repasses a parceiros
 - Registrar despesas do escritório
 - Excluir repasses e despesas
 
 REGRAS DE EXECUÇÃO:
 
-1. AÇÕES QUE EXIGEM CONFIRMAÇÃO (têm efeito real e podem ser difíceis de reverter):
-   - Criar cobrança no Asaas → antes de executar, diga exatamente o que vai fazer e aguarde Mariana confirmar com "sim", "pode criar", "confirma" ou similar
-   - Cancelar cobrança → mesma regra
-   - Excluir repasse ou despesa → mesma regra
-   Exemplo de confirmação: "Vou criar um boleto de **R$ 5.000,00** para **Lima Diniz Construções**, vencimento **10/06/2026**, descrição: Honorários advocatícios. Confirma?"
+1. AÇÕES QUE EXIGEM CONFIRMAÇÃO ANTES DE EXECUTAR:
+   - Criar cobrança avulsa
+   - Criar assinatura recorrente
+   - Cadastrar novo cliente
+   - Cancelar cobrança ou assinatura
+   - Excluir repasse ou despesa
+   Antes de executar qualquer dessas, descreva exatamente o que vai fazer e aguarde "sim", "pode", "confirma" ou equivalente.
+   Exemplo: "Vou criar uma assinatura mensal de **R$ 3.500,00** para **Lima Diniz Construções**, primeiro vencimento **10/06/2026**, via boleto. Confirma?"
 
-2. AÇÕES DIRETAS (sem necessidade de confirmação):
-   - Registrar repasse
-   - Registrar despesa
+2. AÇÕES DIRETAS (sem confirmação):
+   - Registrar repasse ou despesa
    - Consultar qualquer dado
+   - Buscar clientes ou assinaturas
 
-3. FLUXO PARA CRIAR COBRANÇA:
-   a) Se não tiver o ID do cliente, chame buscar_clientes primeiro
-   b) Se retornar múltiplos clientes, pergunte qual
-   c) Confirme os dados com Mariana antes de criar
-   d) Após criar, informe o ID da cobrança e o link se disponível
+3. FLUXO PARA CRIAR COBRANÇA OU ASSINATURA:
+   a) Se não tiver o ID do cliente, chame buscar_clientes
+   b) Se o cliente não existir no Asaas, ofereça cadastrá-lo (criar_cliente) antes de criar a cobrança
+   c) Se retornar múltiplos clientes, pergunte qual é o correto
+   d) Confirme todos os dados antes de executar
+   e) Após criar, informe o ID e o link do boleto/PIX se disponível
 
-4. FORMATAÇÃO:
+4. FLUXO PARA NOVO CLIENTE:
+   a) Pergunte nome (obrigatório), CPF/CNPJ, e-mail e telefone se Mariana não informar
+   b) Informe que CPF/CNPJ é recomendado para emissão de NF futura
+   c) Confirme os dados e cadastre
+
+5. FORMATAÇÃO:
    - Valores como R$ X.XXX,XX
-   - Use **negrito** para destacar valores, nomes e totais
+   - Use **negrito** para valores, nomes e totais importantes
    - Datas no formato DD/MM/AAAA para o usuário, YYYY-MM-DD ao chamar ferramentas
    - Seja direta e concisa
 
-5. SE FALTAR INFORMAÇÃO: pergunte só o que realmente precisa antes de prosseguir.`;
+6. SE FALTAR INFORMAÇÃO: pergunte só o essencial antes de prosseguir.`;
 
   // ─── Loop do agente ──────────────────────────────────────────────────────────
 
@@ -539,6 +631,134 @@ async function executarFerramenta(nome, input, SB_URL, SB_KEY) {
       return { erro: `Supabase ${r.status}: ${t}` };
     }
     return { sucesso: true, tabela, id, mensagem: 'Item excluído com sucesso.' };
+  }
+
+  // CRIAR CLIENTE ─────────────────────────────────────────────────────────────
+
+  if (nome === 'criar_cliente') {
+    const { nome: nomeCliente, cpfCnpj = '', email = '', telefone = '', conta = 'pessoal' } = input;
+    const k = chave(conta);
+    if (!k) return { erro: 'Chave não configurada' };
+    const payload = { name: nomeCliente };
+    if (cpfCnpj)  payload.cpfCnpj    = cpfCnpj.replace(/\D/g, '');
+    if (email)    payload.email       = email;
+    if (telefone) payload.mobilePhone = telefone.replace(/\D/g, '');
+    const r = await fetch('https://api.asaas.com/v3/customers', {
+      method: 'POST',
+      headers: { 'access_token': k, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return { erro: `Asaas ${r.status}: ${t}` };
+    }
+    const data = await r.json();
+    return {
+      sucesso: true,
+      id: data.id,
+      nome: data.name,
+      cpfCnpj: data.cpfCnpj || '',
+      email: data.email || '',
+      conta,
+      mensagem: `Cliente **${data.name}** cadastrado com sucesso. ID: ${data.id}`
+    };
+  }
+
+  // CRIAR ASSINATURA ──────────────────────────────────────────────────────────
+
+  if (nome === 'criar_assinatura') {
+    const {
+      customer_id, valor, primeiro_vencimento,
+      ciclo = 'MONTHLY', descricao, tipo = 'BOLETO', conta = 'pessoal'
+    } = input;
+    const k = chave(conta);
+    if (!k) return { erro: 'Chave não configurada' };
+    const payload = {
+      customer: customer_id,
+      billingType: tipo,
+      value: valor,
+      nextDueDate: primeiro_vencimento,
+      cycle: ciclo,
+      description: descricao
+    };
+    const r = await fetch('https://api.asaas.com/v3/subscriptions', {
+      method: 'POST',
+      headers: { 'access_token': k, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return { erro: `Asaas ${r.status}: ${t}` };
+    }
+    const data = await r.json();
+    const cicloLabel = { MONTHLY:'mensal', WEEKLY:'semanal', BIWEEKLY:'quinzenal', QUARTERLY:'trimestral', SEMIANNUALLY:'semestral', YEARLY:'anual' };
+    return {
+      sucesso: true,
+      id: data.id,
+      status: data.status,
+      valor: data.value,
+      ciclo: cicloLabel[ciclo] || ciclo,
+      proximoVencimento: data.nextDueDate,
+      descricao: data.description,
+      conta,
+      mensagem: `Assinatura ${cicloLabel[ciclo] || ciclo} de **R$ ${valor.toFixed(2).replace('.',',')}** criada. Próximo vencimento: ${data.nextDueDate}. ID: ${data.id}`
+    };
+  }
+
+  // LISTAR ASSINATURAS ────────────────────────────────────────────────────────
+
+  if (nome === 'listar_assinaturas') {
+    const { conta = 'pessoal', customer_id } = input;
+
+    const buscarAssinaturas = async (k, label) => {
+      const params = new URLSearchParams({ status: 'ACTIVE', limit: '50' });
+      if (customer_id) params.set('customer', customer_id);
+      const r = await fetch(`https://api.asaas.com/v3/subscriptions?${params}`, {
+        headers: { 'access_token': k, 'Content-Type': 'application/json' }
+      });
+      if (!r.ok) return [];
+      const data = await r.json();
+      return (data.data || []).map(s => ({
+        id: s.id,
+        cliente: s.customerName || s.customer || '',
+        valor: s.value,
+        ciclo: s.cycle,
+        proximoVencimento: s.nextDueDate,
+        descricao: s.description || '',
+        status: s.status,
+        conta: label
+      }));
+    };
+
+    const contas = conta === 'ambas'
+      ? [{ label: 'Pessoal', k: process.env.ASAAS_KEY_PESSOAL }, { label: 'Escritório', k: process.env.ASAAS_KEY_ESCRITORIO }]
+      : [{ label: conta === 'escritorio' ? 'Escritório' : 'Pessoal', k: chave(conta) }];
+
+    const resultado = [];
+    for (const c of contas) {
+      if (!c.k) continue;
+      const items = await buscarAssinaturas(c.k, c.label);
+      resultado.push(...items);
+    }
+
+    return { quantidade: resultado.length, assinaturas: resultado };
+  }
+
+  // CANCELAR ASSINATURA ───────────────────────────────────────────────────────
+
+  if (nome === 'cancelar_assinatura') {
+    const { subscription_id, conta = 'pessoal' } = input;
+    const k = chave(conta);
+    if (!k) return { erro: 'Chave não configurada' };
+    const r = await fetch(`https://api.asaas.com/v3/subscriptions/${subscription_id}`, {
+      method: 'DELETE',
+      headers: { 'access_token': k, 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return { erro: `Asaas ${r.status}: ${t}` };
+    }
+    return { sucesso: true, subscription_id, mensagem: 'Assinatura cancelada. O Asaas não vai mais gerar cobranças para essa assinatura.' };
   }
 
   return { erro: `Ferramenta desconhecida: ${nome}` };
