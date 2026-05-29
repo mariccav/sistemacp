@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produtividade — Cavalcante Pinheiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --v1:#1f3e3c; --v2:#2b5050; --bg:#f2fdff; --bege:#a7a897;
+  --br:#ffffff; --verde:#2a8f6e; --online:#27ae60; --offline:#bdc3c7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;}
+
+/* ── SELECTOR ── */
+.sel-screen{min-height:100vh;background:var(--v1);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+.sel-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--br);letter-spacing:.5px;}
+.sel-sub{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:2px;margin-top:4px;margin-bottom:40px;}
+.sel-ask{font-size:16px;color:var(--bege);margin-bottom:32px;}
+.sel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:500px;width:100%;}
+.col-card{background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.2);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:.2s;}
+.col-card:hover{background:rgba(255,255,255,.15);border-color:var(--bege);transform:translateY(-2px);}
+.col-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--br);margin:0 auto 14px;}
+.col-nome{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--br);margin-bottom:4px;}
+.col-cargo{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+
+/* ── DASH ── */
+.dash{display:none;min-height:100vh;flex-direction:column;}
+.dash.show{display:flex;}
+
+/* header */
+.d-header{background:var(--v1);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.d-av-sm{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--br);flex-shrink:0;}
+.d-nome{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--br);}
+.d-cargo{font-size:11px;color:var(--bege);}
+.status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--offline);margin-right:6px;transition:.3s;}
+.status-dot.online{background:var(--online);box-shadow:0 0 0 3px rgba(39,174,96,.25);}
+.status-txt{font-size:12px;color:var(--bege);}
+.btn-trocar{background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;transition:.15s;}
+.btn-trocar:hover{background:rgba(255,255,255,.18);}
+
+/* tabs */
+.d-tabs{background:var(--v2);display:flex;padding:0 32px;gap:4px;overflow-x:auto;}
+.dtab{padding:12px 20px;font-size:13px;font-weight:600;color:var(--bege);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;font-family:'Nunito',sans-serif;}
+.dtab:hover{color:var(--br);}
+.dtab.active{color:var(--br);border-bottom-color:var(--bege);}
+
+/* content */
+.d-content{flex:1;padding:28px 32px;max-width:960px;margin:0 auto;width:100%;}
+.dpanel{display:none;}
+.dpanel.active{display:block;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--v1);margin-bottom:20px;}
+
+/* timer card */
+.timer-card{background:var(--br);border-radius:16px;border:1px solid #dde8e8;box-shadow:0 4px 16px rgba(31,62,60,.06);padding:36px;text-align:center;margin-bottom:20px;}
+.timer-display{font-family:'Nunito',sans-serif;font-size:60px;font-weight:700;color:var(--v1);letter-spacing:6px;line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums;}
+.timer-lbl{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:24px;}
+.session-info{background:#f0f7f7;border-radius:10px;padding:12px 20px;margin-bottom:20px;display:none;}
+.session-info.show{display:block;}
+.session-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
+.sitem .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.sitem .val{font-size:14px;font-weight:600;color:var(--v1);}
+.btn-iniciar{background:var(--verde);color:var(--br);border:none;padding:14px 40px;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:.5px;}
+.btn-iniciar:hover{background:#239060;}
+.btn-encerrar{background:#c25e5e;color:var(--br);border:none;padding:14px 40px;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-encerrar:hover{background:#a84e4e;}
+
+/* stats */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.sbox{background:var(--br);border-radius:12px;padding:16px 20px;border:1px solid #dde8e8;text-align:center;}
+.sbox .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.sbox .val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--v1);}
+
+/* hist */
+.hist-card{background:var(--br);border-radius:12px;border:1px solid #dde8e8;overflow:hidden;margin-bottom:16px;}
+.hist-hd{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eef3f3;}
+.hist-hd h3{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--v1);}
+table.htb{width:100%;border-collapse:collapse;font-size:13px;}
+table.htb th{background:var(--v1);color:var(--br);padding:10px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+table.htb td{padding:10px 16px;border-bottom:1px solid #f0f7f7;color:var(--v1);}
+table.htb tr:last-child td{border-bottom:none;}
+.benv{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.besc{background:#e8f0f0;color:var(--v2);}
+.bhome{background:#fef9e7;color:#d4841a;}
+
+/* equipe */
+.eq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.eq-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:24px;transition:.2s;}
+.eq-card.on-card{border-color:rgba(39,174,96,.3);box-shadow:0 0 0 3px rgba(39,174,96,.08);}
+.eq-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--br);margin-bottom:12px;}
+.eq-nome{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--v1);}
+.eq-cargo{font-size:11px;color:var(--bege);margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px;}
+.eq-status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:4px;flex-wrap:wrap;}
+.eq-tempo{font-size:18px;font-weight:700;color:var(--verde);}
+.eq-det{font-size:12px;color:#5a7878;background:#f0f7f7;border-radius:8px;padding:8px 12px;margin-top:8px;}
+
+/* mural */
+.mural-form{background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:20px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;}
+.mural-input{flex:1;padding:12px 16px;border:1px solid #dde8e8;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);resize:none;outline:none;transition:.15s;min-height:60px;}
+.mural-input:focus{border-color:var(--v2);}
+.btn-pub{background:var(--v1);color:var(--br);border:none;padding:12px 20px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;}
+.btn-pub:hover{background:var(--v2);}
+.post{background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:16px 20px;margin-bottom:12px;}
+.post-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.av-xs{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--br);flex-shrink:0;}
+.post-autor{font-size:13px;font-weight:700;color:var(--v1);}
+.post-time{font-size:11px;color:var(--bege);}
+.post-txt{font-size:14px;color:#2a4848;line-height:1.5;}
+
+/* elogios */
+.elog-form{background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:24px;margin-bottom:20px;}
+.elog-form h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:16px;}
+.elog-sel,.elog-ta{width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);outline:none;background:var(--br);}
+.elog-ta{resize:none;min-height:80px;margin-top:10px;}
+.elog-sel:focus,.elog-ta:focus{border-color:var(--v2);}
+.btn-elog{background:#d4ac0d;color:var(--br);border:none;padding:10px 24px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;margin-top:12px;}
+.btn-elog:hover{background:#b8960b;}
+.elog-item{background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:16px 20px;margin-bottom:12px;}
+.elog-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.elog-de{font-size:13px;font-weight:700;color:var(--v1);}
+.elog-para{font-size:13px;font-weight:700;color:var(--verde);}
+.elog-when{font-size:11px;color:var(--bege);margin-left:auto;}
+.elog-msg{font-size:14px;color:#2a4848;line-height:1.5;}
+
+/* modal */
+.mov{display:none;position:fixed;inset:0;background:rgba(31,62,60,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+.mov.show{display:flex;}
+.mbox{background:var(--br);border-radius:16px;padding:32px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.mbox h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v1);margin-bottom:20px;}
+.frow{margin-bottom:14px;}
+.frow label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-bottom:6px;}
+.frow input,.frow select{width:100%;padding:10px 14px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--v1);background:var(--br);outline:none;}
+.frow input:focus,.frow select:focus{border-color:var(--v2);}
+.frow-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.btn-can{background:none;border:1px solid #dde8e8;color:#4a6868;padding:10px 20px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
+.btn-ok{background:var(--v1);color:var(--br);border:none;padding:10px 24px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+.btn-manual{background:none;border:1px solid var(--bege);color:var(--v2);padding:8px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;transition:.15s;}
+.btn-manual:hover{background:#f0f7f7;}
+footer{background:var(--v1);color:var(--bege);text-align:center;padding:16px;font-size:11px;}
+footer a{color:var(--bege);text-decoration:none;margin-left:16px;opacity:.7;}
+footer a:hover{opacity:1;}
+.hide{display:none!important;}
+
+@media(max-width:700px){
+  .eq-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(3,1fr);}
+  .d-header{padding:14px 16px;}
+  .d-content{padding:20px 16px;}
+  .d-tabs{padding:0 16px;}
+  .timer-display{font-size:42px;letter-spacing:3px;}
+  .sel-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SELECTOR ══════════════ -->
+<div class="sel-screen" id="tela-selector">
+  <div class="sel-logo">Cavalcante Pinheiro</div>
+  <div class="sel-sub">Controle de Produtividade</div>
+  <p class="sel-ask">Quem é você hoje?</p>
+  <div class="sel-grid" id="sel-grid"></div>
+</div>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div class="dash" id="tela-dash">
+
+  <header class="d-header">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="d-av-sm" id="d-av-sm"></div>
+      <div>
+        <div class="d-nome" id="d-nome"></div>
+        <div class="d-cargo" id="d-cargo"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="display:flex;align-items:center;">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-txt" id="status-txt">Offline</span>
+      </div>
+      <button class="btn-trocar" onclick="trocar()">↩ Trocar</button>
+    </div>
+  </header>
+
+  <nav class="d-tabs">
+    <button class="dtab active" onclick="tab('meu-dia',this)">Meu Dia</button>
+    <button class="dtab" onclick="tab('equipe',this)">Equipe ao Vivo</button>
+    <button class="dtab" onclick="tab('mural',this)">Mural</button>
+    <button class="dtab" onclick="tab('elogios',this)">Elogios ✦</button>
+  </nav>
+
+  <div class="d-content">
+
+    <!-- MEU DIA -->
+    <div class="dpanel active" id="panel-meu-dia">
+      <div class="timer-card">
+        <div class="timer-display" id="timer">00:00:00</div>
+        <div class="timer-lbl">Tempo de trabalho</div>
+        <div class="session-info" id="sess-info">
+          <div class="session-row" id="sess-row"></div>
+        </div>
+        <button class="btn-iniciar" id="btn-ini" onclick="abrirIniciar()">▶ Iniciar Sessão</button>
+        <button class="btn-encerrar hide" id="btn-enc" onclick="encerrar()">⏹ Encerrar Sessão</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="sbox"><div class="lbl">Horas hoje</div><div class="val" id="st-h">0h 00min</div></div>
+        <div class="sbox"><div class="lbl">Sessões</div><div class="val" id="st-s">0</div></div>
+        <div class="sbox"><div class="lbl">Ambiente</div><div class="val" id="st-a">—</div></div>
+      </div>
+
+      <div class="hist-card">
+        <div class="hist-hd">
+          <h3>Histórico de Hoje</h3>
+          <button class="btn-manual" onclick="abrirManual()">+ Lançamento Manual</button>
+        </div>
+        <table class="htb">
+          <thead><tr><th>Início</th><th>Fim</th><th>Cliente</th><th>Processo/Tarefa</th><th>Ambiente</th><th>Duração</th></tr></thead>
+          <tbody id="hist-body"><tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EQUIPE -->
+    <div class="dpanel" id="panel-equipe">
+      <div class="sec-title">Equipe ao Vivo</div>
+      <div class="eq-grid" id="eq-grid"></div>
+      <p style="font-size:11px;color:var(--bege);text-align:center;margin-top:16px;">Atualizado automaticamente a cada 30 segundos</p>
+    </div>
+
+    <!-- MURAL -->
+    <div class="dpanel" id="panel-mural">
+      <div class="sec-title">Mural da Equipe</div>
+      <div class="mural-form">
+        <textarea class="mural-input" id="mural-txt" placeholder="Compartilhe algo com a equipe..." rows="2"></textarea>
+        <button class="btn-pub" onclick="publicar()">Publicar</button>
+      </div>
+      <div id="mural-lista"><p style="text-align:center;color:var(--bege);padding:20px;">Carregando...</p></div>
+    </div>
+
+    <!-- ELOGIOS -->
+    <div class="dpanel" id="panel-elogios">
+      <div class="sec-title">Elogios</div>
+      <div class="elog-form">
+        <h3>Reconheça alguém 🌟</h3>
+        <label style="font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Para</label>
+        <select class="elog-sel" id="elog-para"></select>
+        <textarea class="elog-ta" id="elog-msg" placeholder="Escreva o elogio..."></textarea>
+        <button class="btn-elog" onclick="enviarElogio()">Enviar Elogio 🌟</button>
+      </div>
+      <div id="elog-lista"><p style="text-align:center;color:var(--bege);padding:20px;">Carregando...</p></div>
+    </div>
+
+  </div>
+  <footer>
+    <strong>Cavalcante Pinheiro Advocacia</strong> · Sistema de Produtividade
+    <a href="/financeiro.html">🔒 Financeiro</a>
+  </footer>
+</div>
+
+<!-- MODAL SESSÃO -->
+<div class="mov" id="mod-sess">
+  <div class="mbox">
+    <h2>Iniciar Sessão de Trabalho</h2>
+    <div class="frow"><label>Cliente</label><input type="text" id="s-cli" placeholder="Nome do cliente"></div>
+    <div class="frow"><label>Processo / Tarefa</label><input type="text" id="s-proc" placeholder="Ex: REFIS, SEFAZ, Proposta..."></div>
+    <div class="frow"><label>Ambiente</label>
+      <select id="s-amb"><option value="escritório">🏢 Escritório</option><option value="home">🏠 Home</option></select>
+    </div>
+    <div class="mbtns">
+      <button class="btn-can" onclick="fechar('mod-sess')">Cancelar</button>
+      <button class="btn-ok" onclick="iniciar()">▶ Iniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MANUAL -->
+<div class="mov" id="mod-man">
+  <div class="mbox">
+    <h2>Lançamento Manual</h2>
+    <div class="frow"><label>Data</label><input type="date" id="m-dt"></div>
+    <div class="frow-2">
+      <div class="frow"><label>Início</label><input type="time" id="m-ini"></div>
+      <div class="frow"><label>Fim</label><input type="time" id="m-fim"></div>
+    </div>
+    <div class="frow"><label>Cliente</label><input type="text" id="m-cli" placeholder="Nome do cliente"></div>
+    <div class="frow"><label>Processo / Tarefa</label><input type="text" id="m-proc" placeholder="Ex: REFIS..."></div>
+    <div class="frow"><label>Ambiente</label>
+      <select id="m-amb"><option value="escritório">🏢 Escritório</option><option value="home">🏠 Home</option></select>
+    </div>
+    <div class="mbtns">
+      <button class="btn-can" onclick="fechar('mod-man')">Cancelar</button>
+      <button class="btn-ok" onclick="salvarManual()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH = { 'apikey':SK, 'Authorization':'Bearer '+SK, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+
+const COLS = [
+  { nome:'Diana',           cargo:'Coordenação Jurídica', ini:'DC', cor:'#1f3e3c' },
+  { nome:'Jade',            cargo:'Operacional',           ini:'JL', cor:'#2b6052' },
+  { nome:'Mariana Barboza', cargo:'Comercial',             ini:'MB', cor:'#4a7a70' },
+  { nome:'Laila Costa',     cargo:'Operacional',           ini:'LC', cor:'#8a9a8a' }
+];
+
+let ativa = null;    // colaboradora selecionada
+let sessao = null;   // { id, inicio (Date), cliente, processo, ambiente }
+let timerInt = null;
+let pollInt  = null;
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  renderSelector();
+  document.getElementById('m-dt').value = new Date().toISOString().split('T')[0];
+  const salvo = localStorage.getItem('cp_col');
+  if (salvo) {
+    const c = COLS.find(x => x.nome === salvo);
+    if (c) { ativa = c; abrirDash(); }
+  }
+  document.querySelectorAll('.mov').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); })
+  );
+});
+
+// ── SELECTOR ─────────────────────────────────────────────────────
+function renderSelector() {
+  document.getElementById('sel-grid').innerHTML = COLS.map(c => `
+    <div class="col-card" onclick="selecionar('${c.nome}')">
+      <div class="col-av" style="background:${c.cor}">${c.ini}</div>
+      <div class="col-nome">${c.nome}</div>
+      <div class="col-cargo">${c.cargo}</div>
+    </div>`).join('');
+}
+
+function selecionar(nome) {
+  const c = COLS.find(x => x.nome === nome);
+  if (!c) return;
+  ativa = c;
+  localStorage.setItem('cp_col', nome);
+  abrirDash();
+}
+
+function trocar() {
+  pararTimer();
+  sessao = null;
+  ativa = null;
+  localStorage.removeItem('cp_col');
+  document.getElementById('tela-dash').classList.remove('show');
+  document.getElementById('tela-selector').style.display = 'flex';
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+async function abrirDash() {
+  document.getElementById('tela-selector').style.display = 'none';
+  document.getElementById('tela-dash').classList.add('show');
+
+  document.getElementById('d-av-sm').style.background = ativa.cor;
+  document.getElementById('d-av-sm').textContent = ativa.ini;
+  document.getElementById('d-nome').textContent = ativa.nome;
+  document.getElementById('d-cargo').textContent = ativa.cargo;
+
+  // select de elogios (excluindo a própria)
+  document.getElementById('elog-para').innerHTML =
+    COLS.filter(c => c.nome !== ativa.nome).map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+
+  await verificarSessao();
+  carregarHoje();
+  carregarEquipe();
+  carregarMural();
+  carregarElogios();
+
+  if (pollInt) clearInterval(pollInt);
+  pollInt = setInterval(carregarEquipe, 30000);
+}
+
+function tab(id, btn) {
+  document.querySelectorAll('.dpanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'equipe') carregarEquipe();
+  if (id === 'mural') carregarMural();
+  if (id === 'elogios') carregarElogios();
+}
+
+// ── SESSÃO ───────────────────────────────────────────────────────
+async function verificarSessao() {
+  const cutoff = new Date(Date.now() - 9 * 3600000).toISOString();
+  const r = await fetch(
+    `${SB}/rest/v1/sessoes?colaboradora=eq.${enc(ativa.nome)}&fim=is.null&inicio=gte.${cutoff}&order=inicio.desc&limit=1`,
+    { headers: SH }
+  );
+  if (!r.ok) return;
+  const d = await r.json();
+  if (d.length > 0) {
+    const s = d[0];
+    sessao = { id: s.id, inicio: new Date(s.inicio), cliente: s.cliente, processo: s.processo, ambiente: s.ambiente };
+    mostrarAtiva();
+    iniciarTimer();
+  }
+}
+
+function abrirIniciar() {
+  document.getElementById('s-cli').value = '';
+  document.getElementById('s-proc').value = '';
+  document.getElementById('s-amb').value = 'escritório';
+  document.getElementById('mod-sess').classList.add('show');
+  setTimeout(() => document.getElementById('s-cli').focus(), 100);
+}
+
+async function iniciar() {
+  const cliente  = document.getElementById('s-cli').value.trim() || '—';
+  const processo = document.getElementById('s-proc').value.trim() || '—';
+  const ambiente = document.getElementById('s-amb').value;
+  fechar('mod-sess');
+
+  const r = await fetch(`${SB}/rest/v1/sessoes`, {
+    method:'POST', headers: SH,
+    body: JSON.stringify({ colaboradora:ativa.nome, cargo:ativa.cargo, cliente, processo, ambiente })
+  });
+  if (!r.ok) { alert('Erro ao iniciar sessão.'); return; }
+  const d = await r.json();
+  const s = Array.isArray(d) ? d[0] : d;
+  sessao = { id: s.id, inicio: new Date(s.inicio), cliente, processo, ambiente };
+  mostrarAtiva();
+  iniciarTimer();
+}
+
+async function encerrar() {
+  if (!sessao) return;
+  const fim = new Date();
+  const mins = Math.round((fim - sessao.inicio) / 60000);
+  await fetch(`${SB}/rest/v1/sessoes?id=eq.${sessao.id}`, {
+    method:'PATCH', headers: SH,
+    body: JSON.stringify({ fim: fim.toISOString(), duracao_minutos: mins })
+  });
+  sessao = null;
+  pararTimer();
+  mostrarInativa();
+  carregarHoje();
+}
+
+function mostrarAtiva() {
+  const { cliente, processo, ambiente } = sessao;
+  document.getElementById('sess-info').classList.add('show');
+  document.getElementById('sess-row').innerHTML = `
+    <div class="sitem"><div class="lbl">Cliente</div><div class="val">${cliente}</div></div>
+    <div class="sitem"><div class="lbl">Processo</div><div class="val">${processo}</div></div>
+    <div class="sitem"><div class="lbl">Ambiente</div><div class="val">${ambiente==='home'?'🏠 Home':'🏢 Escritório'}</div></div>`;
+  document.getElementById('btn-ini').classList.add('hide');
+  document.getElementById('btn-enc').classList.remove('hide');
+  document.getElementById('status-dot').classList.add('online');
+  document.getElementById('status-txt').textContent = 'Online';
+  document.getElementById('st-a').textContent = ambiente === 'home' ? '🏠 Home' : '🏢 Escritório';
+}
+
+function mostrarInativa() {
+  document.getElementById('sess-info').classList.remove('show');
+  document.getElementById('btn-ini').classList.remove('hide');
+  document.getElementById('btn-enc').classList.add('hide');
+  document.getElementById('status-dot').classList.remove('online');
+  document.getElementById('status-txt').textContent = 'Offline';
+  document.getElementById('timer').textContent = '00:00:00';
+  document.getElementById('st-a').textContent = '—';
+}
+
+// ── TIMER ──────────────────────────────────────────────────────────
+function iniciarTimer() {
+  if (timerInt) clearInterval(timerInt);
+  timerInt = setInterval(tickTimer, 1000);
+  tickTimer();
+}
+function pararTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
+function tickTimer() {
+  if (!sessao) return;
+  const s = Math.floor((Date.now() - sessao.inicio.getTime()) / 1000);
+  document.getElementById('timer').textContent = hms(s);
+}
+function hms(t) {
+  return `${pad(Math.floor(t/3600))}:${pad(Math.floor(t%3600/60))}:${pad(t%60)}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function hmin(m) { if (!m) return '—'; return m<60 ? `${m}min` : `${Math.floor(m/60)}h ${pad(m%60)}min`; }
+
+// ── HISTÓRICO ──────────────────────────────────────────────────────
+async function carregarHoje() {
+  const meia = new Date(); meia.setHours(0,0,0,0);
+  const r = await fetch(
+    `${SB}/rest/v1/sessoes?colaboradora=eq.${enc(ativa.nome)}&inicio=gte.${meia.toISOString()}&order=inicio.desc`,
+    { headers: SH }
+  );
+  if (!r.ok) return;
+  const rows = await r.json();
+  const totalMin = rows.filter(s => s.fim).reduce((a, s) => a + (s.duracao_minutos||0), 0);
+  document.getElementById('st-h').textContent = hmin(totalMin);
+  document.getElementById('st-s').textContent = rows.length;
+
+  const tbody = document.getElementById('hist-body');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(s => {
+    const ini = fmt(s.inicio);
+    const fim = s.fim ? fmt(s.fim) : '<span style="color:var(--online);font-weight:700">● Em curso</span>';
+    const amb = s.ambiente === 'home' ? '<span class="benv bhome">🏠 Home</span>' : '<span class="benv besc">🏢 Escritório</span>';
+    return `<tr><td>${ini}</td><td>${fim}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${amb}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
+  }).join('');
+}
+
+// ── LANÇAMENTO MANUAL ─────────────────────────────────────────────
+function abrirManual() { document.getElementById('mod-man').classList.add('show'); }
+
+async function salvarManual() {
+  const dt  = document.getElementById('m-dt').value;
+  const ini = document.getElementById('m-ini').value;
+  const fim = document.getElementById('m-fim').value;
+  if (!dt||!ini||!fim) { alert('Preencha data, início e fim.'); return; }
+  const iniISO = new Date(`${dt}T${ini}:00`).toISOString();
+  const fimISO = new Date(`${dt}T${fim}:00`).toISOString();
+  const dur    = Math.round((new Date(fimISO)-new Date(iniISO))/60000);
+  if (dur <= 0) { alert('Horário de fim deve ser após o início.'); return; }
+  const payload = {
+    colaboradora:ativa.nome, cargo:ativa.cargo,
+    cliente:document.getElementById('m-cli').value.trim()||'—',
+    processo:document.getElementById('m-proc').value.trim()||'—',
+    ambiente:document.getElementById('m-amb').value,
+    inicio:iniISO, fim:fimISO, duracao_minutos:dur, lancamento_manual:true
+  };
+  const r = await fetch(`${SB}/rest/v1/sessoes`, { method:'POST', headers:SH, body:JSON.stringify(payload) });
+  fechar('mod-man');
+  if (r.ok) carregarHoje(); else alert('Erro ao salvar.');
+}
+
+// ── EQUIPE ────────────────────────────────────────────────────────
+async function carregarEquipe() {
+  const cutoff = new Date(Date.now() - 9 * 3600000).toISOString();
+  const r = await fetch(`${SB}/rest/v1/sessoes?fim=is.null&inicio=gte.${cutoff}&select=*`, { headers: SH });
+  const ativas = r.ok ? await r.json() : [];
+
+  document.getElementById('eq-grid').innerHTML = COLS.map(c => {
+    const s = ativas.find(x => x.colaboradora === c.nome);
+    const on = !!s;
+    const el = s ? Math.floor((Date.now() - new Date(s.inicio).getTime())/1000) : 0;
+    return `<div class="eq-card ${on?'on-card':''}">
+      <div class="eq-av" style="background:${c.cor}">${c.ini}</div>
+      <div class="eq-nome">${c.nome}</div>
+      <div class="eq-cargo">${c.cargo}</div>
+      <div class="eq-status">
+        <span class="status-dot ${on?'online':''}"></span>
+        <span style="color:${on?'var(--online)':'var(--bege)'}">${on?'Online':'Offline'}</span>
+        ${on?`<span class="eq-tempo">${hms(el)}</span>`:''}
+      </div>
+      ${on?`<div class="eq-det"><strong>${s.cliente||'—'}</strong> · ${s.processo||'—'}<br><span style="font-size:11px;color:var(--bege)">${s.ambiente==='home'?'🏠 Home':'🏢 Escritório'}</span></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── MURAL ─────────────────────────────────────────────────────────
+async function carregarMural() {
+  const r = await fetch(`${SB}/rest/v1/mural?order=criado_em.desc&limit=30`, { headers: SH });
+  const posts = r.ok ? await r.json() : [];
+  const el = document.getElementById('mural-lista');
+  if (!posts.length) { el.innerHTML = '<p style="text-align:center;color:var(--bege);padding:20px;">O mural está vazio. Seja a primeira a postar!</p>'; return; }
+  el.innerHTML = posts.map(p => {
+    const c = COLS.find(x => x.nome === p.autor) || { ini: p.autor.substring(0,2).toUpperCase(), cor:'#a7a897' };
+    return `<div class="post">
+      <div class="post-hd">
+        <div class="av-xs" style="background:${c.cor}">${c.ini}</div>
+        <div><div class="post-autor">${p.autor}</div><div class="post-time">${tempo(p.criado_em)}</div></div>
+      </div>
+      <div class="post-txt">${p.mensagem.replace(/\n/g,'<br>')}</div>
+    </div>`;
+  }).join('');
+}
+
+async function publicar() {
+  const txt = document.getElementById('mural-txt').value.trim();
+  if (!txt) return;
+  const r = await fetch(`${SB}/rest/v1/mural`, { method:'POST', headers:SH, body:JSON.stringify({ autor:ativa.nome, mensagem:txt }) });
+  if (r.ok) { document.getElementById('mural-txt').value = ''; carregarMural(); }
+  else alert('Erro ao publicar.');
+}
+
+// ── ELOGIOS ───────────────────────────────────────────────────────
+async function carregarElogios() {
+  const r = await fetch(`${SB}/rest/v1/elogios?order=criado_em.desc&limit=30`, { headers: SH });
+  const items = r.ok ? await r.json() : [];
+  const el = document.getElementById('elog-lista');
+  if (!items.length) { el.innerHTML = '<p style="text-align:center;color:var(--bege);padding:20px;">Nenhum elogio ainda. Reconheça alguém da equipe!</p>'; return; }
+  el.innerHTML = items.map(e => `
+    <div class="elog-item">
+      <div class="elog-hd">
+        <span>🌟</span>
+        <span class="elog-de">${e.de_colaboradora}</span>
+        <span style="color:var(--bege)">→</span>
+        <span class="elog-para">${e.para_colaboradora}</span>
+        <span class="elog-when">${tempo(e.criado_em)}</span>
+      </div>
+      <div class="elog-msg">"${e.mensagem}"</div>
+    </div>`).join('');
+}
+
+async function enviarElogio() {
+  const para = document.getElementById('elog-para').value;
+  const msg  = document.getElementById('elog-msg').value.trim();
+  if (!msg) { alert('Escreva uma mensagem.'); return; }
+  const r = await fetch(`${SB}/rest/v1/elogios`, {
+    method:'POST', headers:SH,
+    body: JSON.stringify({ de_colaboradora:ativa.nome, para_colaboradora:para, mensagem:msg })
+  });
+  if (r.ok) { document.getElementById('elog-msg').value = ''; carregarElogios(); }
+  else alert('Erro ao enviar.');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function fmt(iso) { return new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function enc(s) { return encodeURIComponent(s); }
+function fechar(id) { document.getElementById(id).classList.remove('show'); }
+function tempo(iso) {
+  const d = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+  if (d < 60) return 'agora mesmo';
+  if (d < 3600) return `há ${Math.floor(d/60)}min`;
+  if (d < 86400) return `há ${Math.floor(d/3600)}h`;
+  if (d < 172800) return 'ontem';
+  return new Date(iso).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+}
+</script>
+</body>
+</html>
