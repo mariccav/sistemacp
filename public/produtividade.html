@@ -18,7 +18,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-s
 .sel-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--br);letter-spacing:.5px;}
 .sel-sub{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:2px;margin-top:4px;margin-bottom:40px;}
 .sel-ask{font-size:16px;color:var(--bege);margin-bottom:32px;}
-.sel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:500px;width:100%;}
+.sel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;max-width:580px;width:100%;}
+.sel-grid .col-card:last-child:nth-child(odd){grid-column:1/-1;max-width:260px;margin:0 auto;width:100%;}
 .col-card{background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.2);border-radius:16px;padding:28px 20px;text-align:center;cursor:pointer;transition:.2s;}
 .col-card:hover{background:rgba(255,255,255,.15);border-color:var(--bege);transform:translateY(-2px);}
 .col-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--br);margin:0 auto 14px;}
@@ -144,6 +145,25 @@ footer a{color:var(--bege);text-decoration:none;margin-left:16px;opacity:.7;}
 footer a:hover{opacity:1;}
 .hide{display:none!important;}
 
+/* tipo atividade */
+.bati{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:#e8f0f0;color:var(--v2);}
+
+/* gestão gerencial */
+.gest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.gest-box{background:var(--br);border-radius:12px;padding:20px;border:1px solid #dde8e8;text-align:center;}
+.gest-box .lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.gest-box .val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--v1);}
+.chart-wrap{background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:24px;margin-bottom:20px;}
+.chart-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--v1);margin-bottom:16px;}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-nome{font-size:13px;color:var(--v1);min-width:120px;}
+.bar-track{flex:1;height:8px;background:#eef3f3;border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:.4s;}
+.bar-val{font-size:12px;color:var(--v2);font-weight:600;min-width:50px;text-align:right;}
+.g-filtro{display:flex;align-items:center;gap:10px;}
+.g-filtro label{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+.g-filtro input{padding:7px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);background:var(--br);outline:none;}
+
 @media(max-width:700px){
   .eq-grid{grid-template-columns:1fr;}
   .stats-row{grid-template-columns:repeat(3,1fr);}
@@ -190,6 +210,7 @@ footer a:hover{opacity:1;}
     <button class="dtab" onclick="tab('equipe',this)">Equipe ao Vivo</button>
     <button class="dtab" onclick="tab('mural',this)">Mural</button>
     <button class="dtab" onclick="tab('elogios',this)">Elogios ✦</button>
+    <button class="dtab hide" id="tab-gestao" onclick="tab('gestao',this)">Gestão ◆</button>
   </nav>
 
   <div class="d-content">
@@ -218,8 +239,8 @@ footer a:hover{opacity:1;}
           <button class="btn-manual" onclick="abrirManual()">+ Lançamento Manual</button>
         </div>
         <table class="htb">
-          <thead><tr><th>Início</th><th>Fim</th><th>Cliente</th><th>Processo/Tarefa</th><th>Ambiente</th><th>Duração</th></tr></thead>
-          <tbody id="hist-body"><tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr></tbody>
+          <thead><tr><th>Início</th><th>Fim</th><th>Cliente</th><th>Processo/Tarefa</th><th>Tipo</th><th>Ambiente</th><th>Duração</th></tr></thead>
+          <tbody id="hist-body"><tr><td colspan="7" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -254,6 +275,33 @@ footer a:hover{opacity:1;}
       <div id="elog-lista"><p style="text-align:center;color:var(--bege);padding:20px;">Carregando...</p></div>
     </div>
 
+    <!-- GESTÃO (exclusivo Mariana Pinheiro) -->
+    <div class="dpanel" id="panel-gestao">
+      <div class="sec-title">Visão Gerencial</div>
+      <div class="gest-grid">
+        <div class="gest-box"><div class="lbl">Online agora</div><div class="val" id="g-online">—</div></div>
+        <div class="gest-box"><div class="lbl">Horas equipe hoje</div><div class="val" id="g-horas">—</div></div>
+        <div class="gest-box"><div class="lbl">Sessões hoje</div><div class="val" id="g-sessoes">—</div></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Horas por colaboradora — hoje</div>
+        <div id="g-chart"><p style="color:var(--bege);font-size:13px;">Carregando...</p></div>
+      </div>
+      <div class="hist-card">
+        <div class="hist-hd">
+          <h3>Todas as Sessões</h3>
+          <div class="g-filtro">
+            <label>Data</label>
+            <input type="date" id="g-data" onchange="carregarGestao()">
+          </div>
+        </div>
+        <table class="htb">
+          <thead><tr><th>Colaboradora</th><th>Início</th><th>Fim</th><th>Cliente · Processo</th><th>Tipo</th><th>Duração</th></tr></thead>
+          <tbody id="g-body"><tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
   <footer>
     <strong>Cavalcante Pinheiro Advocacia</strong> · Sistema de Produtividade
@@ -269,6 +317,17 @@ footer a:hover{opacity:1;}
     <div class="frow"><label>Processo / Tarefa</label><input type="text" id="s-proc" placeholder="Ex: REFIS, SEFAZ, Proposta..."></div>
     <div class="frow"><label>Ambiente</label>
       <select id="s-amb"><option value="escritório">🏢 Escritório</option><option value="home">🏠 Home</option></select>
+    </div>
+    <div class="frow"><label>Tipo de Atividade</label>
+      <select id="s-tipo">
+        <option value="Petição">📄 Petição</option>
+        <option value="Consulta">💬 Consulta</option>
+        <option value="Reunião">🤝 Reunião</option>
+        <option value="Análise">🔍 Análise</option>
+        <option value="Administrativo">📋 Administrativo</option>
+        <option value="Prospecção">🎯 Prospecção</option>
+        <option value="Outros">📌 Outros</option>
+      </select>
     </div>
     <div class="mbtns">
       <button class="btn-can" onclick="fechar('mod-sess')">Cancelar</button>
@@ -291,6 +350,17 @@ footer a:hover{opacity:1;}
     <div class="frow"><label>Ambiente</label>
       <select id="m-amb"><option value="escritório">🏢 Escritório</option><option value="home">🏠 Home</option></select>
     </div>
+    <div class="frow"><label>Tipo de Atividade</label>
+      <select id="m-tipo">
+        <option value="Petição">📄 Petição</option>
+        <option value="Consulta">💬 Consulta</option>
+        <option value="Reunião">🤝 Reunião</option>
+        <option value="Análise">🔍 Análise</option>
+        <option value="Administrativo">📋 Administrativo</option>
+        <option value="Prospecção">🎯 Prospecção</option>
+        <option value="Outros">📌 Outros</option>
+      </select>
+    </div>
     <div class="mbtns">
       <button class="btn-can" onclick="fechar('mod-man')">Cancelar</button>
       <button class="btn-ok" onclick="salvarManual()">Salvar</button>
@@ -304,10 +374,11 @@ const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
 const SH = { 'apikey':SK, 'Authorization':'Bearer '+SK, 'Content-Type':'application/json', 'Prefer':'return=representation' };
 
 const COLS = [
-  { nome:'Diana',           cargo:'Coordenação Jurídica', ini:'DC', cor:'#1f3e3c' },
-  { nome:'Jade',            cargo:'Operacional',           ini:'JL', cor:'#2b6052' },
-  { nome:'Mariana Barboza', cargo:'Comercial',             ini:'MB', cor:'#4a7a70' },
-  { nome:'Laila Costa',     cargo:'Operacional',           ini:'LC', cor:'#8a9a8a' }
+  { nome:'Mariana Pinheiro', cargo:'Sócia Fundadora',      ini:'MP', cor:'#214949' },
+  { nome:'Diana',            cargo:'Coordenação Jurídica', ini:'DC', cor:'#1f3e3c' },
+  { nome:'Jade',             cargo:'Operacional',           ini:'JL', cor:'#2b6052' },
+  { nome:'Mariana Barboza',  cargo:'Comercial',             ini:'MB', cor:'#4a7a70' },
+  { nome:'Laila Costa',      cargo:'Operacional',           ini:'LC', cor:'#8a9a8a' }
 ];
 
 let ativa = null;    // colaboradora selecionada
@@ -370,6 +441,14 @@ async function abrirDash() {
   document.getElementById('elog-para').innerHTML =
     COLS.filter(c => c.nome !== ativa.nome).map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
 
+  // Aba Gestão só para Mariana Pinheiro
+  const tabGestao = document.getElementById('tab-gestao');
+  if (ativa.nome === 'Mariana Pinheiro') {
+    tabGestao.classList.remove('hide');
+  } else {
+    tabGestao.classList.add('hide');
+  }
+
   await verificarSessao();
   carregarHoje();
   carregarEquipe();
@@ -388,6 +467,7 @@ function tab(id, btn) {
   if (id === 'equipe') carregarEquipe();
   if (id === 'mural') carregarMural();
   if (id === 'elogios') carregarElogios();
+  if (id === 'gestao') carregarGestao();
 }
 
 // ── SESSÃO ───────────────────────────────────────────────────────
@@ -401,7 +481,7 @@ async function verificarSessao() {
   const d = await r.json();
   if (d.length > 0) {
     const s = d[0];
-    sessao = { id: s.id, inicio: new Date(s.inicio), cliente: s.cliente, processo: s.processo, ambiente: s.ambiente };
+    sessao = { id: s.id, inicio: new Date(s.inicio), cliente: s.cliente, processo: s.processo, ambiente: s.ambiente, tipo: s.tipo_atividade || '—' };
     mostrarAtiva();
     iniciarTimer();
   }
@@ -411,6 +491,7 @@ function abrirIniciar() {
   document.getElementById('s-cli').value = '';
   document.getElementById('s-proc').value = '';
   document.getElementById('s-amb').value = 'escritório';
+  document.getElementById('s-tipo').value = 'Petição';
   document.getElementById('mod-sess').classList.add('show');
   setTimeout(() => document.getElementById('s-cli').focus(), 100);
 }
@@ -419,16 +500,17 @@ async function iniciar() {
   const cliente  = document.getElementById('s-cli').value.trim() || '—';
   const processo = document.getElementById('s-proc').value.trim() || '—';
   const ambiente = document.getElementById('s-amb').value;
+  const tipo     = document.getElementById('s-tipo').value;
   fechar('mod-sess');
 
   const r = await fetch(`${SB}/rest/v1/sessoes`, {
     method:'POST', headers: SH,
-    body: JSON.stringify({ colaboradora:ativa.nome, cargo:ativa.cargo, cliente, processo, ambiente })
+    body: JSON.stringify({ colaboradora:ativa.nome, cargo:ativa.cargo, cliente, processo, ambiente, tipo_atividade:tipo })
   });
   if (!r.ok) { alert('Erro ao iniciar sessão.'); return; }
   const d = await r.json();
   const s = Array.isArray(d) ? d[0] : d;
-  sessao = { id: s.id, inicio: new Date(s.inicio), cliente, processo, ambiente };
+  sessao = { id: s.id, inicio: new Date(s.inicio), cliente, processo, ambiente, tipo };
   mostrarAtiva();
   iniciarTimer();
 }
@@ -448,11 +530,12 @@ async function encerrar() {
 }
 
 function mostrarAtiva() {
-  const { cliente, processo, ambiente } = sessao;
+  const { cliente, processo, ambiente, tipo } = sessao;
   document.getElementById('sess-info').classList.add('show');
   document.getElementById('sess-row').innerHTML = `
     <div class="sitem"><div class="lbl">Cliente</div><div class="val">${cliente}</div></div>
     <div class="sitem"><div class="lbl">Processo</div><div class="val">${processo}</div></div>
+    <div class="sitem"><div class="lbl">Tipo</div><div class="val">${tipo||'—'}</div></div>
     <div class="sitem"><div class="lbl">Ambiente</div><div class="val">${ambiente==='home'?'🏠 Home':'🏢 Escritório'}</div></div>`;
   document.getElementById('btn-ini').classList.add('hide');
   document.getElementById('btn-enc').classList.remove('hide');
@@ -503,12 +586,13 @@ async function carregarHoje() {
   document.getElementById('st-s').textContent = rows.length;
 
   const tbody = document.getElementById('hist-body');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão hoje.</td></tr>'; return; }
   tbody.innerHTML = rows.map(s => {
     const ini = fmt(s.inicio);
     const fim = s.fim ? fmt(s.fim) : '<span style="color:var(--online);font-weight:700">● Em curso</span>';
     const amb = s.ambiente === 'home' ? '<span class="benv bhome">🏠 Home</span>' : '<span class="benv besc">🏢 Escritório</span>';
-    return `<tr><td>${ini}</td><td>${fim}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${amb}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
+    const tipo = s.tipo_atividade ? `<span class="bati">${s.tipo_atividade}</span>` : '—';
+    return `<tr><td>${ini}</td><td>${fim}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${tipo}</td><td>${amb}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
   }).join('');
 }
 
@@ -529,6 +613,7 @@ async function salvarManual() {
     cliente:document.getElementById('m-cli').value.trim()||'—',
     processo:document.getElementById('m-proc').value.trim()||'—',
     ambiente:document.getElementById('m-amb').value,
+    tipo_atividade:document.getElementById('m-tipo').value,
     inicio:iniISO, fim:fimISO, duracao_minutos:dur, lancamento_manual:true
   };
   const r = await fetch(`${SB}/rest/v1/sessoes`, { method:'POST', headers:SH, body:JSON.stringify(payload) });
@@ -615,6 +700,51 @@ async function enviarElogio() {
   });
   if (r.ok) { document.getElementById('elog-msg').value = ''; carregarElogios(); }
   else alert('Erro ao enviar.');
+}
+
+// ── GESTÃO ────────────────────────────────────────────────────────
+async function carregarGestao() {
+  const hoje = new Date().toISOString().split('T')[0];
+  const gdEl = document.getElementById('g-data');
+  if (!gdEl.value) gdEl.value = hoje;
+  const dt = gdEl.value;
+  const iniDia = new Date(dt + 'T00:00:00').toISOString();
+  const fimDia = new Date(dt + 'T23:59:59').toISOString();
+
+  const [rDia, rAtivas] = await Promise.all([
+    fetch(`${SB}/rest/v1/sessoes?inicio=gte.${iniDia}&inicio=lte.${fimDia}&order=inicio.desc`, { headers: SH }),
+    fetch(`${SB}/rest/v1/sessoes?fim=is.null&inicio=gte.${new Date(Date.now()-9*3600000).toISOString()}`, { headers: SH })
+  ]);
+  const rows  = rDia.ok   ? await rDia.json()   : [];
+  const ativas = rAtivas.ok ? await rAtivas.json() : [];
+
+  document.getElementById('g-online').textContent   = ativas.length;
+  const totalMin = rows.filter(s => s.fim).reduce((a, s) => a + (s.duracao_minutos||0), 0);
+  document.getElementById('g-horas').textContent    = hmin(totalMin) || '0min';
+  document.getElementById('g-sessoes').textContent  = rows.length;
+
+  // Gráfico de barras
+  const maxMin = Math.max(...COLS.map(c => rows.filter(s => s.colaboradora===c.nome && s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0)), 1);
+  document.getElementById('g-chart').innerHTML = COLS.map(c => {
+    const mins = rows.filter(s => s.colaboradora===c.nome && s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0);
+    const pct  = Math.round((mins/maxMin)*100);
+    return `<div class="bar-row">
+      <div class="bar-nome">${c.nome.split(' ')[0]}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${c.cor}"></div></div>
+      <div class="bar-val">${hmin(mins)||'—'}</div>
+    </div>`;
+  }).join('');
+
+  // Tabela
+  const tbody = document.getElementById('g-body');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9aafaf;padding:20px;">Nenhuma sessão nesta data.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(s => {
+    const c   = COLS.find(x => x.nome===s.colaboradora);
+    const av  = c ? `<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:50%;background:${c.cor};display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${c.ini}</span>${s.colaboradora}</span>` : s.colaboradora;
+    const fim = s.fim ? fmt(s.fim) : '<span style="color:var(--online);font-weight:700">● Em curso</span>';
+    const tipo = s.tipo_atividade ? `<span class="bati">${s.tipo_atividade}</span>` : '—';
+    return `<tr><td>${av}</td><td>${fmt(s.inicio)}</td><td>${fim}</td><td>${s.cliente||'—'} · ${s.processo||'—'}</td><td>${tipo}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
+  }).join('');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────
