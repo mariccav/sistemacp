@@ -308,6 +308,7 @@ footer strong{color:var(--br);}
 
 <!-- TABS (geradas dinamicamente por JS) -->
 <div class="tabs-wrap" id="tabs-wrap">
+  <button class="tab" id="tab-periodo-btn" onclick="ativarPeriodo(event)" style="border-right:1px solid rgba(167,168,151,.2);margin-right:8px;">Período Completo</button>
   <button class="tab tab-agente" id="tab-agente-btn" onclick="ativarAgente(event)">Agente IA <span class="badge-ia">✦</span></button>
 </div>
 <div style="background:var(--v3);padding:6px 48px;display:flex;align-items:center;gap:12px;min-height:36px;">
@@ -667,7 +668,9 @@ function gerarTabs() {
   const anoFinal = agora.getFullYear();
   const wrap = document.getElementById('tabs-wrap');
   const agenteBtn = document.getElementById('tab-agente-btn');
+  // Criar todos os botões de mês em ordem e inserir antes do Agente IA
   let m = INICIO_MES, a = INICIO_ANO;
+  const btns = [];
   while (a < anoFinal || (a === anoFinal && m <= mesFinal)) {
     const mes = m, ano = a;
     const btn = document.createElement('button');
@@ -677,9 +680,11 @@ function gerarTabs() {
     btn.dataset.ano = a;
     btn.id = `tab-${a}-${m}`;
     btn.onclick = () => selecionarMes(btn, mes, ano);
-    wrap.insertBefore(btn, agenteBtn);
+    btns.push(btn);
     m++; if (m > 12) { m = 1; a++; }
   }
+  // Inserir em ordem cronológica antes do botão Agente
+  btns.forEach(btn => wrap.insertBefore(btn, agenteBtn));
 }
 
 function selecionarMes(btn, mes, ano) {
@@ -1161,9 +1166,89 @@ function ativarAgente(e) {
   currentTab = 'agente';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   e.currentTarget.classList.add('active');
-  document.getElementById('mes-nav-bar').classList.remove('show');
   document.getElementById('panel').style.display = 'none';
   document.getElementById('panel-agente').classList.add('show');
+}
+
+async function ativarPeriodo(e) {
+  currentTab = 'periodo';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
+  document.getElementById('mes-atualizado').textContent = 'Carregando período completo...';
+  document.getElementById('loading-overlay').classList.add('show');
+
+  // Construir lista de meses desde o início
+  const agora = new Date();
+  const meses = [];
+  let m = INICIO_MES, a = INICIO_ANO;
+  while (a < agora.getFullYear() || (a === agora.getFullYear() && m <= agora.getMonth() + 1)) {
+    meses.push({ mes: m, ano: a });
+    m++; if (m > 12) { m = 1; a++; }
+  }
+
+  // Buscar todos os meses em paralelo
+  const resultados = await Promise.all(meses.map(async ({ mes, ano }) => {
+    try {
+      const resp = await fetch(`/api/honorarios?mes=${mes}&ano=${ano}`);
+      const api = resp.ok ? await resp.json() : { pessoal: { pagamentos: [] }, escritorio: { pagamentos: [] }, totalHonorarios: 0 };
+      const fmtData = s => { if (!s) return '—'; const [,mm,dd] = s.split('-'); return `${dd}/${mm}`; };
+      const lancAsaas = [
+        ...(api.pessoal.pagamentos||[]).map(p => ({ data: fmtData(p.dataPagamento), cliente: p.cliente, conta: 'Asaas Pessoal', valor: p.valor, mes, ano })),
+        ...(api.escritorio.pagamentos||[]).map(p => ({ data: fmtData(p.dataPagamento), cliente: p.cliente, conta: 'Asaas Empresa', valor: p.valor, mes, ano }))
+      ];
+      const rManual = await sbGet('lancamentos_manuais', mes, ano);
+      const lancManuais = (rManual||[]).map(lm => ({ data: lm.data, cliente: lm.cliente, conta: lm.conta, valor: parseFloat(lm.valor), mes, ano, manual: true, id: lm.id }));
+      const [repasses, despesas] = await Promise.all([ sbGet('repasses', mes, ano), sbGet('despesas', mes, ano) ]);
+      return {
+        mes, ano,
+        lancamentos: [...lancAsaas, ...lancManuais].sort((a,b) => a.data.localeCompare(b.data)),
+        honorarios: api.totalHonorarios + (rManual||[]).reduce((s,lm)=>s+parseFloat(lm.valor),0),
+        repasses: (repasses||[]).reduce((s,r)=>s+parseFloat(r.valor||0),0),
+        despesas: (despesas||[]).reduce((s,d)=>s+parseFloat(d.valor||0),0),
+      };
+    } catch { return { mes, ano, lancamentos: [], honorarios: 0, repasses: 0, despesas: 0 }; }
+  }));
+
+  // Agregar totais
+  const totalHon = resultados.reduce((s,r) => s + r.honorarios, 0);
+  const totalRep = resultados.reduce((s,r) => s + r.repasses, 0);
+  const totalDes = resultados.reduce((s,r) => s + r.despesas, 0);
+  const todosLanc = resultados.flatMap(r => r.lancamentos.map(l => ({ ...l, _mesLabel: `${MESES[r.mes-1]} ${r.ano}` })));
+  const mapa = {};
+  todosLanc.forEach(l => { mapa[l.cliente] = (mapa[l.cliente]||0) + l.valor; });
+  const porCliente = Object.entries(mapa).map(([nome,valor])=>({nome,valor})).sort((a,b)=>b.valor-a.valor);
+
+  dados['vivo'] = { honorarios: totalHon, repasses: totalRep, despesas: totalDes, lancamentos: todosLanc, porCliente, categoriasDespesa: [], repassesItems: [], mesTitulo: 'Período Completo' };
+
+  document.getElementById('hd-period').textContent = 'Período Completo';
+  document.getElementById('hon-table-title').textContent = 'Todos os Lançamentos — agrupados por mês';
+  document.getElementById('mes-atualizado').textContent = `Período completo · ${meses.length} meses carregados`;
+  document.getElementById('loading-overlay').classList.remove('show');
+
+  // Render com tabela agrupada por mês
+  render('vivo');
+
+  // Substituir tabela com agrupamento por mês
+  let honHTML = '';
+  resultados.forEach(r => {
+    if (!r.lancamentos.length) return;
+    const mesLabel = `${MESES[r.mes-1]} ${r.ano}`;
+    honHTML += `<tr style="background:#f2fdff;"><td colspan="5" style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:14px;color:#1f3e3c;padding:10px 12px;">${mesLabel} — ${fmt(r.honorarios)}</td></tr>`;
+    r.lancamentos.forEach(l => {
+      const acoes = l.manual ? `<td style="text-align:right"><button onclick="excluirLancamentoManual('${l.id}')" style="background:none;border:none;cursor:pointer;color:#c25e5e;font-size:12px;">✕</button></td>` : `<td></td>`;
+      honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td>${acoes}</tr>`;
+    });
+  });
+  honHTML += `<tr class="tr-total"><td colspan="4">TOTAL DO PERÍODO</td><td>${fmt(totalHon)}</td></tr>`;
+  document.getElementById('tbody-hon').innerHTML = honHTML;
+
+  // Seções editáveis (repasses/despesas do mês mais recente)
+  const ultimo = resultados[resultados.length - 1];
+  mesAtivo = ultimo.mes; anoAtivo = ultimo.ano;
+  const [rep, des] = await Promise.all([ sbGet('repasses', ultimo.mes, ultimo.ano), sbGet('despesas', ultimo.mes, ultimo.ano) ]);
+  setTimeout(() => renderSecaoEditavel(rep, des), 50);
 }
 
 function chatKeyDown(e) {
