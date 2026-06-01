@@ -62,12 +62,29 @@ async function buscarPagamentos(chave, dataInicio, dataFim) {
   const pagamentos = data.data || [];
   const total = pagamentos.reduce((soma, p) => soma + (p.value || 0), 0);
 
+  // Buscar nomes dos clientes que não vieram na listagem
+  const idsUnicos = [...new Set(
+    pagamentos.filter(p => !p.customerName && p.customer).map(p => p.customer)
+  )];
+  const nomeCliente = {};
+  await Promise.all(idsUnicos.map(async (id) => {
+    try {
+      const r = await fetch(`https://api.asaas.com/v3/customers/${id}`, {
+        headers: { access_token: chave }
+      });
+      if (r.ok) {
+        const c = await r.json();
+        nomeCliente[id] = c.name || null;
+      }
+    } catch {}
+  }));
+
   return {
     total: Math.round(total * 100) / 100,
     quantidade: pagamentos.length,
     pagamentos: pagamentos.map(p => ({
       id: p.id,
-      cliente: p.customerName || p.description || "Cliente",
+      cliente: p.customerName || nomeCliente[p.customer] || p.description || "Cliente",
       valor: p.value,
       dataPagamento: p.paymentDate,
       descricao: p.description || ""
