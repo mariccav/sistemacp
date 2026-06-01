@@ -224,6 +224,26 @@ footer strong{color:var(--br);}
   </div>
 </div>
 
+<!-- MODAL LANÇAMENTO MANUAL -->
+<div class="modal-overlay" id="modal-lancamento">
+  <div class="modal">
+    <h2 id="modal-lanc-titulo">Lançamento Manual</h2>
+    <input type="hidden" id="lanc-id">
+    <div class="form-row"><label>Data</label><input type="text" id="lanc-data" placeholder="14/05"></div>
+    <div class="form-row"><label>Cliente / Descrição</label><input type="text" id="lanc-cliente" placeholder="Nome do cliente"></div>
+    <div class="form-row"><label>Conta</label>
+      <select id="lanc-conta">
+        <option>Itaú</option><option>Banco do Brasil</option><option>Caixa</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="lanc-valor" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="fecharModal('modal-lancamento')">Cancelar</button>
+      <button class="btn-save" onclick="salvarLancamentoManual()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL REPASSE -->
 <div class="modal-overlay" id="modal-repasse">
   <div class="modal">
@@ -286,21 +306,12 @@ footer strong{color:var(--br);}
   </div>
 </header>
 
-<!-- TABS -->
-<div class="tabs-wrap">
-  <button class="tab active" onclick="setTab('abril')">Abril 2026</button>
-  <button class="tab" onclick="setTab('maio')">Maio 2026</button>
-  <button class="tab" onclick="setTab('total')">Período Completo</button>
-  <button class="tab tab-vivo" id="tab-vivo-btn" onclick="ativarVivo(event)">Ao Vivo <span class="badge-vivo">●</span></button>
+<!-- TABS (geradas dinamicamente por JS) -->
+<div class="tabs-wrap" id="tabs-wrap">
   <button class="tab tab-agente" id="tab-agente-btn" onclick="ativarAgente(event)">Agente IA <span class="badge-ia">✦</span></button>
 </div>
-
-<!-- BARRA DE NAVEGAÇÃO DE MÊS (só aparece na aba ao vivo) -->
-<div class="mes-nav-bar" id="mes-nav-bar">
-  <button class="mes-nav-btn" onclick="navegarMes(-1)">&#8249;</button>
-  <span class="mes-nav-titulo" id="mes-nav-titulo">—</span>
-  <button class="mes-nav-btn" onclick="navegarMes(1)">&#8250;</button>
-  <span class="mes-atualizado" id="mes-atualizado"></span>
+<div style="background:var(--v3);padding:6px 48px;display:flex;align-items:center;gap:12px;min-height:36px;">
+  <span class="mes-atualizado" id="mes-atualizado" style="font-size:11px;color:var(--bege);"></span>
 </div>
 
 <div class="main" id="panel">
@@ -340,9 +351,12 @@ footer strong{color:var(--br);}
   <!-- HONORÁRIOS TABLE -->
   <div class="section-lbl">Honorários — Lançamentos</div>
   <div class="tcard gap">
-    <h3 id="hon-table-title">Lançamentos do Mês</h3>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h3 id="hon-table-title">Lançamentos do Mês</h3>
+      <button class="btn-add" onclick="abrirModalLancamento(null)">+ Lançamento Manual</button>
+    </div>
     <table>
-      <thead><tr><th>Data</th><th>Cliente</th><th>Conta</th><th>Valor</th></tr></thead>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Conta</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
       <tbody id="tbody-hon"></tbody>
     </table>
   </div>
@@ -642,16 +656,49 @@ const CONTAS_BADGE = {
 };
 
 let chartCli = null, chartDes = null;
-let currentTab = 'abril';
+let currentTab = 'vivo';
+let mesAtivo = null, anoAtivo = null;
+const INICIO_MES = 4, INICIO_ANO = 2026;
+
+// ── GERAÇÃO DE ABAS DINÂMICAS ────────────────────────────────────
+function gerarTabs() {
+  const agora = new Date();
+  const mesFinal = agora.getMonth() + 1;
+  const anoFinal = agora.getFullYear();
+  const wrap = document.getElementById('tabs-wrap');
+  const agenteBtn = document.getElementById('tab-agente-btn');
+  let m = INICIO_MES, a = INICIO_ANO;
+  while (a < anoFinal || (a === anoFinal && m <= mesFinal)) {
+    const mes = m, ano = a;
+    const btn = document.createElement('button');
+    btn.className = 'tab';
+    btn.textContent = `${MESES[m-1]} ${a}`;
+    btn.dataset.mes = m;
+    btn.dataset.ano = a;
+    btn.id = `tab-${a}-${m}`;
+    btn.onclick = () => selecionarMes(btn, mes, ano);
+    wrap.insertBefore(btn, agenteBtn);
+    m++; if (m > 12) { m = 1; a++; }
+  }
+}
+
+function selecionarMes(btn, mes, ano) {
+  mesAtivo = mes; anoAtivo = ano;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-agente').classList.remove('show');
+  document.getElementById('panel').style.display = '';
+  carregarMes(mes, ano);
+}
 
 // ─────────────────────────────────────────
 // RENDER
 // ─────────────────────────────────────────
 function setTab(tab) {
+  // mantido por compatibilidade — não usado nas abas dinâmicas
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('mes-nav-bar').classList.remove('show');
+  if (event && event.target) event.target.classList.add('active');
   document.getElementById('panel-agente').classList.remove('show');
   document.getElementById('panel').style.display = '';
   render(tab);
@@ -663,11 +710,10 @@ function render(tab) {
   const d = dados[tab];
   const resultado = d.honorarios - d.repasses - d.despesas;
 
-  // Alternar seções estáticas vs editáveis
-  const isVivo = tab === 'vivo';
-  document.getElementById('secao-rep-estatica').style.display = isVivo ? 'none' : '';
-  document.getElementById('secao-rep-vivo').style.display     = isVivo ? '' : 'none';
-  document.getElementById('secao-des-vivo').style.display     = isVivo ? '' : 'none';
+  // Sempre modo dinâmico — seções editáveis sempre visíveis
+  document.getElementById('secao-rep-estatica').style.display = 'none';
+  document.getElementById('secao-rep-vivo').style.display     = '';
+  document.getElementById('secao-des-vivo').style.display     = '';
   // Ocultar tabela de despesas estática na aba ao vivo
   const desTcard = document.querySelector('.section-lbl + .tcard');
   // (gerenciado abaixo pelo display das seções)
@@ -753,22 +799,16 @@ function render(tab) {
     tab === 'total' ? `Todos os Lançamentos — ${d.lancamentos.length} entradas` : `Lançamentos de ${periodos[tab]}`;
 
   let honHTML = '';
-  if (tab === 'total') {
-    // Agrupar por mês
-    ['Abril','Maio'].forEach(mes => {
-      const itens = d.lancamentos.filter(l => l.mes === mes);
-      const total = itens.reduce((s,l) => s + l.valor, 0);
-      honHTML += `<tr class="tr-hvote"><td colspan="3"><strong>${mes} 2026</strong></td><td>${fmt(total)}</td></tr>`;
-      itens.forEach(l => {
-        honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
-      });
-    });
-  } else {
-    d.lancamentos.forEach(l => {
-      honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td></tr>`;
-    });
-  }
-  honHTML += `<tr class="tr-total"><td colspan="3">TOTAL</td><td>${fmt(d.honorarios)}</td></tr>`;
+  d.lancamentos.forEach(l => {
+    const acoes = l.manual
+      ? `<td style="text-align:right">
+           <button onclick="abrirModalLancamento(${JSON.stringify(l).replace(/"/g,'&quot;')})" style="background:none;border:none;cursor:pointer;color:var(--bege);font-size:12px;margin-right:6px;">✏️</button>
+           <button onclick="excluirLancamentoManual('${l.id}')" style="background:none;border:none;cursor:pointer;color:#c25e5e;font-size:12px;">✕</button>
+         </td>`
+      : `<td></td>`;
+    honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td>${acoes}</tr>`;
+  });
+  honHTML += `<tr class="tr-total"><td colspan="4">TOTAL</td><td>${fmt(d.honorarios)}</td></tr>`;
   tbHon.innerHTML = honHTML;
 
   // Tabela despesas (com categorias expansíveis)
@@ -984,30 +1024,19 @@ let vivoMes = new Date().getMonth() + 1;
 let vivoAno = new Date().getFullYear();
 
 function ativarVivo(e) {
-  currentTab = 'vivo';
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  e.currentTarget.classList.add('active');
-  document.getElementById('mes-nav-bar').classList.add('show');
-  document.getElementById('panel-agente').classList.remove('show');
-  document.getElementById('panel').style.display = '';
-  carregarVivo();
+  // redireciona para o mês atual dinamicamente
+  const agora = new Date();
+  const btn = document.getElementById(`tab-${agora.getFullYear()}-${agora.getMonth()+1}`);
+  if (btn) btn.click();
 }
 
-function navegarMes(delta) {
-  vivoMes += delta;
-  if (vivoMes > 12) { vivoMes = 1; vivoAno++; }
-  if (vivoMes < 1)  { vivoMes = 12; vivoAno--; }
-  carregarVivo();
-}
-
-async function carregarVivo() {
-  const nomeMes = `${MESES[vivoMes - 1]} ${vivoAno}`;
-  document.getElementById('mes-nav-titulo').textContent = nomeMes;
-  document.getElementById('mes-atualizado').textContent = '';
+async function carregarMes(mes, ano) {
+  const nomeMes = `${MESES[mes - 1]} ${ano}`;
+  document.getElementById('mes-atualizado').textContent = 'Carregando...';
   document.getElementById('loading-overlay').classList.add('show');
 
   try {
-    const resp = await fetch(`/api/honorarios?mes=${vivoMes}&ano=${vivoAno}`);
+    const resp = await fetch(`/api/honorarios?mes=${mes}&ano=${ano}`);
     if (!resp.ok) throw new Error(`Erro ${resp.status}`);
     const api = await resp.json();
 
@@ -1017,16 +1046,29 @@ async function carregarVivo() {
       return `${d}/${m}`;
     };
 
-    const lancamentos = [
+    // Lançamentos do Asaas
+    const lancAsaas = [
       ...(api.pessoal.pagamentos||[]).map(p => ({
         data: fmtData(p.dataPagamento), cliente: p.cliente,
-        conta: 'Asaas Pessoal', valor: p.valor
+        conta: 'Asaas Pessoal', valor: p.valor, manual: false
       })),
       ...(api.escritorio.pagamentos||[]).map(p => ({
         data: fmtData(p.dataPagamento), cliente: p.cliente,
-        conta: 'Asaas Empresa', valor: p.valor
+        conta: 'Asaas Empresa', valor: p.valor, manual: false
       }))
-    ].sort((a,b) => a.data.localeCompare(b.data));
+    ];
+
+    // Lançamentos manuais (Itaú, BB, etc.) do Supabase
+    const rManual = await sbGet('lancamentos_manuais', mes, ano);
+    const lancManuais = (rManual||[]).map(m => ({
+      data: m.data, cliente: m.cliente, conta: m.conta,
+      valor: parseFloat(m.valor), manual: true, id: m.id
+    }));
+
+    const lancamentos = [...lancAsaas, ...lancManuais]
+      .sort((a,b) => a.data.localeCompare(b.data));
+
+    const totalHonorarios = lancamentos.reduce((s,l) => s + l.valor, 0);
 
     const mapa = {};
     lancamentos.forEach(l => { mapa[l.cliente] = (mapa[l.cliente]||0) + l.valor; });
@@ -1035,31 +1077,79 @@ async function carregarVivo() {
       .sort((a,b) => b.valor - a.valor);
 
     dados['vivo'] = {
-      honorarios: api.totalHonorarios,
+      honorarios: totalHonorarios,
       repasses: 0, despesas: 0,
       lancamentos, porCliente,
       categoriasDespesa: [], repassesItems: [],
       mesTitulo: nomeMes
     };
 
-    // Buscar repasses e despesas do Supabase
+    // Repasses e despesas do Supabase
     const [repasses, despesas] = await Promise.all([
-      sbGet('repasses', vivoMes, vivoAno),
-      sbGet('despesas', vivoMes, vivoAno)
+      sbGet('repasses', mes, ano),
+      sbGet('despesas', mes, ano)
     ]);
 
-    const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-    document.getElementById('mes-atualizado').textContent = `Atualizado às ${agora}`;
-    document.getElementById('loading-overlay').classList.remove('show');
-    render('vivo');
+    const repTotal = (repasses||[]).reduce((s,r) => s + parseFloat(r.valor||0), 0);
+    const desTotal = (despesas||[]).reduce((s,d) => s + parseFloat(d.valor||0), 0);
+    dados['vivo'].repasses = repTotal;
+    dados['vivo'].despesas = desTotal;
 
-    // Renderizar seções editáveis após render
+    const agora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('mes-atualizado').textContent = `${nomeMes} · Atualizado às ${agora}`;
+    document.getElementById('loading-overlay').classList.remove('show');
+
+    document.getElementById('hon-table-title').textContent = `Lançamentos de ${nomeMes}`;
+    document.getElementById('hd-period').textContent = nomeMes;
+
+    render('vivo');
     setTimeout(() => renderSecaoEditavel(repasses, despesas), 50);
 
   } catch(err) {
     document.getElementById('loading-overlay').classList.remove('show');
-    alert('Não foi possível buscar os dados do Asaas.\n\nDetalhe: ' + err.message);
+    document.getElementById('mes-atualizado').textContent = 'Erro ao carregar dados';
+    console.error(err);
   }
+}
+
+// ── LANÇAMENTOS MANUAIS ──────────────────────────────────────────
+let lancEditando = null;
+
+function abrirModalLancamento(item) {
+  lancEditando = item;
+  document.getElementById('modal-lanc-titulo').textContent = item ? 'Editar Lançamento' : 'Lançamento Manual';
+  document.getElementById('lanc-id').value    = item?.id || '';
+  document.getElementById('lanc-data').value  = item?.data || '';
+  document.getElementById('lanc-cliente').value = item?.cliente || '';
+  document.getElementById('lanc-conta').value = item?.conta || 'Itaú';
+  document.getElementById('lanc-valor').value = item?.valor || '';
+  document.getElementById('modal-lancamento').classList.add('show');
+}
+
+async function salvarLancamentoManual() {
+  const d = {
+    mes:     mesAtivo,
+    ano:     anoAtivo,
+    data:    document.getElementById('lanc-data').value.trim(),
+    cliente: document.getElementById('lanc-cliente').value.trim(),
+    conta:   document.getElementById('lanc-conta').value,
+    valor:   parseFloat(document.getElementById('lanc-valor').value)
+  };
+  if (!d.cliente || !d.valor || !d.data) { alert('Preencha data, cliente e valor.'); return; }
+  const id = document.getElementById('lanc-id').value;
+  if (id) {
+    await sbUpdate('lancamentos_manuais', id, d);
+  } else {
+    await sbInsert('lancamentos_manuais', d);
+  }
+  fecharModal('modal-lancamento');
+  carregarMes(mesAtivo, anoAtivo);
+}
+
+async function excluirLancamentoManual(id) {
+  if (!confirm('Excluir este lançamento?')) return;
+  await sbDelete('lancamentos_manuais', id);
+  carregarMes(mesAtivo, anoAtivo);
 }
 
 // ─────────────────────────────────────────
@@ -1166,7 +1256,15 @@ function adicionarTyping() {
 }
 
 // Inicializar com Abril
-render('abril');
+// Gerar abas e abrir mês atual automaticamente
+gerarTabs();
+const _agora = new Date();
+const _tabAtual = document.getElementById(`tab-${_agora.getFullYear()}-${_agora.getMonth()+1}`);
+if (_tabAtual) _tabAtual.click();
+else {
+  const _tabs = document.querySelectorAll('#tabs-wrap .tab:not(#tab-agente-btn)');
+  if (_tabs.length) _tabs[_tabs.length - 1].click();
+}
 </script>
 </body>
 </html>
