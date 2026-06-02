@@ -522,9 +522,23 @@ async function executarFerramenta(nome, input, SB_URL, SB_KEY) {
       });
       if (!r.ok) return [];
       const data = await r.json();
-      return (data.data || []).map(p => ({
+      const pags = data.data || [];
+
+      // Buscar nomes dos clientes pelo ID
+      const idsUnicos = [...new Set(pags.filter(p => !p.customerName && p.customer).map(p => p.customer))];
+      const nomeCliente = {};
+      await Promise.all(idsUnicos.map(async (id) => {
+        try {
+          const rc = await fetch(`https://api.asaas.com/v3/customers/${id}`, {
+            headers: { 'access_token': k, 'Content-Type': 'application/json' }
+          });
+          if (rc.ok) { const c = await rc.json(); nomeCliente[id] = c.name || null; }
+        } catch {}
+      }));
+
+      return pags.map(p => ({
         id: p.id,
-        cliente: p.customerName || p.description || 'Cliente',
+        cliente: p.customerName || nomeCliente[p.customer] || p.description || 'Cliente',
         valor: p.value,
         vencimento: p.dueDate,
         status: p.status,
@@ -776,11 +790,24 @@ async function buscarPagamentosAsaas(chave, params) {
     const data = await r.json();
     const pags = data.data || [];
     const total = pags.reduce((s, p) => s + (p.value || 0), 0);
+
+    // Buscar nomes dos clientes pelo ID (Asaas não retorna customerName na listagem)
+    const idsUnicos = [...new Set(pags.filter(p => !p.customerName && p.customer).map(p => p.customer))];
+    const nomeCliente = {};
+    await Promise.all(idsUnicos.map(async (id) => {
+      try {
+        const rc = await fetch(`https://api.asaas.com/v3/customers/${id}`, {
+          headers: { 'access_token': chave, 'Content-Type': 'application/json' }
+        });
+        if (rc.ok) { const c = await rc.json(); nomeCliente[id] = c.name || null; }
+      } catch {}
+    }));
+
     return {
       total: Math.round(total * 100) / 100,
       quantidade: pags.length,
       pagamentos: pags.map(p => ({
-        cliente: p.customerName || p.description || 'Cliente',
+        cliente: p.customerName || nomeCliente[p.customer] || p.description || 'Cliente',
         valor: p.value,
         data: p.paymentDate
       }))
