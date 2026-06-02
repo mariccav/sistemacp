@@ -270,6 +270,26 @@ module.exports = async (req, res) => {
         },
         required: ["subscription_id", "conta"]
       }
+    },
+    {
+      name: "registrar_honorario_manual",
+      description: "Registra um honorário recebido fora do Asaas — via PIX direto, TED, Itaú, Banco do Brasil ou outro meio. Salva no sistema financeiro para aparecer no dashboard. Pode executar diretamente sem confirmação.",
+      input_schema: {
+        type: "object",
+        properties: {
+          cliente:  { type: "string", description: "Nome do cliente ou descrição do recebimento" },
+          valor:    { type: "number", description: "Valor recebido em reais" },
+          data:     { type: "string", description: "Data do recebimento no formato DD/MM" },
+          mes:      { type: "number", description: "Mês de referência (1-12)" },
+          ano:      { type: "number", description: "Ano de referência (ex: 2026)" },
+          conta: {
+            type: "string",
+            enum: ["PIX Direto", "Itaú", "Banco do Brasil", "Caixa", "Outro"],
+            description: "Por onde o dinheiro entrou. Se Mariana disser 'PIX', use 'PIX Direto'."
+          }
+        },
+        required: ["cliente", "valor", "data", "mes", "ano", "conta"]
+      }
     }
   ];
 
@@ -299,6 +319,7 @@ CAPACIDADES:
 - Registrar repasses a parceiros
 - Registrar despesas do escritório
 - Excluir repasses e despesas
+- Registrar honorários recebidos manualmente (PIX direto, TED, Itaú, etc.) — use registrar_honorario_manual
 
 REGRAS DE EXECUÇÃO:
 
@@ -313,6 +334,7 @@ REGRAS DE EXECUÇÃO:
 
 2. AÇÕES DIRETAS (sem confirmação):
    - Registrar repasse ou despesa
+   - Registrar honorário manual (PIX, TED, Itaú, BB)
    - Consultar qualquer dado
    - Buscar clientes ou assinaturas
 
@@ -629,6 +651,37 @@ async function executarFerramenta(nome, input, SB_URL, SB_KEY) {
     const data = await r.json();
     const item = Array.isArray(data) ? data[0] : data;
     return { sucesso: true, id: item?.id, categoria, descricao, valor, mes, ano, mensagem: `Despesa "${descricao}" de R$ ${valor.toFixed(2).replace('.',',')} registrada.` };
+  }
+
+  // REGISTRAR HONORÁRIO MANUAL (PIX, TED, Itaú, etc.) ────────────────────────
+
+  if (nome === 'registrar_honorario_manual') {
+    const { cliente, valor, data, mes, ano, conta } = input;
+    const SB_HEAD = {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
+    const payload = { mes, ano, data, cliente, conta, valor };
+    const r = await fetch(`${SB_URL}/rest/v1/lancamentos_manuais`, {
+      method: 'POST',
+      headers: SB_HEAD,
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return { erro: `Supabase ${r.status}: ${t}` };
+    }
+    const d = await r.json();
+    const item = Array.isArray(d) ? d[0] : d;
+    const valorFmt = `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return {
+      sucesso: true,
+      id: item?.id,
+      cliente, valor, data, mes, ano, conta,
+      mensagem: `Honorário de **${valorFmt}** de **${cliente}** via **${conta}** registrado em ${data}/${String(mes).padStart(2,'0')}/${ano}. Já aparece no dashboard financeiro.`
+    };
   }
 
   // EXCLUIR ITEM ──────────────────────────────────────────────────────────────
