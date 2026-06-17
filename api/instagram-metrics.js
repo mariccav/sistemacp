@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json");
 
   const token  = process.env.INSTAGRAM_ACCESS_TOKEN;
-  const userId = process.env.INSTAGRAM_USER_ID;
+  const userId = process.env.INSTAGRAM_USER_ID || process.env.ID_DE_USUÁRIO_DO_INSTAGRAM;
 
   if (!token || !userId) {
     return res.status(200).json({
