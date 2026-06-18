@@ -291,13 +291,13 @@ textarea.field-input{resize:vertical;min-height:80px;}
           <button class="modal-tab active" onclick="ctab(this,'ct-dados')">Dados</button>
           <button class="modal-tab" onclick="ctab(this,'ct-prazos')">Prazos <span class="modal-tab-badge" id="badge-prazos" style="display:none">!</span></button>
           <button class="modal-tab" onclick="ctab(this,'ct-hist')">Histórico</button>
-          <button class="modal-tab" onclick="ctab(this,'ct-alice')">Alice ✦</button>
+          <button class="modal-tab" onclick="ctab(this,'ct-laura')">Laura ✦</button>
         </div>
         <div class="tab-content">
           <div id="ct-dados"></div>
           <div id="ct-prazos" style="display:none"></div>
           <div id="ct-hist" style="display:none"></div>
-          <div id="ct-alice" style="display:none;flex-direction:column;height:100%;padding:0;"></div>
+          <div id="ct-laura" style="display:none;flex-direction:column;height:100%;padding:0;"></div>
         </div>
       </div>
 
@@ -516,7 +516,7 @@ const HIST_ICONS = { manual:'📝', etapa_mudou:'➡️', contrato:'🖊️', co
 
 // ── ESTADO ────────────────────────────────────────────────────────────────────
 let todosCasos = [], casosFiltrados = [], casoAtivo = null;
-let aliceHistorico = [], viewAtual = 'kanban', origemNovo = 'avulso';
+let lauraHistorico = [], viewAtual = 'kanban', origemNovo = 'avulso';
 let prazosCaso = [], leads_convertidos = [];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -719,7 +719,7 @@ function renderLista(){
 async function abrirCaso(id){
   casoAtivo=todosCasos.find(c=>c.id===id);
   if(!casoAtivo)return;
-  aliceHistorico=[];
+  lauraHistorico=[];
   document.getElementById('mc-titulo').textContent=casoAtivo.cliente_nome;
   document.getElementById('mc-sub').textContent=(casoAtivo.orgao||'')+(casoAtivo.cliente_cnpj?' · '+casoAtivo.cliente_cnpj:'');
   // Side cards
@@ -738,7 +738,7 @@ async function abrirCaso(id){
   } else { cs.textContent='Nenhum contrato enviado.'; }
   // Ativar primeira aba
   document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
-  ['ct-dados','ct-prazos','ct-hist','ct-alice'].forEach(id=>document.getElementById(id).style.display='none');
+  ['ct-dados','ct-prazos','ct-hist','ct-laura'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('ct-dados').style.display='block';
   renderTabDados();
   abrirModal('mod-caso');
@@ -754,12 +754,12 @@ function fecharCaso(){fecharModal('mod-caso');casoAtivo=null;}
 function ctab(btn,id){
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  ['ct-dados','ct-prazos','ct-hist','ct-alice'].forEach(t=>document.getElementById(t).style.display='none');
+  ['ct-dados','ct-prazos','ct-hist','ct-laura'].forEach(t=>document.getElementById(t).style.display='none');
   const el=document.getElementById(id);
-  el.style.display=id==='ct-alice'?'flex':'block';
+  el.style.display=id==='ct-laura'?'flex':'block';
   if(id==='ct-prazos')renderTabPrazos();
   if(id==='ct-hist')renderTabHist();
-  if(id==='ct-alice')renderTabAlice();
+  if(id==='ct-laura')renderTabLaura();
 }
 
 // ── ABA DADOS ─────────────────────────────────────────────────────────────────
@@ -934,16 +934,16 @@ async function registrarHist(){
 }
 
 // ── ABA ALICE ─────────────────────────────────────────────────────────────────
-function renderTabAlice(){
-  const el=document.getElementById('ct-alice');
+function renderTabLaura(){
+  const el=document.getElementById('ct-laura');
   el.style.cssText='display:flex;flex-direction:column;height:100%;padding:0';
   if(el.querySelector('.chat-msgs'))return; // já renderizado
   el.innerHTML=`
     <div style="padding:12px 16px;background:#f8fdfd;border-bottom:1px solid #e8f0f0;flex-shrink:0">
-      <div style="font-size:12px;font-weight:700;color:var(--v1)">✦ Alice — Especialista em Transação Tributária</div>
+      <div style="font-size:12px;font-weight:700;color:var(--v1)">✦ Laura — Especialista em Transação Tributária</div>
       <div style="font-size:11px;color:var(--bege)">Contexto do caso carregado automaticamente</div>
     </div>
-    <div class="chips" id="alice-chips">
+    <div class="chips" id="laura-chips">
       <span class="chip" onclick="usarChip(this)">Qual modalidade é mais vantajosa para esse caso?</span>
       <span class="chip" onclick="usarChip(this)">Estime o desconto provável com base no perfil</span>
       <span class="chip" onclick="usarChip(this)">Rascunhe o requerimento inicial para protocolo</span>
@@ -951,45 +951,45 @@ function renderTabAlice(){
       <span class="chip" onclick="usarChip(this)">Quais documentos solicitar ao cliente?</span>
       <span class="chip" onclick="usarChip(this)">Como estruturar o argumento de negociação?</span>
     </div>
-    <div class="chat-msgs" id="alice-msgs"></div>
+    <div class="chat-msgs" id="laura-msgs"></div>
     <div class="chat-input-row">
-      <textarea id="alice-input" placeholder="Pergunte à Alice sobre este caso..." onkeydown="aliceKeyDown(event)"></textarea>
-      <button onclick="enviarAlice()">→</button>
+      <textarea id="laura-input" placeholder="Pergunte à Laura sobre este caso..." onkeydown="lauraKeyDown(event)"></textarea>
+      <button onclick="enviarLaura()">→</button>
     </div>`;
 }
 
 function usarChip(el){
-  document.getElementById('alice-input').value=el.textContent;
-  document.getElementById('alice-chips').style.display='none';
-  enviarAlice();
+  document.getElementById('laura-input').value=el.textContent;
+  document.getElementById('laura-chips').style.display='none';
+  enviarLaura();
 }
 
-function aliceKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarAlice();}}
+function lauraKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarLaura();}}
 
-async function enviarAlice(){
-  const input=document.getElementById('alice-input');
+async function enviarLaura(){
+  const input=document.getElementById('laura-input');
   const msg=input.value.trim();
   if(!msg)return;
   input.value='';
-  const msgs=document.getElementById('alice-msgs');
+  const msgs=document.getElementById('laura-msgs');
   msgs.innerHTML+=`<div class="cmsg user">${msg}</div>`;
-  msgs.innerHTML+=`<div class="cmsg agent" id="alice-typing"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.innerHTML+=`<div class="cmsg agent" id="laura-typing"><div class="typing"><span></span><span></span><span></span></div></div>`;
   msgs.scrollTop=msgs.scrollHeight;
-  aliceHistorico.push({role:'user',content:msg});
+  lauraHistorico.push({role:'user',content:msg});
   try{
-    const r=await fetch('/api/alice',{
+    const r=await fetch('/api/laura',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({mensagem:msg,historico:aliceHistorico.slice(-10),caso:casoAtivo})
+      body:JSON.stringify({mensagem:msg,historico:lauraHistorico.slice(-10),caso:casoAtivo})
     });
     const d=await r.json();
-    document.getElementById('alice-typing')?.remove();
+    document.getElementById('laura-typing')?.remove();
     const resposta=d.resposta||d.erro||'Erro ao obter resposta';
     msgs.innerHTML+=`<div class="cmsg agent">${resposta.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div>`;
-    aliceHistorico.push({role:'assistant',content:resposta});
+    lauraHistorico.push({role:'assistant',content:resposta});
     msgs.scrollTop=msgs.scrollHeight;
   }catch(e){
-    document.getElementById('alice-typing')?.remove();
+    document.getElementById('laura-typing')?.remove();
     msgs.innerHTML+=`<div class="cmsg agent" style="color:var(--verm)">Erro de conexão. Tente novamente.</div>`;
   }
 }
