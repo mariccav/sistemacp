@@ -282,12 +282,14 @@ textarea.field-input{resize:vertical;min-height:80px;}
     <button class="painel-tab" onclick="ptab(this,'pt-contatos')">Contatos</button>
     <button class="painel-tab" onclick="ptab(this,'pt-historico')">Histórico</button>
     <button class="painel-tab" onclick="ptab(this,'pt-followups')">Follow-ups</button>
+    <button class="painel-tab" onclick="ptab(this,'pt-natalia')" style="color:#2b6052;font-weight:700;">Natalia ✦</button>
   </div>
   <div class="painel-body">
     <div id="pt-dados"></div>
     <div id="pt-contatos" style="display:none"></div>
     <div id="pt-historico" style="display:none"></div>
     <div id="pt-followups" style="display:none"></div>
+    <div id="pt-natalia" style="display:none;flex-direction:column;height:100%;padding:0;"></div>
   </div>
   <div class="painel-footer">
     <button class="btn-converter" onclick="abrirConverter()">CONVERTER EM CASO DE TRANSAÇÃO →</button>
@@ -790,9 +792,12 @@ function fecharPainel() {
 function ptab(btn, id) {
   document.querySelectorAll('.painel-tab').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
-  ['pt-dados','pt-contatos','pt-historico','pt-followups'].forEach(t=>
-    document.getElementById(t).style.display = t===id?'block':'none'
-  );
+  ['pt-dados','pt-contatos','pt-historico','pt-followups','pt-natalia'].forEach(t=>{
+    const el=document.getElementById(t);
+    if(t==='pt-natalia') el.style.display=t===id?'flex':'none';
+    else el.style.display=t===id?'block':'none';
+  });
+  if(id==='pt-natalia') renderNatalia();
 }
 
 async function salvarEtapa() {
@@ -1223,6 +1228,153 @@ async function confirmarConverter() {
     renderView(); renderKPIs();
     toast('Lead convertido em transação ✓');
   } catch(e) { toast('Erro: '+e.message, true); }
+}
+
+// ── NATALIA ───────────────────────────────────────────────────────────────────
+let nataliaHistorico = [];
+
+function renderNatalia() {
+  const el = document.getElementById('pt-natalia');
+  if (el.querySelector('.natalia-msgs')) return; // já renderizada
+  nataliaHistorico = [];
+  el.style.cssText = 'display:flex;flex-direction:column;height:100%;padding:0;overflow:hidden;';
+  el.innerHTML = `
+    <div style="padding:12px 16px;background:#f8fdfd;border-bottom:1px solid #e8f0f0;flex-shrink:0;">
+      <div style="font-size:12px;font-weight:700;color:var(--v1);">✦ Natalia — Estrategista Comercial</div>
+      <div style="font-size:11px;color:var(--bege);">Contexto do lead carregado · Dossiês e propostas</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid #f0f7f7;flex-shrink:0;">
+      <span style="background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--v1);" onclick="nataliaChip(this)">Preparar dossiê de reunião</span>
+      <span style="background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--v1);" onclick="nataliaChip(this)">Gerar proposta comercial</span>
+      <span style="background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--v1);" onclick="nataliaChip(this)">Quais oportunidades tributárias vê?</span>
+      <span style="background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:4px 11px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;color:var(--v1);" onclick="nataliaChip(this)">Como abordar esse lead?</span>
+    </div>
+    <div class="natalia-msgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;">
+      <div style="background:#f0f7f7;border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:13px;line-height:1.55;max-width:95%;color:var(--v1);">
+        Olá. Tenho os dados do <strong>${leadAtivo?.nome_fantasia || leadAtivo?.razao_social || 'lead'}</strong> carregados.<br><br>
+        Posso preparar o dossiê completo para a reunião, gerar uma proposta personalizada ou analisar as oportunidades tributárias para esse perfil. O que precisa?
+      </div>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid #e8f0f0;flex-shrink:0;display:flex;gap:8px;" id="natalia-doc-bar" style="display:none">
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid #e8f0f0;flex-shrink:0;display:flex;gap:8px;">
+      <textarea id="natalia-input" placeholder="Pergunte à Natalia sobre este lead..." style="flex:1;padding:8px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;resize:none;outline:none;height:36px;color:var(--v1);" onkeydown="nataliaKey(event)"></textarea>
+      <button onclick="nataliaEnviar()" style="padding:8px 14px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">→</button>
+    </div>`;
+}
+
+function nataliaChip(el) {
+  document.getElementById('natalia-input').value = el.textContent;
+  nataliaEnviar();
+}
+function nataliaKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();nataliaEnviar();} }
+
+async function nataliaEnviar() {
+  const input = document.getElementById('natalia-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const msgs = document.querySelector('.natalia-msgs');
+  const addMsg = (tipo, txt) => {
+    const d = document.createElement('div');
+    d.style.cssText = tipo==='user'
+      ? 'background:var(--v1);color:#fff;border-radius:12px 12px 2px 12px;padding:10px 14px;font-size:12px;line-height:1.5;max-width:95%;align-self:flex-end;'
+      : 'background:#f0f7f7;color:var(--v1);border-radius:12px 12px 12px 2px;padding:10px 14px;font-size:12px;line-height:1.6;max-width:95%;';
+    d.innerHTML = tipo==='user' ? txt.replace(/</g,'&lt;')
+      : txt.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+    return d;
+  };
+
+  addMsg('user', msg);
+  const typing = addMsg('agent', '<span style="color:var(--bege)">✦ analisando...</span>');
+  nataliaHistorico.push({ role: 'user', content: msg });
+
+  try {
+    const r = await fetch('/api/natalia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensagem: msg,
+        historico: nataliaHistorico.slice(-12),
+        lead_id: leadAtivo?.id || null
+      })
+    });
+    const d = await r.json();
+    typing.remove();
+
+    if (d.resposta) {
+      addMsg('agent', d.resposta);
+      nataliaHistorico.push({ role: 'assistant', content: d.resposta });
+    }
+
+    if (d.documento_html) {
+      // Guardar doc e mostrar botões de ação
+      window._nataliaDocHtml = d.documento_html;
+      const bar = document.getElementById('natalia-doc-bar');
+      bar.style.display = 'flex';
+      bar.style.gap = '8px';
+      bar.innerHTML = `
+        <span style="font-size:11px;color:var(--bege);flex:1;align-self:center;">Documento pronto</span>
+        <button onclick="nataliaVerDoc()" style="padding:6px 12px;background:#fff;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;cursor:pointer;color:var(--v1);">👁 Visualizar</button>
+        <button onclick="nataliaBaixar()" style="padding:6px 12px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">↓ PDF</button>`;
+      if (!d.resposta) addMsg('agent', 'Documento gerado. Use os botões acima para visualizar ou baixar o PDF.');
+    }
+  } catch(e) {
+    typing.remove();
+    addMsg('agent', 'Erro de conexão. Tente novamente.');
+  }
+}
+
+function nataliaVerDoc() {
+  if (!window._nataliaDocHtml) return;
+  const w = window.open('', '_blank');
+  w.document.write(buildNataliaDoc(window._nataliaDocHtml));
+  w.document.close();
+}
+
+async function nataliaBaixar() {
+  if (!window._nataliaDocHtml) return;
+  const div = document.createElement('div');
+  div.innerHTML = buildNataliaDoc(window._nataliaDocHtml);
+  div.style.position = 'fixed'; div.style.left = '-9999px';
+  document.body.appendChild(div);
+  const nome = (leadAtivo?.razao_social || 'documento').replace(/\s+/g,'_').substring(0,30);
+  try {
+    const { default: html2pdf } = await import('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+    await html2pdf().set({ margin:0, filename: nome+'.pdf', html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4'} }).from(div).save();
+  } catch {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;width:210mm;height:297mm;';
+    iframe.srcdoc = buildNataliaDoc(window._nataliaDocHtml);
+    document.body.appendChild(iframe);
+    iframe.onload = () => { iframe.contentWindow.print(); setTimeout(()=>iframe.remove(),2000); };
+  }
+  setTimeout(()=>div.remove(), 3000);
+}
+
+function buildNataliaDoc(conteudo) {
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;font-size:11pt;line-height:1.7;color:#1a1a1a;background:#fff;}
+.capa{min-height:100vh;background:#1f3e3c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;text-align:center;page-break-after:always;}
+.capa img{height:56px;margin-bottom:48px;filter:brightness(0) invert(1);}
+h1,h2,h3{font-family:'Cormorant Garamond',serif;color:#1f3e3c;}
+.conteudo{padding:22mm 22mm 20mm;}
+p{margin-bottom:10px;text-align:justify;}
+h2{font-size:13pt;text-transform:uppercase;letter-spacing:1px;margin-top:18px;margin-bottom:7px;border-bottom:1px solid #e0e8e8;padding-bottom:4px;}
+h3{font-size:11.5pt;margin-top:12px;margin-bottom:5px;}
+strong{font-weight:700;}
+ul{margin-left:20px;margin-bottom:10px;}
+li{margin-bottom:4px;}
+@media print{@page{margin:0;} .capa{page-break-after:always;}}
+</style></head><body>
+${conteudo}
+</body></html>`;
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
