@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helena — Documentos Jurídicos · CP</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Nunito:wght@300;400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--br:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+header{background:var(--v1);color:#fff;padding:16px 36px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;transition:.2s;}
+.hd-back:hover{color:#fff;}
+
+.workspace{flex:1;display:grid;grid-template-columns:400px 1fr;overflow:hidden;}
+
+/* PAINEL ESQUERDO — CHAT */
+.chat-panel{display:flex;flex-direction:column;border-right:1px solid #e8f0f0;background:#fff;}
+.chat-header{padding:16px 20px;border-bottom:1px solid #e8f0f0;background:#f8fdfd;}
+.chat-header h3{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--v1);}
+.chat-header p{font-size:11px;color:var(--bege);margin-top:2px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;border-bottom:1px solid #f0f7f7;}
+.chip{background:#f2fdff;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;transition:.2s;font-family:'Nunito',sans-serif;color:var(--v1);}
+.chip:hover{background:var(--v1);color:#fff;border-color:var(--v1);}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;}
+.cmsg{max-width:92%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.55;}
+.cmsg.user{background:var(--v1);color:#fff;align-self:flex-end;border-radius:12px 12px 2px 12px;}
+.cmsg.agent{background:#f0f7f7;color:var(--v1);align-self:flex-start;border-radius:12px 12px 12px 2px;}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0;}
+.typing span{width:6px;height:6px;background:var(--bege);border-radius:50%;animation:bounce .8s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.chat-input-area{padding:12px 16px;border-top:1px solid #e8f0f0;display:flex;gap:8px;}
+.chat-input-area textarea{flex:1;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;outline:none;height:40px;color:var(--v1);}
+.chat-input-area textarea::placeholder{color:var(--bege);}
+.btn-send{padding:9px 16px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-send:hover{background:var(--v2);}
+
+/* PAINEL DIREITO — DOCUMENTO */
+.doc-panel{display:flex;flex-direction:column;overflow:hidden;background:#e8ecec;}
+.doc-toolbar{padding:12px 20px;background:#fff;border-bottom:1px solid #e8f0f0;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.doc-toolbar span{font-size:12px;color:var(--bege);font-weight:600;flex:1;}
+.btn-tool{padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:.2s;}
+.btn-pdf{background:var(--v1);color:#fff;}
+.btn-pdf:hover{background:var(--v2);}
+.btn-cs{background:#fff;color:var(--v1);border:1px solid rgba(167,168,151,.4);}
+.btn-cs:hover{background:var(--bg);}
+.btn-limpar{background:#fff;color:var(--bege);border:1px solid rgba(167,168,151,.3);}
+.doc-preview{flex:1;overflow-y:auto;padding:24px;display:flex;justify-content:center;}
+.doc-preview-inner{width:210mm;min-height:297mm;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12);padding:0;}
+
+/* VAZIO */
+.doc-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--bege);gap:12px;}
+.doc-empty-icon{font-size:48px;opacity:.4;}
+.doc-empty p{font-size:13px;text-align:center;max-width:280px;line-height:1.6;}
+
+/* ════════════════════════════════
+   ESTILOS DO DOCUMENTO GERADO
+════════════════════════════════ */
+.doc-wrap{font-family:'EB Garamond',Georgia,serif;font-size:11.5pt;line-height:1.7;color:#1a1a1a;}
+
+/* CAPA */
+.doc-capa{
+  width:100%;min-height:297mm;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:#1f3e3c;
+  color:#fff;
+  padding:60px 48px;
+  text-align:center;
+  page-break-after:always;
+}
+.doc-capa img{height:64px;width:auto;margin-bottom:48px;filter:brightness(0) invert(1);}
+.doc-capa-linha{width:60px;height:2px;background:#a7a897;margin:20px auto;}
+.doc-capa-tipo{font-family:'Cormorant Garamond',serif;font-size:11pt;letter-spacing:4px;text-transform:uppercase;color:#a7a897;margin-bottom:20px;}
+.doc-capa-titulo{font-family:'Cormorant Garamond',serif;font-size:22pt;font-weight:600;line-height:1.3;margin-bottom:32px;color:#fff;}
+.doc-capa-cliente{font-family:'Cormorant Garamond',serif;font-size:14pt;color:#d4c9b5;margin-bottom:8px;}
+.doc-capa-data{font-size:10pt;color:#a7a897;letter-spacing:1px;}
+.doc-capa-rodape{margin-top:auto;font-size:9pt;color:#a7a897;letter-spacing:.5px;line-height:1.8;}
+
+/* CONTEÚDO */
+.doc-conteudo{padding:25mm 22mm 20mm 22mm;}
+.doc-header-interno{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #ddd;}
+.doc-header-interno img{height:36px;width:auto;}
+.doc-header-interno-info{text-align:right;font-size:8pt;color:#777;line-height:1.6;}
+
+.doc-titulo-principal{font-family:'Cormorant Garamond',serif;font-size:16pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:2px;margin-bottom:28px;color:#1f3e3c;}
+
+.doc-wrap p{margin-bottom:12px;text-align:justify;}
+.doc-wrap h2,.doc-wrap h3{font-family:'Cormorant Garamond',serif;font-weight:600;color:#1f3e3c;margin-top:20px;margin-bottom:8px;}
+.doc-wrap h2{font-size:12pt;text-transform:uppercase;letter-spacing:.5px;}
+.doc-wrap h3{font-size:11.5pt;}
+.doc-wrap strong{font-weight:600;}
+.doc-wrap em{font-style:italic;}
+
+.assinaturas{margin-top:40px;page-break-inside:avoid;}
+.assinaturas-data{text-align:center;margin-bottom:32px;font-size:11pt;}
+.assinaturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:16px;}
+.assinatura-bloco{text-align:center;}
+.assinatura-linha{border-top:1px solid #333;padding-top:8px;margin-top:48px;font-size:10pt;}
+.testemunhas{margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+.testemunha-bloco{font-size:9.5pt;line-height:1.8;}
+
+@media print{
+  body{background:#fff;}
+  .workspace{grid-template-columns:1fr;}
+  .chat-panel,.doc-toolbar,header{display:none!important;}
+  .doc-panel{border:none;}
+  .doc-preview{padding:0;}
+  .doc-preview-inner{box-shadow:none;width:100%;}
+}
+
+@media(max-width:900px){
+  .workspace{grid-template-columns:1fr;}
+  .chat-panel{height:50vh;border-right:none;border-bottom:1px solid #e8f0f0;}
+  .doc-panel{height:50vh;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Helena ◆ — Documentos Jurídicos</h1>
+    <p>Contratos de honorários · Procurações · Cavalcante Pinheiro Advocacia</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar</a>
+</header>
+
+<div class="workspace">
+
+  <!-- CHAT -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h3>Helena</h3>
+      <p>Informe o cliente e o tipo de documento · Ela busca os dados e gera</p>
+    </div>
+    <div class="chips" id="chips">
+      <span class="chip" onclick="usarChip(this)">Gerar contrato de honorários</span>
+      <span class="chip" onclick="usarChip(this)">Gerar procuração</span>
+      <span class="chip" onclick="usarChip(this)">Contrato de consultoria recorrente</span>
+      <span class="chip" onclick="usarChip(this)">Procuração com poderes específicos</span>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="cmsg agent">Olá. Sou Helena, responsável pelos documentos jurídicos do escritório.<br><br>Me diga o <strong>nome ou CNPJ do cliente</strong> e o <strong>tipo de documento</strong> que precisa. Busco os dados na base e gero o documento completo para revisão e envio.</div>
+    </div>
+    <div class="chat-input-area">
+      <textarea id="chat-input" placeholder="Ex: Gerar contrato de equiparação hospitalar para SINBA..." onkeydown="keyDown(event)" oninput="resize(this)"></textarea>
+      <button class="btn-send" onclick="enviar()">→</button>
+    </div>
+  </div>
+
+  <!-- DOCUMENTO -->
+  <div class="doc-panel">
+    <div class="doc-toolbar">
+      <span id="doc-titulo-toolbar">Nenhum documento gerado</span>
+      <button class="btn-tool btn-limpar" onclick="limparDoc()" id="btn-limpar" style="display:none">↺ Limpar</button>
+      <button class="btn-tool btn-cs" onclick="enviarClickSign()" id="btn-cs" style="display:none">✍ ClickSign</button>
+      <button class="btn-tool btn-pdf" onclick="baixarPDF()" id="btn-pdf" style="display:none">↓ Baixar PDF</button>
+    </div>
+    <div class="doc-preview" id="doc-preview">
+      <div class="doc-empty">
+        <div class="doc-empty-icon">◆</div>
+        <p>O documento gerado por Helena aparecerá aqui para revisão antes do envio.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CLICKSIGN -->
+<div id="mod-cs" style="display:none;position:fixed;inset:0;background:rgba(31,62,60,.75);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:440px;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#1f3e3c;margin-bottom:4px;">Enviar para Assinatura</div>
+    <div style="font-size:12px;color:#a7a897;margin-bottom:20px;">Via ClickSign</div>
+    <div style="margin-bottom:12px;"><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Nome do Signatário *</label><input id="cs-nome" type="text" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+    <div style="margin-bottom:12px;"><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">E-mail *</label><input id="cs-email" type="email" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+    <div style="margin-bottom:20px;"><label style="font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">CPF</label><input id="cs-cpf" type="text" placeholder="000.000.000-00" style="width:100%;padding:9px 12px;border:1px solid #dde8e8;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:#1f3e3c;outline:none;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="document.getElementById('mod-cs').style.display='none'" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:9px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;">Cancelar</button>
+      <button onclick="confirmarCS()" style="background:#1f3e3c;color:#fff;border:none;padding:9px 22px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;" id="btn-cs-conf">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let historico = [];
+let docAtual = null;
+let docTitulo = 'documento';
+
+function usarChip(el) {
+  document.getElementById('chips').style.display = 'none';
+  document.getElementById('chat-input').value = el.textContent;
+  enviar();
+}
+
+function keyDown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); } }
+function resize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+function addMsg(tipo, texto) {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'cmsg ' + tipo;
+  div.innerHTML = tipo === 'agent'
+    ? texto.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    : texto.replace(/</g,'&lt;');
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'cmsg agent'; div.id = 'typing';
+  div.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function enviar() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = ''; input.style.height = '40px';
+  document.getElementById('chips').style.display = 'none';
+  addMsg('user', msg);
+  addTyping();
+  historico.push({ role: 'user', content: msg });
+
+  try {
+    const r = await fetch('/api/helena', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem: msg, historico: historico.slice(-12) })
+    });
+    const d = await r.json();
+    document.getElementById('typing')?.remove();
+
+    if (d.erro) { addMsg('agent', 'Erro: ' + d.erro); return; }
+
+    if (d.resposta) {
+      addMsg('agent', d.resposta);
+      historico.push({ role: 'assistant', content: d.resposta });
+    }
+
+    if (d.documento_html) {
+      renderDoc(d.documento_html);
+      if (!d.resposta) {
+        addMsg('agent', 'Documento gerado. Revise no painel à direita. Quando estiver pronto, baixe o PDF ou envie via ClickSign.');
+      }
+    }
+  } catch(e) {
+    document.getElementById('typing')?.remove();
+    addMsg('agent', 'Erro de conexão. Tente novamente.');
+  }
+}
+
+function renderDoc(html) {
+  docAtual = html;
+
+  // Construir documento com capa
+  const fullDoc = `
+  <div class="doc-wrap">
+    <div class="doc-capa">
+      <img src="/logo-cp.png" alt="Cavalcante Pinheiro Advocacia">
+      ${html}
+      <div class="doc-capa-rodape">
+        Cavalcante Pinheiro Sociedade Individual de Advocacia<br>
+        OAB/BA nº 49.675 · (71) 99129-2322<br>
+        Av. Tancredo Neves, 620, sala 1006, Salvador/BA
+      </div>
+    </div>
+  </div>`;
+
+  // Verificar se o HTML já tem capa embutida
+  const temCapa = html.includes('doc-capa') || html.includes('CONTRATO') || html.includes('PROCURAÇÃO');
+
+  const preview = document.getElementById('doc-preview');
+  preview.innerHTML = '';
+  const inner = document.createElement('div');
+  inner.className = 'doc-preview-inner';
+
+  if (html.includes('<html') || html.includes('<!DOCTYPE')) {
+    // HTML completo — usar em iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:100%;min-height:900px;border:none;';
+    inner.appendChild(iframe);
+    preview.appendChild(inner);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(buildDocHTML(html));
+    iframe.contentDocument.close();
+    docAtual = html;
+  } else {
+    // HTML parcial — envolver com estrutura
+    inner.innerHTML = buildDocHTML(html);
+    preview.appendChild(inner);
+  }
+
+  // Mostrar botões
+  document.getElementById('doc-titulo-toolbar').textContent = 'Documento gerado — pronto para revisão';
+  document.getElementById('btn-pdf').style.display = 'inline-block';
+  document.getElementById('btn-cs').style.display = 'inline-block';
+  document.getElementById('btn-limpar').style.display = 'inline-block';
+}
+
+function buildDocHTML(conteudo) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'EB Garamond',Georgia,serif;font-size:11.5pt;line-height:1.75;color:#1a1a1a;background:#fff;}
+.doc-capa{width:100%;min-height:100vh;background:#1f3e3c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;text-align:center;page-break-after:always;}
+.doc-capa img{height:60px;width:auto;margin-bottom:48px;filter:brightness(0) invert(1);}
+.doc-capa-tipo{font-family:'Cormorant Garamond',serif;font-size:10pt;letter-spacing:5px;text-transform:uppercase;color:#a7a897;margin-bottom:16px;}
+.doc-capa-titulo{font-family:'Cormorant Garamond',serif;font-size:22pt;font-weight:600;line-height:1.3;margin-bottom:28px;color:#fff;}
+.doc-capa-linha{width:50px;height:1px;background:#a7a897;margin:16px auto;}
+.doc-capa-cliente{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#d4c9b5;margin-bottom:6px;}
+.doc-capa-data{font-size:9.5pt;color:#a7a897;letter-spacing:1px;}
+.doc-capa-rodape{position:absolute;bottom:40px;font-size:8.5pt;color:rgba(167,168,151,.7);letter-spacing:.3px;line-height:1.8;text-align:center;}
+.doc-conteudo{padding:22mm 22mm 20mm 22mm;}
+.doc-header-interno{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #ddd;}
+.doc-header-interno img{height:32px;width:auto;}
+.doc-header-interno-info{text-align:right;font-size:8pt;color:#888;line-height:1.6;}
+.doc-titulo-principal{font-family:'Cormorant Garamond',serif;font-size:15pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:2px;margin-bottom:24px;color:#1f3e3c;}
+p{margin-bottom:11px;text-align:justify;}
+h2,h3{font-family:'Cormorant Garamond',serif;font-weight:600;color:#1f3e3c;margin-top:18px;margin-bottom:7px;}
+h2{font-size:11.5pt;text-transform:uppercase;letter-spacing:.5px;}
+h3{font-size:11pt;}
+strong{font-weight:600;}
+.assinaturas{margin-top:36px;}
+.assinaturas-data{text-align:center;margin-bottom:28px;}
+.assinaturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;}
+.assinatura-linha{border-top:1px solid #222;padding-top:7px;margin-top:44px;font-size:10pt;text-align:center;}
+.testemunhas{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:36px;}
+.testemunha-bloco{font-size:9.5pt;line-height:1.9;}
+.testemunha-linha{border-top:1px solid #aaa;margin-top:28px;padding-top:5px;}
+@media print{
+  .doc-capa{position:relative;page-break-after:always;}
+  @page{margin:0;}
+}
+</style>
+</head>
+<body>
+${conteudo}
+</body>
+</html>`;
+}
+
+async function baixarPDF() {
+  if (!docAtual) return;
+  const el = document.querySelector('.doc-preview-inner');
+  if (!el) return;
+  const opt = {
+    margin: 0,
+    filename: docTitulo + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  try {
+    await html2pdf().set(opt).from(el).save();
+  } catch(e) {
+    // Fallback: print
+    window.print();
+  }
+}
+
+function enviarClickSign() {
+  document.getElementById('mod-cs').style.display = 'flex';
+}
+
+async function confirmarCS() {
+  const nome  = document.getElementById('cs-nome').value.trim();
+  const email = document.getElementById('cs-email').value.trim();
+  const cpf   = document.getElementById('cs-cpf').value.trim();
+  if (!nome || !email) { alert('Nome e e-mail são obrigatórios.'); return; }
+
+  const btn = document.getElementById('btn-cs-conf');
+  btn.textContent = 'Gerando PDF...'; btn.disabled = true;
+
+  try {
+    // Gerar PDF como base64 usando html2pdf
+    const el = document.querySelector('.doc-preview-inner');
+    const opt = {
+      margin: 0,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
+    const base64 = await blobToBase64(pdfBlob);
+
+    btn.textContent = 'Enviando...';
+    const r = await fetch('/api/clicksign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        arquivo_base64: base64,
+        nome_arquivo: docTitulo.replace(/\s+/g,'_') + '.pdf',
+        signatarios: [{ nome, email, cpf: cpf || null }],
+        mensagem: `Prezado(a) ${nome}, segue o documento para assinatura. Cavalcante Pinheiro Advocacia.`
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erro || 'Erro no ClickSign');
+    document.getElementById('mod-cs').style.display = 'none';
+    addMsg('agent', `✓ Documento enviado para assinatura via ClickSign!\n\nSignatário: **${nome}** (${email})\nEnvelope: ${d.envelope_key}`);
+    alert('Enviado! O signatário receberá o e-mail do ClickSign em instantes.');
+  } catch(e) {
+    alert('Erro: ' + e.message);
+  } finally {
+    btn.textContent = 'Enviar'; btn.disabled = false;
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result);
+    reader.onerror = rej;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function limparDoc() {
+  docAtual = null;
+  document.getElementById('doc-preview').innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">◆</div><p>O documento gerado por Helena aparecerá aqui para revisão antes do envio.</p></div>`;
+  document.getElementById('doc-titulo-toolbar').textContent = 'Nenhum documento gerado';
+  ['btn-pdf','btn-cs','btn-limpar'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+</script>
+</body>
+</html>
