@@ -1207,26 +1207,64 @@ async function confirmarConverter() {
   const orgao = document.getElementById('cv-orgao').value;
   if (!orgao) { toast('Selecione o órgão', true); return; }
   try {
-    await sbPost('transacoes', {
-      lead_id:                  leadAtivo.id,
-      cliente_nome:             leadAtivo.razao_social,
-      cliente_cnpj:             leadAtivo.cnpj,
+    // 1. Criar ou encontrar cliente na base
+    let clienteId = null;
+    toast('Criando cliente na base...');
+    try {
+      // Verificar se já existe pelo CNPJ
+      if (leadAtivo.cnpj) {
+        const cnpjLimpo = leadAtivo.cnpj.replace(/\D/g,'');
+        const rBusca = await fetch(`${SB}/rest/v1/clientes?cpf_cnpj=ilike.*${cnpjLimpo}*&limit=1`, { headers: SHR });
+        if (rBusca.ok) {
+          const existentes = await rBusca.json();
+          if (existentes.length) { clienteId = existentes[0].id; }
+        }
+      }
+      // Se não existe, criar via API (sincroniza com Asaas)
+      if (!clienteId) {
+        const rCli = await fetch('/api/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome:       leadAtivo.razao_social || leadAtivo.nome_fantasia,
+            contato:    leadAtivo.telefone_receita || null,
+            cpf_cnpj:   leadAtivo.cnpj || null,
+            email:      leadAtivo.email_receita || null,
+            tipo_servico: leadAtivo.modalidade_transacao || null
+          })
+        });
+        if (rCli.ok) { const d = await rCli.json(); clienteId = d.id; }
+      }
+    } catch {}
+
+    // 2. Criar caso de transação (já com cliente_id)
+    const transacao = await sbPost('transacoes', {
+      lead_id:                     leadAtivo.id,
+      cliente_id:                  clienteId,
+      cliente_nome:                leadAtivo.razao_social,
+      cliente_cnpj:                leadAtivo.cnpj,
       orgao,
-      valor_divida:             parseFloat(document.getElementById('cv-divida').value) || null,
-      modalidade:               document.getElementById('cv-modalidade').value,
-      honorarios_previstos:     parseFloat(document.getElementById('cv-honorarios').value) || null,
+      valor_divida:                parseFloat(document.getElementById('cv-divida').value) || null,
+      modalidade:                  document.getElementById('cv-modalidade').value,
+      honorarios_previstos:        parseFloat(document.getElementById('cv-honorarios').value) || null,
       honorarios_exito_percentual: parseFloat(document.getElementById('cv-exito').value) || null,
-      responsavel:              document.getElementById('cv-resp').value,
-      etapa:                    'diagnostico'
+      responsavel:                 document.getElementById('cv-resp').value,
+      etapa:                       'diagnostico'
     });
-    await sbPatch('leads', leadAtivo.id, { etapa: 'convertido' });
+
+    // 3. Atualizar lead com referências
+    await sbPatch('leads', leadAtivo.id, {
+      etapa:         'convertido',
+      convertido_em: clienteId || null
+    });
+
     leadAtivo.etapa = 'convertido';
     const idx = todosLeads.findIndex(l=>l.id===leadAtivo.id);
     if (idx>=0) todosLeads[idx].etapa = 'convertido';
     fecharModal('mod-converter');
     fecharPainel();
     renderView(); renderKPIs();
-    toast('Lead convertido em transação ✓');
+    toast(`Lead convertido ✓ · Cliente ${clienteId ? 'criado na base' : 'não sincronizado'} · Caso de transação aberto`);
   } catch(e) { toast('Erro: '+e.message, true); }
 }
 

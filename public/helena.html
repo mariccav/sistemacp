@@ -415,6 +415,21 @@ async function confirmarCS() {
     if (!r.ok) throw new Error(d.erro || 'Erro no ClickSign');
     document.getElementById('mod-cs').style.display = 'none';
     addMsg('agent', `✓ Documento enviado para assinatura via ClickSign!\n\nSignatário: **${nome}** (${email})\nEnvelope: ${d.envelope_key}`);
+
+    // Salvar na tabela contratos e vincular ao cliente
+    try {
+      const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
+      const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+      const SH = { 'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation' };
+      let clienteId = null;
+      const rCli = await fetch(`${SB}/rest/v1/clientes?nome=ilike.*${encodeURIComponent(nome)}*&limit=1`, { headers: SH });
+      if (rCli.ok) { const clis = await rCli.json(); clienteId = clis[0]?.id || null; }
+      await fetch(`${SB}/rest/v1/contratos`, {
+        method: 'POST', headers: SH,
+        body: JSON.stringify({ cliente_nome: nome, cliente_contato: email, cliente_id: clienteId, clicksign_envelope_key: d.envelope_key, status: 'aguardando' })
+      });
+    } catch {}
+
     alert('Enviado! O signatário receberá o e-mail do ClickSign em instantes.');
   } catch(e) {
     alert('Erro: ' + e.message);
