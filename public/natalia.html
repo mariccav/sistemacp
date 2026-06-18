@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Natalia ✦ — Estrategista Comercial · CP</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);height:100vh;display:flex;flex-direction:column;}
+
+header{background:var(--v1);color:#fff;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:2px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;transition:.2s;}
+.hd-back:hover{color:#fff;}
+
+.workspace{flex:1;display:grid;grid-template-columns:420px 1fr;overflow:hidden;}
+
+/* CHAT */
+.chat-panel{display:flex;flex-direction:column;border-right:1px solid #e8f0f0;background:#fff;overflow:hidden;}
+.chat-intro{padding:16px 20px;border-bottom:1px solid #e8f0f0;background:#f8fdfd;}
+.chat-intro h3{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v1);}
+.chat-intro p{font-size:11px;color:var(--bege);margin-top:2px;}
+
+.cnpj-bar{padding:12px 16px;border-bottom:1px solid #f0f7f7;display:flex;gap:8px;align-items:center;}
+.cnpj-bar input{flex:1;padding:8px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;outline:none;color:var(--v1);}
+.cnpj-bar button{padding:8px 14px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;border-bottom:1px solid #f0f7f7;}
+.chip{background:#f0f7f7;border:1px solid rgba(167,168,151,.25);border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;transition:.2s;font-family:'Nunito',sans-serif;color:var(--v1);}
+.chip:hover{background:var(--v1);color:#fff;}
+
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.cmsg{max-width:92%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;}
+.cmsg.user{background:var(--v1);color:#fff;align-self:flex-end;border-radius:12px 12px 2px 12px;}
+.cmsg.agent{background:#f0f7f7;color:var(--v1);align-self:flex-start;border-radius:12px 12px 12px 2px;}
+
+.typing span{width:6px;height:6px;background:var(--bege);border-radius:50%;display:inline-block;animation:bounce .8s infinite;margin:0 2px;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+.input-row{padding:12px 16px;border-top:1px solid #e8f0f0;display:flex;gap:8px;flex-shrink:0;}
+.input-row textarea{flex:1;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;outline:none;height:40px;color:var(--v1);}
+.input-row textarea::placeholder{color:var(--bege);}
+.btn-send{padding:9px 16px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-send:hover{background:var(--v2);}
+
+/* DOCUMENTO */
+.doc-panel{display:flex;flex-direction:column;overflow:hidden;background:#e8ecec;}
+.doc-toolbar{padding:12px 20px;background:#fff;border-bottom:1px solid #e8f0f0;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.doc-toolbar-title{font-size:12px;color:var(--bege);font-weight:600;flex:1;}
+.btn-tool{padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:.2s;}
+.btn-pdf{background:var(--v1);color:#fff;}
+.btn-pdf:hover{background:var(--v2);}
+.btn-new{background:#fff;color:var(--bege);border:1px solid rgba(167,168,151,.3);}
+.doc-preview{flex:1;overflow-y:auto;padding:24px;display:flex;justify-content:center;}
+.doc-preview-inner{width:210mm;min-height:297mm;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.12);}
+.doc-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--bege);gap:14px;padding:40px;}
+.doc-empty-icon{font-size:52px;opacity:.35;}
+.doc-empty p{font-size:13px;text-align:center;max-width:300px;line-height:1.7;}
+
+.lead-badge{display:inline-flex;align-items:center;gap:6px;background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--v1);margin:0 16px 10px;}
+.lead-badge button{background:none;border:none;cursor:pointer;color:var(--bege);font-size:12px;margin-left:4px;}
+.lead-badge button:hover{color:var(--verm,#c25e5e);}
+
+@media(max-width:900px){
+  .workspace{grid-template-columns:1fr;}
+  .doc-panel{display:none;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Natalia ✦ — Estrategista Comercial</h1>
+    <p>Dossiês de reunião · Propostas personalizadas · Cavalcante Pinheiro Advocacia</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar ao sistema</a>
+</header>
+
+<div class="workspace">
+
+  <!-- CHAT -->
+  <div class="chat-panel">
+    <div class="chat-intro">
+      <h3>Natalia</h3>
+      <p>Pesquiso empresas, preparo reuniões e gero propostas com visão tributária estratégica</p>
+    </div>
+
+    <!-- Busca por CNPJ/nome -->
+    <div class="cnpj-bar">
+      <input type="text" id="busca-lead" placeholder="CNPJ ou nome do lead para carregar contexto (opcional)">
+      <button onclick="carregarContexto()">Carregar</button>
+    </div>
+
+    <div id="lead-badge-wrap"></div>
+
+    <div class="chips" id="chips">
+      <span class="chip" onclick="usarChip(this)">Preparar dossiê de reunião</span>
+      <span class="chip" onclick="usarChip(this)">Gerar proposta comercial</span>
+      <span class="chip" onclick="usarChip(this)">Quais oportunidades tributárias para esse perfil?</span>
+      <span class="chip" onclick="usarChip(this)">Como abordar esse lead?</span>
+      <span class="chip" onclick="usarChip(this)">Listar perguntas para a reunião</span>
+      <span class="chip" onclick="usarChip(this)">Analisar objeções prováveis</span>
+    </div>
+
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="cmsg agent">Olá. Sou a Natalia, estrategista comercial do escritório.<br><br>Posso pesquisar uma empresa pelo CNPJ, preparar o dossiê completo para a reunião ou gerar uma proposta personalizada. Use o campo acima para carregar um lead do CRM ou simplesmente me diga o nome ou CNPJ da empresa.</div>
+    </div>
+
+    <div class="input-row">
+      <textarea id="chat-input" placeholder="Descreva o lead ou peça o dossiê/proposta..." onkeydown="keyDown(event)" oninput="resize(this)"></textarea>
+      <button class="btn-send" onclick="enviar()">→</button>
+    </div>
+  </div>
+
+  <!-- DOCUMENTO -->
+  <div class="doc-panel">
+    <div class="doc-toolbar">
+      <span class="doc-toolbar-title" id="doc-titulo">Nenhum documento gerado</span>
+      <button class="btn-tool btn-new" id="btn-new" onclick="limparDoc()" style="display:none">↺ Novo</button>
+      <button class="btn-tool btn-pdf" id="btn-pdf" onclick="baixarPDF()" style="display:none">↓ Baixar PDF</button>
+    </div>
+    <div id="doc-area">
+      <div class="doc-empty">
+        <div class="doc-empty-icon">✦</div>
+        <p>O dossiê ou a proposta gerada por Natalia aparecerá aqui para revisão antes do envio.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let historico = [];
+let leadAtivo = null;
+let docAtual = null;
+
+// ── CONTEXTO DO LEAD ────────────────────────────────────────────────────────
+const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH = { 'apikey': SK, 'Authorization': 'Bearer ' + SK };
+
+async function carregarContexto() {
+  const q = document.getElementById('busca-lead').value.trim();
+  if (!q) return;
+  try {
+    const cnpjLimpo = q.replace(/\D/g,'');
+    let url = `${SB}/rest/v1/leads?limit=1&`;
+    url += cnpjLimpo.length >= 11 ? `cnpj=ilike.*${cnpjLimpo}*` : `razao_social=ilike.*${encodeURIComponent(q)}*`;
+    const r = await fetch(url, { headers: SH });
+    if (!r.ok) throw new Error();
+    const leads = await r.json();
+    if (!leads.length) { addMsg('agent', 'Lead não encontrado no CRM. Mas pode me descrever a empresa e trabalho sem o contexto salvo.'); return; }
+    leadAtivo = leads[0];
+    mostrarBadgeLead();
+    historico = [];
+    addMsg('agent', `Contexto carregado: **${leadAtivo.nome_fantasia || leadAtivo.razao_social}**${leadAtivo.cnpj ? ' · CNPJ: ' + leadAtivo.cnpj : ''}. O que precisa?`);
+    document.getElementById('busca-lead').value = '';
+  } catch {
+    addMsg('agent', 'Erro ao buscar lead. Verifique o nome ou CNPJ.');
+  }
+}
+
+function mostrarBadgeLead() {
+  const wrap = document.getElementById('lead-badge-wrap');
+  wrap.innerHTML = leadAtivo
+    ? `<div class="lead-badge">✦ ${leadAtivo.nome_fantasia || leadAtivo.razao_social}<button onclick="limparLead()" title="Remover contexto">✕</button></div>`
+    : '';
+}
+
+function limparLead() { leadAtivo = null; historico = []; mostrarBadgeLead(); }
+
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+function usarChip(el) {
+  document.getElementById('chips').style.display = 'none';
+  document.getElementById('chat-input').value = el.textContent;
+  enviar();
+}
+function keyDown(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();} }
+function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function addMsg(tipo, txt) {
+  const msgs = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'cmsg ' + tipo;
+  d.innerHTML = tipo==='user'
+    ? txt.replace(/</g,'&lt;')
+    : txt.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return d;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-msgs');
+  const d = document.createElement('div');
+  d.className = 'cmsg agent'; d.id = 'typing';
+  d.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function enviar() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = ''; input.style.height = '40px';
+  document.getElementById('chips').style.display = 'none';
+  addMsg('user', msg);
+  addTyping();
+  historico.push({ role: 'user', content: msg });
+
+  try {
+    const r = await fetch('/api/natalia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensagem: msg,
+        historico: historico.slice(-14),
+        lead_id: leadAtivo?.id || null
+      })
+    });
+    const d = await r.json();
+    document.getElementById('typing')?.remove();
+
+    if (d.erro) { addMsg('agent', 'Erro: ' + d.erro); return; }
+    if (d.resposta) {
+      addMsg('agent', d.resposta);
+      historico.push({ role: 'assistant', content: d.resposta });
+    }
+    if (d.documento_html) {
+      renderDoc(d.documento_html);
+      if (!d.resposta) addMsg('agent', 'Documento gerado. Revise no painel à direita e baixe o PDF quando estiver pronto.');
+    }
+  } catch {
+    document.getElementById('typing')?.remove();
+    addMsg('agent', 'Erro de conexão. Tente novamente.');
+  }
+}
+
+// ── DOCUMENTO ─────────────────────────────────────────────────────────────────
+function renderDoc(html) {
+  docAtual = html;
+  const area = document.getElementById('doc-area');
+  area.innerHTML = '';
+  const inner = document.createElement('div');
+  inner.className = 'doc-preview-inner';
+  area.style.cssText = 'flex:1;overflow-y:auto;padding:24px;display:flex;justify-content:center;';
+  inner.innerHTML = buildDoc(html);
+  area.appendChild(inner);
+
+  const titulo = leadAtivo ? (leadAtivo.nome_fantasia || leadAtivo.razao_social) : 'documento';
+  document.getElementById('doc-titulo').textContent = titulo + ' — pronto para revisão';
+  document.getElementById('btn-pdf').style.display = 'inline-block';
+  document.getElementById('btn-new').style.display = 'inline-block';
+}
+
+function buildDoc(conteudo) {
+  return `<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body,div{font-family:'Nunito',sans-serif;font-size:11pt;line-height:1.7;color:#1a1a1a;}
+.capa{background:#1f3e3c;color:#fff;padding:60px 48px;text-align:center;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:0;}
+.capa img{height:52px;margin-bottom:40px;filter:brightness(0) invert(1);}
+.capa-tipo{font-size:10pt;letter-spacing:4px;text-transform:uppercase;color:#a7a897;margin-bottom:14px;font-family:'Nunito',sans-serif;}
+.capa-titulo{font-family:'Cormorant Garamond',serif;font-size:20pt;font-weight:600;color:#fff;line-height:1.3;margin-bottom:20px;}
+.capa-linha{width:40px;height:1px;background:#a7a897;margin:14px auto;}
+.capa-cliente{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#d4c9b5;}
+.capa-data{font-size:9pt;color:#a7a897;margin-top:6px;letter-spacing:1px;}
+.conteudo{padding:20mm 22mm 18mm;}
+h2{font-family:'Cormorant Garamond',serif;font-size:13pt;font-weight:700;color:#1f3e3c;text-transform:uppercase;letter-spacing:1px;margin-top:20px;margin-bottom:8px;border-bottom:1px solid #e8f0f0;padding-bottom:5px;}
+h3{font-family:'Cormorant Garamond',serif;font-size:11.5pt;font-weight:600;color:#2b5050;margin-top:14px;margin-bottom:5px;}
+p{margin-bottom:10px;text-align:justify;}
+ul,ol{margin-left:20px;margin-bottom:10px;}
+li{margin-bottom:4px;}
+strong{font-weight:700;}
+.destaque{background:#f2fdff;border-left:3px solid #1f3e3c;padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:11pt;}
+.rodape-doc{margin-top:32px;padding-top:14px;border-top:1px solid #e8f0f0;text-align:center;font-size:9pt;color:#a7a897;line-height:1.8;}
+</style>
+${conteudo}`;
+}
+
+async function baixarPDF() {
+  if (!docAtual) return;
+  const nome = (leadAtivo?.razao_social || 'natalia_doc').replace(/\s+/g,'_').substring(0,30);
+  const el = document.querySelector('.doc-preview-inner');
+  if (!el) return;
+  try {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = async () => {
+      await html2pdf().set({
+        margin: 0, filename: nome + '.pdf',
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(el).save();
+    };
+    document.head.appendChild(script);
+  } catch { window.print(); }
+}
+
+function limparDoc() {
+  docAtual = null;
+  document.getElementById('doc-area').innerHTML = `<div class="doc-empty"><div class="doc-empty-icon">✦</div><p>O dossiê ou a proposta gerada por Natalia aparecerá aqui para revisão antes do envio.</p></div>`;
+  document.getElementById('doc-area').style.cssText = '';
+  document.getElementById('doc-titulo').textContent = 'Nenhum documento gerado';
+  document.getElementById('btn-pdf').style.display = 'none';
+  document.getElementById('btn-new').style.display = 'none';
+}
+
+// Enter no campo de busca
+document.getElementById('busca-lead').addEventListener('keydown', e => { if(e.key==='Enter') carregarContexto(); });
+</script>
+</body>
+</html>
