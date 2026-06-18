@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transação Tributária — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --v1:#1f3e3c;--v2:#2b5050;--v3:#214949;
+  --bg:#f2fdff;--bege:#a7a897;--br:#ffffff;
+  --verde:#2a8f6e;--verm:#c25e5e;--laran:#d97706;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;}
+
+/* HEADER */
+header{background:var(--v1);color:#fff;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:2px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;}
+.hd-back:hover{color:#fff;}
+
+/* BANNER ALERTA */
+.banner-alerta{display:none;background:#fef3c7;border-left:4px solid var(--laran);padding:12px 40px;font-size:13px;font-weight:600;color:#92400e;align-items:center;gap:10px;}
+.banner-alerta.show{display:flex;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.5s infinite;}
+
+/* MAIN */
+.main{max-width:1600px;margin:0 auto;padding:28px 40px;}
+
+/* KPIs */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px;}
+.kpi{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid rgba(167,168,151,.25);box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--bege);margin-bottom:5px;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--v1);}
+.kpi-sub{font-size:11px;color:#9aadad;margin-top:3px;}
+.kpi.alerta .kpi-val{color:var(--verm);}
+.kpi.ok .kpi-val{color:var(--verde);}
+
+/* BARRA */
+.action-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-box{flex:1;min-width:200px;position:relative;}
+.search-box input{width:100%;padding:9px 14px 9px 36px;border:1px solid rgba(167,168,151,.4);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:#fff;}
+.search-box::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;}
+.filter-select{padding:9px 12px;border:1px solid rgba(167,168,151,.4);border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;cursor:pointer;}
+.btn{padding:9px 18px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.2s;}
+.btn-primary{background:var(--v1);color:#fff;}
+.btn-primary:hover{background:var(--v2);}
+.btn-primary:disabled{background:#9aadad;cursor:not-allowed;}
+.btn-outline{background:#fff;color:var(--v1);border:1px solid rgba(167,168,151,.4);}
+.btn-outline:hover{background:var(--bg);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.toggle-view{display:flex;border:1px solid rgba(167,168,151,.4);border-radius:10px;overflow:hidden;}
+.toggle-view button{padding:8px 14px;border:none;background:#fff;font-family:'Nunito',sans-serif;font-size:12px;color:var(--bege);cursor:pointer;transition:.2s;}
+.toggle-view button.active{background:var(--v1);color:#fff;}
+
+/* KANBAN */
+.kanban-wrap{overflow-x:auto;padding-bottom:16px;}
+.kanban{display:flex;gap:14px;min-width:max-content;}
+.kanban-col{width:250px;flex-shrink:0;}
+.kanban-col-header{color:#fff;padding:10px 14px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;}
+.col-title{font-size:12px;font-weight:700;letter-spacing:.3px;}
+.col-count{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;font-size:11px;}
+.kanban-body{background:#fff;border:1px solid rgba(167,168,151,.2);border-top:none;border-radius:0 0 10px 10px;min-height:400px;padding:10px 8px;display:flex;flex-direction:column;gap:8px;}
+.kanban-body.drag-over{background:#f0f9f8;border-color:var(--v2);}
+
+/* CARD */
+.caso-card{background:#fff;border:1px solid rgba(167,168,151,.25);border-radius:10px;padding:12px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(31,62,60,.06);}
+.caso-card:hover{border-color:var(--v2);box-shadow:0 3px 12px rgba(31,62,60,.12);}
+.caso-card.dragging{opacity:.5;}
+.card-cliente{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--v1);margin-bottom:3px;line-height:1.3;}
+.card-cnpj{font-size:10px;color:var(--bege);margin-bottom:8px;}
+.card-divida{font-size:13px;font-weight:700;color:var(--v1);margin-bottom:6px;}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge-pgfn{background:#e8f0fe;color:#1a56db;}
+.badge-rfb{background:#fef9e7;color:#a07020;}
+.badge-sefaz{background:#f3e8ff;color:#7c3aed;}
+.badge-mun{background:#fce8f3;color:#be185d;}
+.badge-outro{background:#f0f7f7;color:var(--v2);}
+.badge-modal{background:#f0f7f7;color:var(--v2);}
+.card-prazo{font-size:11px;font-weight:700;margin-top:6px;}
+.prazo-urgente{color:var(--verm);}
+.prazo-ok{color:var(--bege);}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f0f7f7;}
+.card-resp{font-size:10px;color:var(--bege);}
+.card-hon{font-size:10px;color:var(--verde);font-weight:700;}
+
+/* LISTA */
+.lista-wrap{display:none;}
+.lista-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.lista-table th{background:var(--v1);color:#fff;padding:12px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;text-align:left;}
+.lista-table td{padding:12px 14px;border-bottom:1px solid #f0f7f7;font-size:13px;}
+.lista-table tr:hover td{background:#f8fdfd;cursor:pointer;}
+.etapa-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;}
+
+/* MODAL DO CASO */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(31,62,60,.75);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.caso-modal{background:#fff;border-radius:20px;width:90vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.caso-modal-header{background:var(--v1);color:#fff;padding:18px 28px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;}
+.caso-modal-header h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;}
+.caso-modal-header p{font-size:11px;color:var(--bege);margin-top:2px;}
+.caso-modal-body{flex:1;display:grid;grid-template-columns:65% 35%;overflow:hidden;}
+.caso-col-main{display:flex;flex-direction:column;border-right:1px solid #e8f0f0;overflow:hidden;}
+.caso-col-side{overflow-y:auto;padding:20px;}
+.modal-tabs{display:flex;border-bottom:1px solid #e8f0f0;flex-shrink:0;}
+.modal-tab{flex:1;padding:12px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--bege);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;}
+.modal-tab.active{color:var(--v1);border-bottom-color:var(--v1);}
+.modal-tab-badge{background:var(--verm);color:#fff;border-radius:20px;padding:0 5px;font-size:10px;margin-left:4px;}
+.tab-content{flex:1;overflow-y:auto;padding:20px 24px;}
+
+/* CAMPOS */
+.field-group{margin-bottom:18px;}
+.field-lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;}
+.field-input{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.field-input:focus{border-color:var(--v2);}
+textarea.field-input{resize:vertical;min-height:80px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+.full{grid-column:1/-1;}
+
+/* PRAZOS */
+.prazo-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:8px;border:1px solid transparent;}
+.prazo-item.vencido{background:#fef2f2;border-color:#fecaca;}
+.prazo-item.urgente{background:#fff7ed;border-color:#fed7aa;}
+.prazo-item.normal{background:#f8fdfd;border-color:#e8f0f0;}
+.prazo-item.concluido{background:#f9f9f9;border-color:#e8e8e8;opacity:.6;}
+.prazo-desc{flex:1;font-size:13px;}
+.prazo-data{font-size:11px;font-weight:700;color:var(--bege);}
+.prazo-concluido .prazo-desc{text-decoration:line-through;color:var(--bege);}
+
+/* HISTÓRICO */
+.hist-item{display:flex;gap:12px;margin-bottom:16px;}
+.hist-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:#f0f7f7;}
+.hist-body{flex:1;}
+.hist-tipo{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--bege);}
+.hist-desc{font-size:13px;color:var(--v1);margin:2px 0;}
+.hist-meta{font-size:11px;color:var(--bege);}
+
+/* CHAT ALICE */
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:200px;max-height:340px;}
+.cmsg{max-width:90%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;}
+.cmsg.user{background:var(--v1);color:#fff;align-self:flex-end;border-radius:12px 12px 2px 12px;}
+.cmsg.agent{background:#f0f7f7;color:var(--v1);align-self:flex-start;border-radius:12px 12px 12px 2px;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;}
+.chip{background:#f0f7f7;border:1px solid rgba(167,168,151,.3);border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;transition:.2s;font-family:'Nunito',sans-serif;}
+.chip:hover{background:var(--v1);color:#fff;border-color:var(--v1);}
+.chat-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #e8f0f0;}
+.chat-input-row textarea{flex:1;padding:8px 12px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;outline:none;height:38px;}
+.chat-input-row button{padding:8px 16px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+/* SIDE CARDS */
+.side-card{background:#f8fdfd;border-radius:12px;padding:16px;border:1px solid rgba(167,168,151,.2);margin-bottom:14px;}
+.side-card h4{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:var(--v1);margin-bottom:12px;}
+.etapa-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.etapa-atual{font-size:13px;font-weight:700;text-align:center;flex:1;padding:8px;background:#fff;border-radius:8px;border:1px solid rgba(167,168,151,.3);}
+.btn-etapa{padding:7px 12px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(167,168,151,.4);background:#fff;color:var(--v1);transition:.2s;}
+.btn-etapa:hover{background:var(--v1);color:#fff;}
+.hon-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f0f7f7;}
+.hon-val{font-weight:700;color:var(--v1);}
+
+/* MODAL PEQUENO */
+.mini-modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.mini-modal h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v1);margin-bottom:18px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.modal-label{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;}
+.modal-input{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;margin-bottom:12px;}
+.modal-input:focus{border-color:var(--v2);}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--v1);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:360px;}
+.toast.erro{background:var(--verm);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* LOADING */
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid #e8f0f0;border-top-color:var(--v1);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.typing{display:flex;gap:4px;align-items:center;padding:8px 14px;}
+.typing span{width:6px;height:6px;background:var(--bege);border-radius:50%;animation:bounce .8s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* CONDIÇÃO SUSPENSIVA */
+.toggle-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.toggle{width:40px;height:22px;background:#ddd;border-radius:20px;cursor:pointer;position:relative;transition:.3s;}
+.toggle.on{background:var(--v1);}
+.toggle::after{content:'';width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:.3s;}
+.toggle.on::after{left:20px;}
+.cond-fields{display:none;background:#fff8e6;border-radius:8px;padding:12px;border:1px solid #fed7aa;}
+.cond-fields.show{display:block;}
+
+@media(max-width:900px){
+  .caso-modal-body{grid-template-columns:1fr;}
+  .caso-col-side{display:none;}
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Transação Tributária</h1>
+    <p>Cavalcante Pinheiro Advocacia · Pipeline de Casos em Negociação</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar ao sistema</a>
+</header>
+
+<!-- BANNER PRAZOS URGENTES -->
+<div class="banner-alerta" id="banner-alerta">
+  <span class="pulse">⚠</span>
+  <span id="banner-texto"></span>
+</div>
+
+<div class="main">
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-lbl">Casos Ativos</div><div class="kpi-val" id="kpi-ativos">—</div><div class="kpi-sub">em andamento</div></div>
+    <div class="kpi"><div class="kpi-lbl">Valor em Negociação</div><div class="kpi-val" id="kpi-valor">—</div><div class="kpi-sub">dívida total</div></div>
+    <div class="kpi"><div class="kpi-lbl">Honorários Previstos</div><div class="kpi-val ok" id="kpi-hon">—</div><div class="kpi-sub">a receber</div></div>
+    <div class="kpi alerta"><div class="kpi-lbl">Prazos em 7 Dias</div><div class="kpi-val" id="kpi-prazos">—</div><div class="kpi-sub" id="kpi-prazos-sub"></div></div>
+    <div class="kpi"><div class="kpi-lbl">Cond. Suspensiva</div><div class="kpi-val" id="kpi-cond">—</div><div class="kpi-sub">casos ativos</div></div>
+    <div class="kpi ok"><div class="kpi-lbl">Encerrados c/ Êxito</div><div class="kpi-val" id="kpi-exito">—</div><div class="kpi-sub">este mês</div></div>
+  </div>
+
+  <!-- BARRA -->
+  <div class="action-bar">
+    <div class="search-box">
+      <input type="text" id="busca" placeholder="Buscar por cliente ou CNPJ..." oninput="filtrar()">
+    </div>
+    <select class="filter-select" id="f-orgao" onchange="filtrar()">
+      <option value="">Todos os órgãos</option>
+      <option>PGFN</option><option>RFB</option><option>SEFAZ-BA</option><option>Prefeitura</option>
+    </select>
+    <select class="filter-select" id="f-resp" onchange="filtrar()">
+      <option value="">Todos os responsáveis</option>
+      <option>Mariana Pinheiro</option><option>Diana</option>
+      <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+    </select>
+    <select class="filter-select" id="f-modal" onchange="filtrar()">
+      <option value="">Todas as modalidades</option>
+      <option>REFIS Federal</option><option>REFIS Estadual</option>
+      <option>REFIS Municipal</option><option>CARF</option><option>Negociação Direta</option>
+    </select>
+    <div class="toggle-view">
+      <button id="btn-kanban" class="active" onclick="setView('kanban')">⊞ Kanban</button>
+      <button id="btn-lista" onclick="setView('lista')">☰ Lista</button>
+    </div>
+    <button class="btn btn-primary" onclick="abrirNovoCaso()">+ Novo Caso</button>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="kanban-wrap" id="view-kanban">
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="lista-wrap" id="view-lista">
+    <table class="lista-table">
+      <thead><tr>
+        <th>Cliente</th><th>CNPJ</th><th>Órgão</th><th>Dívida</th>
+        <th>Modalidade</th><th>Etapa</th><th>Responsável</th><th>Próx. Prazo</th>
+      </tr></thead>
+      <tbody id="lista-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL DO CASO
+═══════════════════════════════════════════════════ -->
+<div class="modal-bg" id="mod-caso">
+  <div class="caso-modal">
+    <div class="caso-modal-header">
+      <div>
+        <h2 id="mc-titulo">—</h2>
+        <p id="mc-sub">—</p>
+      </div>
+      <button onclick="fecharCaso()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;">✕ Fechar</button>
+    </div>
+    <div class="caso-modal-body">
+      <!-- COLUNA PRINCIPAL -->
+      <div class="caso-col-main">
+        <div class="modal-tabs">
+          <button class="modal-tab active" onclick="ctab(this,'ct-dados')">Dados</button>
+          <button class="modal-tab" onclick="ctab(this,'ct-prazos')">Prazos <span class="modal-tab-badge" id="badge-prazos" style="display:none">!</span></button>
+          <button class="modal-tab" onclick="ctab(this,'ct-hist')">Histórico</button>
+          <button class="modal-tab" onclick="ctab(this,'ct-alice')">Alice ✦</button>
+        </div>
+        <div class="tab-content">
+          <div id="ct-dados"></div>
+          <div id="ct-prazos" style="display:none"></div>
+          <div id="ct-hist" style="display:none"></div>
+          <div id="ct-alice" style="display:none;flex-direction:column;height:100%;padding:0;"></div>
+        </div>
+      </div>
+
+      <!-- COLUNA DE AÇÕES -->
+      <div class="caso-col-side">
+        <!-- ETAPA -->
+        <div class="side-card">
+          <h4>Etapa do Caso</h4>
+          <div class="etapa-nav">
+            <button class="btn-etapa" onclick="moverEtapa(-1)">← Retroceder</button>
+            <div class="etapa-atual" id="sc-etapa-label">—</div>
+            <button class="btn-etapa" onclick="moverEtapa(1)">Avançar →</button>
+          </div>
+        </div>
+
+        <!-- HONORÁRIOS -->
+        <div class="side-card">
+          <h4>Honorários</h4>
+          <div class="hon-row"><span>Previsto</span><span class="hon-val" id="sc-hon-prev">—</span></div>
+          <div class="hon-row"><span>Recebido</span><span class="hon-val" id="sc-hon-rec">—</span></div>
+          <div class="hon-row" style="border:none"><span>Êxito</span><span class="hon-val" id="sc-hon-exit">—</span></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;margin-top:12px" onclick="abrirGerarCobranca()">Gerar Cobrança</button>
+        </div>
+
+        <!-- CONTRATO CLICKSIGN -->
+        <div class="side-card">
+          <h4>Contrato</h4>
+          <div id="sc-clicksign-status" style="font-size:12px;color:var(--bege);margin-bottom:10px;"></div>
+          <button class="btn btn-outline btn-sm" id="btn-clicksign" style="width:100%" onclick="abrirClickSign()">✍ Enviar para Assinatura</button>
+        </div>
+
+        <!-- ENCERRAMENTO -->
+        <div class="side-card">
+          <h4>Encerrar Caso</h4>
+          <p style="font-size:12px;color:var(--bege);margin-bottom:10px">Move para "Encerrado" e registra o resultado final.</p>
+          <button class="btn btn-outline btn-sm" style="width:100%;color:var(--verm);border-color:var(--verm)" onclick="abrirEncerramento()">Encerrar Caso</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO CASO -->
+<div class="modal-bg" id="mod-novo">
+  <div class="mini-modal" style="max-width:580px">
+    <h3>Novo Caso de Transação</h3>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn btn-outline btn-sm" id="orig-lead" onclick="setOrigem('lead')" style="flex:1">A partir de lead do CRM</button>
+      <button class="btn btn-primary btn-sm" id="orig-avulso" onclick="setOrigem('avulso')" style="flex:1">Avulso</button>
+    </div>
+    <div id="orig-lead-section" style="display:none;margin-bottom:12px">
+      <label class="modal-label">Selecionar Lead</label>
+      <select class="modal-input" id="nc-lead-id" onchange="preencherDoLead()">
+        <option value="">Selecione um lead...</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div>
+        <label class="modal-label">Cliente *</label>
+        <input class="modal-input" id="nc-cliente" placeholder="Nome ou Razão Social">
+      </div>
+      <div>
+        <label class="modal-label">CNPJ</label>
+        <input class="modal-input" id="nc-cnpj" placeholder="00.000.000/0001-00">
+      </div>
+      <div>
+        <label class="modal-label">Órgão *</label>
+        <select class="modal-input" id="nc-orgao">
+          <option value="">Selecione...</option>
+          <option>PGFN</option><option>RFB</option><option>SEFAZ-BA</option>
+          <option>Prefeitura</option><option>CARF</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Valor da Dívida (R$)</label>
+        <input class="modal-input" id="nc-divida" type="number">
+      </div>
+      <div>
+        <label class="modal-label">Modalidade</label>
+        <select class="modal-input" id="nc-modal">
+          <option value="">Selecione...</option>
+          <option>REFIS Federal</option><option>REFIS Estadual</option>
+          <option>REFIS Municipal</option><option>CARF</option><option>Negociação Direta</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Responsável</label>
+        <select class="modal-input" id="nc-resp">
+          <option>Mariana Pinheiro</option><option>Diana</option>
+          <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Honorários Iniciais (R$)</label>
+        <input class="modal-input" id="nc-hon" type="number">
+      </div>
+      <div>
+        <label class="modal-label">Honorários Êxito (%)</label>
+        <input class="modal-input" id="nc-exito" type="number" min="0" max="100">
+      </div>
+      <div class="full">
+        <label class="modal-label">Tese Jurídica</label>
+        <textarea class="modal-input" id="nc-tese" rows="2" placeholder="Descreva a tese aplicável..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-novo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarNovoCaso()">Criar Caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GERAR COBRANÇA -->
+<div class="modal-bg" id="mod-cobranca">
+  <div class="mini-modal">
+    <h3>Gerar Cobrança</h3>
+    <label class="modal-label">Tipo</label>
+    <select class="modal-input" id="cob-tipo">
+      <option value="inicial">Inicial</option>
+      <option value="exito">Êxito</option>
+      <option value="outro">Outro</option>
+    </select>
+    <label class="modal-label">Valor (R$)</label>
+    <input class="modal-input" id="cob-valor" type="number">
+    <label class="modal-label">Vencimento</label>
+    <input class="modal-input" id="cob-venc" type="date">
+    <label class="modal-label">Descrição</label>
+    <input class="modal-input" id="cob-desc">
+    <label class="modal-label">Conta</label>
+    <select class="modal-input" id="cob-conta">
+      <option value="pessoal">Asaas Pessoal</option>
+      <option value="escritorio">Asaas Escritório</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-cobranca')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCobranca()">Gerar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENCERRAMENTO -->
+<div class="modal-bg" id="mod-encerramento">
+  <div class="mini-modal">
+    <h3>Encerrar Caso</h3>
+    <label class="modal-label">Resultado</label>
+    <select class="modal-input" id="enc-resultado" onchange="toggleEncResult()">
+      <option value="exito">Com Êxito</option>
+      <option value="sem_exito">Sem Êxito</option>
+    </select>
+    <div id="enc-exito-fields">
+      <label class="modal-label">Valor Negociado (R$)</label>
+      <input class="modal-input" id="enc-valor" type="number">
+      <label class="modal-label">Data do Acordo</label>
+      <input class="modal-input" id="enc-data" type="date">
+    </div>
+    <div id="enc-sem-exito-fields" style="display:none">
+      <label class="modal-label">Motivo</label>
+      <textarea class="modal-input" id="enc-motivo" rows="2"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-encerramento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEncerramento()">Encerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLICKSIGN -->
+<div class="modal-bg" id="mod-clicksign">
+  <div class="mini-modal">
+    <h3>Enviar para Assinatura</h3>
+    <label class="modal-label">PDF do Contrato</label>
+    <input class="modal-input" type="file" id="cs-arquivo" accept=".pdf">
+    <label class="modal-label">Nome do Signatário</label>
+    <input class="modal-input" id="cs-nome" placeholder="Nome completo">
+    <label class="modal-label">E-mail do Signatário</label>
+    <input class="modal-input" id="cs-email" type="email">
+    <label class="modal-label">CPF do Signatário</label>
+    <input class="modal-input" id="cs-cpf" placeholder="000.000.000-00">
+    <label class="modal-label">Mensagem (opcional)</label>
+    <textarea class="modal-input" id="cs-msg" rows="2" placeholder="Prezado cliente..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-clicksign')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarClickSign()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ── CONSTANTES ────────────────────────────────────────────────────────────────
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH  = { 'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation' };
+const SHR = { 'apikey':SK,'Authorization':'Bearer '+SK };
+
+const ETAPAS = [
+  { key:'diagnostico',    label:'Diagnóstico',    cor:'#1f3e3c' },
+  { key:'proposta',       label:'Proposta',        cor:'#2b5050' },
+  { key:'adesao',         label:'Adesão',          cor:'#2e6b5a' },
+  { key:'protocolo',      label:'Protocolo',       cor:'#3d7a65' },
+  { key:'acompanhamento', label:'Acompanhamento',  cor:'#5a8a78' },
+  { key:'encerrado',      label:'Encerrado',       cor:'#a7a897' }
+];
+
+const ORGAO_BADGE = {
+  'PGFN':      'badge-pgfn',
+  'RFB':       'badge-rfb',
+  'SEFAZ-BA':  'badge-sefaz',
+  'Prefeitura':'badge-mun',
+  'CARF':      'badge-rfb'
+};
+
+const HIST_ICONS = { manual:'📝', etapa_mudou:'➡️', contrato:'🖊️', cobranca:'💰', protocolo:'📋', outro:'📌' };
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let todosCasos = [], casosFiltrados = [], casoAtivo = null;
+let aliceHistorico = [], viewAtual = 'kanban', origemNovo = 'avulso';
+let prazosCaso = [], leads_convertidos = [];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const brl = v => v != null ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0}).format(v) : '—';
+const fmt = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const hoje = () => new Date().toISOString().split('T')[0];
+const daqui7 = () => { const d=new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; };
+
+function toast(msg,erro=false){
+  const w=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast'+(erro?' erro':'');
+  t.textContent=msg;
+  w.appendChild(t);
+  setTimeout(()=>t.remove(),4500);
+}
+function fecharModal(id){document.getElementById(id).classList.remove('show');}
+function abrirModal(id){document.getElementById(id).classList.add('show');}
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function sbGet(tabela,q=''){const r=await fetch(`${SB}/rest/v1/${tabela}?${q}`,{headers:SHR});return r.ok?r.json():[];}
+async function sbPost(tabela,body){
+  const r=await fetch(`${SB}/rest/v1/${tabela}`,{method:'POST',headers:SH,body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();throw new Error(t);}
+  const d=await r.json();return Array.isArray(d)?d[0]:d;
+}
+async function sbPatch(tabela,id,body){
+  const r=await fetch(`${SB}/rest/v1/${tabela}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(body)});
+  return r.ok;
+}
+
+// ── CARREGAR ──────────────────────────────────────────────────────────────────
+async function carregar(){
+  todosCasos=await sbGet('transacoes','order=created_at.desc&limit=500');
+  casosFiltrados=[...todosCasos];
+  await renderKPIs();
+  renderView();
+}
+
+// ── KPIs e BANNER ─────────────────────────────────────────────────────────────
+async function renderKPIs(){
+  const ativos=todosCasos.filter(c=>c.etapa!=='encerrado');
+  const valorTotal=ativos.reduce((s,c)=>s+(c.valor_divida||0),0);
+  const honTotal=ativos.reduce((s,c)=>s+(c.honorarios_previstos||0),0);
+  const cond=ativos.filter(c=>c.condicao_suspensiva).length;
+
+  // Prazos urgentes (carregar de todos)
+  const ids=ativos.map(c=>`transacao_id=in.(${ativos.map(c=>c.id).join(',')})`);
+  let prazosUrgentes=0;
+  if(ativos.length){
+    const prazos=await sbGet('transacoes_prazos',`transacao_id=in.(${ativos.map(c=>c.id).join(',')})&concluido=eq.false&data_prazo=lte.${daqui7()}`);
+    prazosUrgentes=prazos.length;
+    if(prazosUrgentes>0){
+      const banner=document.getElementById('banner-alerta');
+      banner.classList.add('show');
+      document.getElementById('banner-texto').textContent=`${prazosUrgentes} prazo(s) vencem nos próximos 7 dias. Verifique os casos.`;
+    }
+  }
+
+  const mesAtual=new Date().toISOString().slice(0,7);
+  const exito=todosCasos.filter(c=>c.etapa==='encerrado'&&c.valor_negociado&&(c.updated_at||'').startsWith(mesAtual)).length;
+
+  document.getElementById('kpi-ativos').textContent=ativos.length;
+  document.getElementById('kpi-valor').textContent=brl(valorTotal);
+  document.getElementById('kpi-hon').textContent=brl(honTotal);
+  document.getElementById('kpi-prazos').textContent=prazosUrgentes;
+  document.getElementById('kpi-prazos-sub').textContent=prazosUrgentes>0?'atenção necessária':'todos em dia';
+  document.getElementById('kpi-cond').textContent=cond;
+  document.getElementById('kpi-exito').textContent=exito;
+}
+
+// ── FILTROS ───────────────────────────────────────────────────────────────────
+function filtrar(){
+  const q   =document.getElementById('busca').value.toLowerCase();
+  const orgao=document.getElementById('f-orgao').value;
+  const resp =document.getElementById('f-resp').value;
+  const modal=document.getElementById('f-modal').value;
+  casosFiltrados=todosCasos.filter(c=>
+    (!q    ||(c.cliente_nome||'').toLowerCase().includes(q)||(c.cliente_cnpj||'').includes(q))&&
+    (!orgao||c.orgao===orgao)&&
+    (!resp ||c.responsavel===resp)&&
+    (!modal||c.modalidade===modal)
+  );
+  renderView();
+}
+
+// ── VISTAS ────────────────────────────────────────────────────────────────────
+function setView(v){
+  viewAtual=v;
+  document.getElementById('view-kanban').style.display=v==='kanban'?'block':'none';
+  document.getElementById('view-lista').style.display =v==='lista' ?'block':'none';
+  document.getElementById('btn-kanban').classList.toggle('active',v==='kanban');
+  document.getElementById('btn-lista').classList.toggle('active', v==='lista');
+  renderView();
+}
+function renderView(){viewAtual==='kanban'?renderKanban():renderLista();}
+
+// ── KANBAN ────────────────────────────────────────────────────────────────────
+function renderKanban(){
+  const board=document.getElementById('kanban-board');
+  board.innerHTML='';
+  ETAPAS.forEach(e=>{
+    const cards=casosFiltrados.filter(c=>c.etapa===e.key);
+    const col=document.createElement('div');
+    col.className='kanban-col';
+    col.innerHTML=`
+      <div class="kanban-col-header" style="background:${e.cor}">
+        <span class="col-title">${e.label}</span>
+        <span class="col-count">${cards.length}</span>
+      </div>
+      <div class="kanban-body" id="col-${e.key}"
+           ondragover="dragOver(event,'${e.key}')"
+           ondrop="dropCard(event,'${e.key}')"
+           ondragleave="dragLeave(event)">
+        ${cards.map(renderCard).join('')}
+        ${!cards.length?'<p style="text-align:center;color:var(--bege);font-size:11px;padding:20px 0">Nenhum caso</p>':''}
+      </div>`;
+    board.appendChild(col);
+  });
+}
+
+function orgaoBadge(orgao){
+  const cls=ORGAO_BADGE[orgao]||'badge-outro';
+  return `<span class="badge ${cls}">${orgao||'—'}</span>`;
+}
+
+function renderCard(c){
+  const prazoLabel=c._prazo_proximo
+    ? `<div class="card-prazo ${c._prazo_urgente?'prazo-urgente':'prazo-ok'}">${c._prazo_urgente?'⚠ ':'📅 '}${fmt(c._prazo_proximo)}</div>`
+    : '';
+  return `
+    <div class="caso-card" draggable="true" id="card-${c.id}"
+         ondragstart="dragStart(event,'${c.id}')"
+         ondragend="dragEnd(event)"
+         onclick="abrirCaso('${c.id}')">
+      <div class="card-cliente">${c.cliente_nome}</div>
+      <div class="card-cnpj">${c.cliente_cnpj||'—'}</div>
+      ${c.valor_divida?`<div class="card-divida">${brl(c.valor_divida)}</div>`:''}
+      <div class="card-tags">
+        ${orgaoBadge(c.orgao)}
+        ${c.modalidade?`<span class="badge badge-modal">${c.modalidade}</span>`:''}
+        ${c.condicao_suspensiva?'<span class="badge" style="background:#fff7ed;color:var(--laran)">⏸ Cond. Susp.</span>':''}
+      </div>
+      ${prazoLabel}
+      <div class="card-footer">
+        <span class="card-resp">${c.responsavel||'—'}</span>
+        ${c.honorarios_previstos?`<span class="card-hon">${brl(c.honorarios_previstos)}</span>`:''}
+      </div>
+    </div>`;
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+let dragId=null;
+function dragStart(e,id){dragId=id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function dragEnd(e){e.currentTarget.classList.remove('dragging');}
+function dragOver(e,etapa){e.preventDefault();document.getElementById('col-'+etapa).classList.add('drag-over');}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
+
+async function dropCard(e,etapa){
+  e.preventDefault();
+  document.getElementById('col-'+etapa).classList.remove('drag-over');
+  if(!dragId)return;
+  const caso=todosCasos.find(c=>c.id===dragId);
+  if(!caso||caso.etapa===etapa)return;
+  const ant=caso.etapa;
+  caso.etapa=etapa;
+  renderKanban();
+  const ok=await sbPatch('transacoes',dragId,{etapa});
+  if(ok){
+    await sbPost('transacoes_historico',{
+      transacao_id:dragId,tipo:'etapa_mudou',
+      descricao:`Etapa: "${ETAPAS.find(x=>x.key===ant)?.label}" → "${ETAPAS.find(x=>x.key===etapa)?.label}"`,
+      criado_por:'Sistema'
+    });
+    toast('Etapa atualizada ✓');
+  } else {caso.etapa=ant;renderKanban();toast('Erro ao atualizar',true);}
+  dragId=null;
+}
+
+// ── LISTA ─────────────────────────────────────────────────────────────────────
+function renderLista(){
+  const tbody=document.getElementById('lista-body');
+  if(!casosFiltrados.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--bege)">Nenhum caso encontrado</td></tr>';return;}
+  tbody.innerHTML=casosFiltrados.slice(0,50).map(c=>{
+    const e=ETAPAS.find(x=>x.key===c.etapa);
+    return `<tr onclick="abrirCaso('${c.id}')">
+      <td><strong>${c.cliente_nome}</strong></td>
+      <td>${c.cliente_cnpj||'—'}</td>
+      <td>${orgaoBadge(c.orgao)}</td>
+      <td>${brl(c.valor_divida)}</td>
+      <td>${c.modalidade||'—'}</td>
+      <td><span class="etapa-pill" style="background:${e?.cor||'#999'}">${e?.label||c.etapa}</span></td>
+      <td>${c.responsavel||'—'}</td>
+      <td>${fmt(c._prazo_proximo)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── ABRIR CASO ────────────────────────────────────────────────────────────────
+async function abrirCaso(id){
+  casoAtivo=todosCasos.find(c=>c.id===id);
+  if(!casoAtivo)return;
+  aliceHistorico=[];
+  document.getElementById('mc-titulo').textContent=casoAtivo.cliente_nome;
+  document.getElementById('mc-sub').textContent=(casoAtivo.orgao||'')+(casoAtivo.cliente_cnpj?' · '+casoAtivo.cliente_cnpj:'');
+  // Side cards
+  const e=ETAPAS.find(x=>x.key===casoAtivo.etapa);
+  document.getElementById('sc-etapa-label').textContent=e?.label||casoAtivo.etapa;
+  document.getElementById('sc-etapa-label').style.background=e?.cor||'#999';
+  document.getElementById('sc-etapa-label').style.color='#fff';
+  document.getElementById('sc-hon-prev').textContent=brl(casoAtivo.honorarios_previstos);
+  document.getElementById('sc-hon-rec').textContent=brl(casoAtivo.honorarios_recebidos);
+  document.getElementById('sc-hon-exit').textContent=casoAtivo.honorarios_exito_percentual?casoAtivo.honorarios_exito_percentual+'%':'—';
+  // ClickSign status
+  const cs=document.getElementById('sc-clicksign-status');
+  if(casoAtivo.clicksign_envelope_key){
+    cs.textContent='Envelope: '+casoAtivo.clicksign_envelope_key;
+    cs.style.color=var_verde;
+  } else { cs.textContent='Nenhum contrato enviado.'; }
+  // Ativar primeira aba
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  ['ct-dados','ct-prazos','ct-hist','ct-alice'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('ct-dados').style.display='block';
+  renderTabDados();
+  abrirModal('mod-caso');
+  prazosCaso=await sbGet('transacoes_prazos',`transacao_id=eq.${casoAtivo.id}&order=data_prazo.asc`);
+  const urgentes=prazosCaso.filter(p=>!p.concluido&&p.data_prazo<=daqui7()).length;
+  const badge=document.getElementById('badge-prazos');
+  badge.style.display=urgentes?'inline':'none';
+  badge.textContent=urgentes;
+}
+
+function fecharCaso(){fecharModal('mod-caso');casoAtivo=null;}
+
+function ctab(btn,id){
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['ct-dados','ct-prazos','ct-hist','ct-alice'].forEach(t=>document.getElementById(t).style.display='none');
+  const el=document.getElementById(id);
+  el.style.display=id==='ct-alice'?'flex':'block';
+  if(id==='ct-prazos')renderTabPrazos();
+  if(id==='ct-hist')renderTabHist();
+  if(id==='ct-alice')renderTabAlice();
+}
+
+// ── ABA DADOS ─────────────────────────────────────────────────────────────────
+function renderTabDados(){
+  const c=casoAtivo;
+  document.getElementById('ct-dados').innerHTML=`
+    <div class="form-grid">
+      <div><label class="field-lbl">Cliente *</label><input class="field-input" id="d-cliente" value="${c.cliente_nome||''}"></div>
+      <div><label class="field-lbl">CNPJ</label><input class="field-input" id="d-cnpj" value="${c.cliente_cnpj||''}"></div>
+      <div><label class="field-lbl">Órgão</label>
+        <select class="field-input" id="d-orgao">
+          ${['PGFN','RFB','SEFAZ-BA','Prefeitura','CARF'].map(o=>`<option ${c.orgao===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="field-lbl">Modalidade</label>
+        <select class="field-input" id="d-modal">
+          <option value="">—</option>
+          ${['REFIS Federal','REFIS Estadual','REFIS Municipal','CARF','Negociação Direta'].map(m=>`<option ${c.modalidade===m?'selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="field-lbl">Valor da Dívida (R$)</label><input class="field-input" id="d-divida" type="number" value="${c.valor_divida||''}"></div>
+      <div><label class="field-lbl">Número do Processo</label><input class="field-input" id="d-processo" value="${c.numero_processo||''}"></div>
+      <div><label class="field-lbl">Honorários Iniciais (R$)</label><input class="field-input" id="d-hon" type="number" value="${c.honorarios_previstos||''}"></div>
+      <div><label class="field-lbl">Honorários Êxito (%)</label><input class="field-input" id="d-exito" type="number" value="${c.honorarios_exito_percentual||''}"></div>
+      <div><label class="field-lbl">Valor Recebido (R$)</label><input class="field-input" id="d-recebido" type="number" value="${c.honorarios_recebidos||0}"></div>
+      <div><label class="field-lbl">Responsável</label>
+        <select class="field-input" id="d-resp">
+          ${['Mariana Pinheiro','Diana','Jade','Mariana Barboza','Laila Costa'].map(r=>`<option ${c.responsavel===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="full"><label class="field-lbl">Tese Jurídica</label><textarea class="field-input" id="d-tese" rows="3">${c.tese||''}</textarea></div>
+    </div>
+    <!-- CONDIÇÃO SUSPENSIVA -->
+    <div style="background:#fff8e6;border-radius:10px;padding:14px;border:1px solid #fed7aa;margin:16px 0">
+      <div class="toggle-wrap">
+        <div class="toggle ${c.condicao_suspensiva?'on':''}" id="cond-toggle" onclick="toggleCond()"></div>
+        <span style="font-size:13px;font-weight:600">Condição Suspensiva Ativa</span>
+      </div>
+      <div class="cond-fields ${c.condicao_suspensiva?'show':''}" id="cond-fields">
+        <div class="form-grid">
+          <div><label class="field-lbl">Data Limite</label><input class="field-input" id="d-cond-data" type="date" value="${c.prazo_condicao||''}"></div>
+          <div><label class="field-lbl">Descrição</label><input class="field-input" id="d-cond-desc" value="${c.descricao_condicao||''}"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="full"><label class="field-lbl">Observações</label><textarea class="field-input" id="d-obs" rows="2">${c.observacoes||''}</textarea></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-primary" onclick="salvarDados()">Salvar Alterações</button>
+    </div>`;
+}
+
+let condAtivo = false;
+function toggleCond(){
+  condAtivo=!document.getElementById('cond-toggle').classList.contains('on');
+  document.getElementById('cond-toggle').classList.toggle('on',condAtivo);
+  document.getElementById('cond-fields').classList.toggle('show',condAtivo);
+}
+
+async function salvarDados(){
+  const body={
+    cliente_nome:             document.getElementById('d-cliente').value.trim(),
+    cliente_cnpj:             document.getElementById('d-cnpj').value.trim()||null,
+    orgao:                    document.getElementById('d-orgao').value,
+    modalidade:               document.getElementById('d-modal').value||null,
+    valor_divida:             parseFloat(document.getElementById('d-divida').value)||null,
+    numero_processo:          document.getElementById('d-processo').value.trim()||null,
+    honorarios_previstos:     parseFloat(document.getElementById('d-hon').value)||null,
+    honorarios_exito_percentual:parseFloat(document.getElementById('d-exito').value)||null,
+    honorarios_recebidos:     parseFloat(document.getElementById('d-recebido').value)||0,
+    responsavel:              document.getElementById('d-resp').value,
+    tese:                     document.getElementById('d-tese').value.trim()||null,
+    observacoes:              document.getElementById('d-obs').value.trim()||null,
+    condicao_suspensiva:      document.getElementById('cond-toggle').classList.contains('on'),
+    prazo_condicao:           document.getElementById('d-cond-data')?.value||null,
+    descricao_condicao:       document.getElementById('d-cond-desc')?.value.trim()||null
+  };
+  const ok=await sbPatch('transacoes',casoAtivo.id,body);
+  if(ok){
+    Object.assign(casoAtivo,body);
+    const idx=todosCasos.findIndex(c=>c.id===casoAtivo.id);
+    if(idx>=0)Object.assign(todosCasos[idx],body);
+    document.getElementById('sc-hon-prev').textContent=brl(body.honorarios_previstos);
+    renderView();
+    toast('Caso atualizado ✓');
+  } else toast('Erro ao salvar',true);
+}
+
+// ── ABA PRAZOS ────────────────────────────────────────────────────────────────
+function renderTabPrazos(){
+  const el=document.getElementById('ct-prazos');
+  el.innerHTML=`
+    <div style="background:#f8fdfd;border-radius:10px;padding:14px;border:1px solid #e8f0f0;margin-bottom:16px">
+      <div class="form-grid" style="margin-bottom:8px">
+        <div><label class="field-lbl">Descrição *</label><input class="field-input" id="np-desc" placeholder="Ex: Protocolar Pedido"></div>
+        <div><label class="field-lbl">Data *</label><input class="field-input" id="np-data" type="date"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary btn-sm" onclick="adicionarPrazo()">+ Adicionar Prazo</button>
+      </div>
+    </div>
+    ${prazosCaso.map(p=>{
+      const venc=p.data_prazo<hoje()&&!p.concluido;
+      const urg =!p.concluido&&p.data_prazo<=daqui7()&&p.data_prazo>=hoje();
+      const cls =p.concluido?'concluido':venc?'vencido':urg?'urgente':'normal';
+      return `<div class="prazo-item ${cls} ${p.concluido?'prazo-concluido':''}">
+        <input type="checkbox" ${p.concluido?'checked':''} onchange="togglePrazo('${p.id}',this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--v1)">
+        <span class="prazo-desc">${p.descricao}</span>
+        <span class="prazo-data">${fmt(p.data_prazo)}</span>
+        ${venc&&!p.concluido?'<span style="font-size:10px;color:var(--verm);font-weight:700">VENCIDO</span>':''}
+        ${urg?'<span style="font-size:10px;color:var(--laran);font-weight:700">URGENTE</span>':''}
+      </div>`;
+    }).join('')}
+    ${!prazosCaso.length?'<p style="text-align:center;color:var(--bege);padding:20px">Nenhum prazo cadastrado</p>':''}`;
+}
+
+async function adicionarPrazo(){
+  const desc=document.getElementById('np-desc').value.trim();
+  const data=document.getElementById('np-data').value;
+  if(!desc||!data){toast('Descrição e data obrigatórios',true);return;}
+  const novo=await sbPost('transacoes_prazos',{transacao_id:casoAtivo.id,descricao:desc,data_prazo:data});
+  prazosCaso.push(novo);
+  prazosCaso.sort((a,b)=>a.data_prazo.localeCompare(b.data_prazo));
+  renderTabPrazos();
+  toast('Prazo adicionado ✓');
+}
+
+async function togglePrazo(id,concluido){
+  await sbPatch('transacoes_prazos',id,{concluido});
+  const p=prazosCaso.find(x=>x.id===id);
+  if(p)p.concluido=concluido;
+  renderTabPrazos();
+  toast(concluido?'Prazo concluído ✓':'Prazo reaberto');
+}
+
+// ── ABA HISTÓRICO ─────────────────────────────────────────────────────────────
+async function renderTabHist(){
+  const items=await sbGet('transacoes_historico',`transacao_id=eq.${casoAtivo.id}&order=created_at.desc`);
+  const el=document.getElementById('ct-hist');
+  el.innerHTML=`
+    <div style="background:#f8fdfd;border-radius:10px;padding:14px;border:1px solid #e8f0f0;margin-bottom:16px">
+      <div class="form-grid" style="margin-bottom:8px">
+        <div class="full"><label class="field-lbl">Descrição *</label><textarea class="field-input" id="hi-desc" rows="2" placeholder="O que aconteceu?"></textarea></div>
+        <div><label class="field-lbl">Registrado por</label><input class="field-input" id="hi-quem" placeholder="Seu nome"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary btn-sm" onclick="registrarHist()">Registrar</button>
+      </div>
+    </div>
+    ${items.map(i=>`
+      <div class="hist-item">
+        <div class="hist-icon">${HIST_ICONS[i.tipo]||'📌'}</div>
+        <div class="hist-body">
+          <div class="hist-tipo">${(i.tipo||'manual').replace('_',' ')}</div>
+          <div class="hist-desc">${i.descricao}</div>
+          <div class="hist-meta">${new Date(i.created_at).toLocaleString('pt-BR')}${i.criado_por?' · '+i.criado_por:''}</div>
+        </div>
+      </div>`).join('')}
+    ${!items.length?'<p style="text-align:center;color:var(--bege);padding:20px">Nenhum registro ainda</p>':''}`;
+}
+
+async function registrarHist(){
+  const desc=document.getElementById('hi-desc').value.trim();
+  if(!desc){toast('Descrição obrigatória',true);return;}
+  await sbPost('transacoes_historico',{
+    transacao_id:casoAtivo.id,tipo:'manual',
+    descricao:desc,criado_por:document.getElementById('hi-quem').value
+  });
+  toast('Registrado ✓');
+  renderTabHist();
+}
+
+// ── ABA ALICE ─────────────────────────────────────────────────────────────────
+function renderTabAlice(){
+  const el=document.getElementById('ct-alice');
+  el.style.cssText='display:flex;flex-direction:column;height:100%;padding:0';
+  if(el.querySelector('.chat-msgs'))return; // já renderizado
+  el.innerHTML=`
+    <div style="padding:12px 16px;background:#f8fdfd;border-bottom:1px solid #e8f0f0;flex-shrink:0">
+      <div style="font-size:12px;font-weight:700;color:var(--v1)">✦ Alice — Especialista em Transação Tributária</div>
+      <div style="font-size:11px;color:var(--bege)">Contexto do caso carregado automaticamente</div>
+    </div>
+    <div class="chips" id="alice-chips">
+      <span class="chip" onclick="usarChip(this)">Qual modalidade é mais vantajosa para esse caso?</span>
+      <span class="chip" onclick="usarChip(this)">Estime o desconto provável com base no perfil</span>
+      <span class="chip" onclick="usarChip(this)">Rascunhe o requerimento inicial para protocolo</span>
+      <span class="chip" onclick="usarChip(this)">Analise o risco da condição suspensiva</span>
+      <span class="chip" onclick="usarChip(this)">Quais documentos solicitar ao cliente?</span>
+      <span class="chip" onclick="usarChip(this)">Como estruturar o argumento de negociação?</span>
+    </div>
+    <div class="chat-msgs" id="alice-msgs"></div>
+    <div class="chat-input-row">
+      <textarea id="alice-input" placeholder="Pergunte à Alice sobre este caso..." onkeydown="aliceKeyDown(event)"></textarea>
+      <button onclick="enviarAlice()">→</button>
+    </div>`;
+}
+
+function usarChip(el){
+  document.getElementById('alice-input').value=el.textContent;
+  document.getElementById('alice-chips').style.display='none';
+  enviarAlice();
+}
+
+function aliceKeyDown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarAlice();}}
+
+async function enviarAlice(){
+  const input=document.getElementById('alice-input');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+  const msgs=document.getElementById('alice-msgs');
+  msgs.innerHTML+=`<div class="cmsg user">${msg}</div>`;
+  msgs.innerHTML+=`<div class="cmsg agent" id="alice-typing"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  aliceHistorico.push({role:'user',content:msg});
+  try{
+    const r=await fetch('/api/alice',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mensagem:msg,historico:aliceHistorico.slice(-10),caso:casoAtivo})
+    });
+    const d=await r.json();
+    document.getElementById('alice-typing')?.remove();
+    const resposta=d.resposta||d.erro||'Erro ao obter resposta';
+    msgs.innerHTML+=`<div class="cmsg agent">${resposta.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div>`;
+    aliceHistorico.push({role:'assistant',content:resposta});
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){
+    document.getElementById('alice-typing')?.remove();
+    msgs.innerHTML+=`<div class="cmsg agent" style="color:var(--verm)">Erro de conexão. Tente novamente.</div>`;
+  }
+}
+
+// ── MOVER ETAPA ───────────────────────────────────────────────────────────────
+async function moverEtapa(dir){
+  if(!casoAtivo)return;
+  const idx=ETAPAS.findIndex(e=>e.key===casoAtivo.etapa);
+  const novoIdx=idx+dir;
+  if(novoIdx<0||novoIdx>=ETAPAS.length)return;
+  const novaEtapa=ETAPAS[novoIdx];
+
+  // Protocolo: pede número
+  if(novaEtapa.key==='protocolo'&&dir>0){
+    const num=prompt('Número do protocolo (deixe em branco para pular):');
+    if(num){await sbPatch('transacoes',casoAtivo.id,{numero_processo:num});}
+  }
+  // Encerrado: abre modal
+  if(novaEtapa.key==='encerrado'&&dir>0){abrirEncerramento();return;}
+
+  const ok=await sbPatch('transacoes',casoAtivo.id,{etapa:novaEtapa.key});
+  if(ok){
+    const ant=casoAtivo.etapa;
+    casoAtivo.etapa=novaEtapa.key;
+    const idx2=todosCasos.findIndex(c=>c.id===casoAtivo.id);
+    if(idx2>=0)todosCasos[idx2].etapa=novaEtapa.key;
+    document.getElementById('sc-etapa-label').textContent=novaEtapa.label;
+    document.getElementById('sc-etapa-label').style.background=novaEtapa.cor;
+    await sbPost('transacoes_historico',{
+      transacao_id:casoAtivo.id,tipo:'etapa_mudou',
+      descricao:`Etapa: "${ETAPAS.find(x=>x.key===ant)?.label}" → "${novaEtapa.label}"`,
+      criado_por:'Usuário'
+    });
+    renderView();toast('Etapa avançada ✓');
+  }
+}
+
+// ── GERAR COBRANÇA ────────────────────────────────────────────────────────────
+function abrirGerarCobranca(){
+  if(!casoAtivo)return;
+  document.getElementById('cob-valor').value=casoAtivo.honorarios_previstos||'';
+  document.getElementById('cob-desc').value=`Honorários — ${casoAtivo.cliente_nome}`;
+  abrirModal('mod-cobranca');
+}
+
+async function confirmarCobranca(){
+  const valor=document.getElementById('cob-valor').value;
+  const venc=document.getElementById('cob-venc').value;
+  if(!valor||!venc){toast('Valor e vencimento obrigatórios',true);return;}
+  try{
+    const r=await fetch('/api/honorario-transacao',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        nome_cliente:casoAtivo.cliente_nome,
+        cnpj:casoAtivo.cliente_cnpj,
+        valor:parseFloat(valor),
+        vencimento:venc,
+        descricao:document.getElementById('cob-desc').value,
+        conta:document.getElementById('cob-conta').value
+      })
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erro||'Erro');
+    await sbPatch('transacoes',casoAtivo.id,{asaas_cobranca_id:d.id});
+    await sbPost('transacoes_historico',{
+      transacao_id:casoAtivo.id,tipo:'cobranca',
+      descricao:`Cobrança gerada: ${brl(parseFloat(valor))} | Venc: ${fmt(venc)}${d.linkPagamento?' | '+d.linkPagamento:''}`,
+      criado_por:'Sistema'
+    });
+    fecharModal('mod-cobranca');
+    toast('Cobrança gerada no Asaas ✓');
+    if(d.linkPagamento)window.open(d.linkPagamento,'_blank');
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+// ── CLICKSIGN ─────────────────────────────────────────────────────────────────
+function abrirClickSign(){abrirModal('mod-clicksign');}
+
+async function confirmarClickSign(){
+  toast('Integração ClickSign: adicione CLICKSIGN_TOKEN nas variáveis de ambiente do Vercel para ativar esta funcionalidade.',true);
+  fecharModal('mod-clicksign');
+}
+
+// ── ENCERRAMENTO ──────────────────────────────────────────────────────────────
+function abrirEncerramento(){abrirModal('mod-encerramento');}
+function toggleEncResult(){
+  const v=document.getElementById('enc-resultado').value;
+  document.getElementById('enc-exito-fields').style.display=v==='exito'?'block':'none';
+  document.getElementById('enc-sem-exito-fields').style.display=v==='sem_exito'?'block':'none';
+}
+
+async function confirmarEncerramento(){
+  if(!casoAtivo)return;
+  const resultado=document.getElementById('enc-resultado').value;
+  const body={etapa:'encerrado'};
+  let descHist='';
+  if(resultado==='exito'){
+    const val=parseFloat(document.getElementById('enc-valor').value)||null;
+    body.valor_negociado=val;
+    descHist=`Caso encerrado com êxito. Valor negociado: ${brl(val)}`;
+    // Gerar cobrança de êxito se percentual configurado
+    if(casoAtivo.honorarios_exito_percentual&&val){
+      const honExito=(casoAtivo.honorarios_exito_percentual/100)*val;
+      try{
+        const r=await fetch('/api/honorario-transacao',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            nome_cliente:casoAtivo.cliente_nome,cnpj:casoAtivo.cliente_cnpj,
+            valor:honExito,vencimento:document.getElementById('enc-data').value||hoje(),
+            descricao:`Honorários de êxito — ${casoAtivo.cliente_nome} (${casoAtivo.honorarios_exito_percentual}%)`
+          })
+        });
+        const d=await r.json();
+        if(r.ok){
+          descHist+=` | Cobrança de êxito: ${brl(honExito)}`;
+          toast(`Cobrança de êxito de ${brl(honExito)} criada no Asaas ✓`);
+        }
+      }catch{}
+    }
+  } else {
+    descHist=`Caso encerrado sem êxito. Motivo: ${document.getElementById('enc-motivo').value||'não informado'}`;
+  }
+  await sbPatch('transacoes',casoAtivo.id,body);
+  await sbPost('transacoes_historico',{
+    transacao_id:casoAtivo.id,tipo:'manual',descricao:descHist,criado_por:'Usuário'
+  });
+  casoAtivo.etapa='encerrado';
+  const idx=todosCasos.findIndex(c=>c.id===casoAtivo.id);
+  if(idx>=0)todosCasos[idx].etapa='encerrado';
+  fecharModal('mod-encerramento');
+  fecharCaso();
+  renderView();
+  toast('Caso encerrado ✓');
+}
+
+// ── NOVO CASO ─────────────────────────────────────────────────────────────────
+async function abrirNovoCaso(){
+  // Carregar leads convertidos
+  leads_convertidos=await sbGet('leads',`etapa=in.(convertido,proposta_enviada)&order=razao_social.asc`);
+  const sel=document.getElementById('nc-lead-id');
+  sel.innerHTML='<option value="">Selecione um lead...</option>'+
+    leads_convertidos.map(l=>`<option value="${l.id}">${l.razao_social||l.nome_fantasia}</option>`).join('');
+  setOrigem('avulso');
+  abrirModal('mod-novo');
+}
+
+function setOrigem(o){
+  origemNovo=o;
+  document.getElementById('orig-lead-section').style.display=o==='lead'?'block':'none';
+  document.getElementById('orig-lead').className='btn btn-'+(o==='lead'?'primary':'outline')+' btn-sm';
+  document.getElementById('orig-avulso').className='btn btn-'+(o==='avulso'?'primary':'outline')+' btn-sm';
+}
+
+function preencherDoLead(){
+  const id=document.getElementById('nc-lead-id').value;
+  if(!id)return;
+  const l=leads_convertidos.find(x=>x.id===id);
+  if(!l)return;
+  document.getElementById('nc-cliente').value=l.razao_social||l.nome_fantasia||'';
+  document.getElementById('nc-cnpj').value=l.cnpj||'';
+  document.getElementById('nc-divida').value=l.valor_divida||'';
+  if(l.modalidade_transacao){
+    const s=document.getElementById('nc-modal');
+    for(let o of s.options)if(o.value===l.modalidade_transacao){s.value=o.value;break;}
+  }
+}
+
+async function salvarNovoCaso(){
+  const cliente=document.getElementById('nc-cliente').value.trim();
+  const orgao=document.getElementById('nc-orgao').value;
+  if(!cliente||!orgao){toast('Cliente e órgão são obrigatórios',true);return;}
+  const leadId=origemNovo==='lead'?document.getElementById('nc-lead-id').value||null:null;
+  try{
+    const novo=await sbPost('transacoes',{
+      lead_id:leadId||null,
+      cliente_nome:cliente,
+      cliente_cnpj:document.getElementById('nc-cnpj').value||null,
+      orgao,
+      valor_divida:parseFloat(document.getElementById('nc-divida').value)||null,
+      modalidade:document.getElementById('nc-modal').value||null,
+      responsavel:document.getElementById('nc-resp').value,
+      honorarios_previstos:parseFloat(document.getElementById('nc-hon').value)||null,
+      honorarios_exito_percentual:parseFloat(document.getElementById('nc-exito').value)||null,
+      tese:document.getElementById('nc-tese').value||null,
+      etapa:'diagnostico'
+    });
+    await sbPost('transacoes_historico',{
+      transacao_id:novo.id,tipo:'manual',
+      descricao:`Caso criado em ${new Date().toLocaleDateString('pt-BR')}`,
+      criado_por:'Sistema'
+    });
+    if(leadId)await sbPatch('leads',leadId,{convertido_em:novo.id});
+    todosCasos.unshift(novo);
+    casosFiltrados=[...todosCasos];
+    fecharModal('mod-novo');
+    renderView();
+    toast('Caso criado ✓');
+    abrirCaso(novo.id);
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Variável auxiliar para CSS-in-JS
+const var_verde='#2a8f6e';
+carregar();
+</script>
+</body>
+</html>
