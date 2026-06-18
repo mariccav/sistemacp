@@ -5,6 +5,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>PAINEL DE GESTÃO | Cavalcante Pinheiro Advocacia</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -451,6 +452,7 @@ canvas{display:block;width:100%;height:100%;}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:20px;">
       <input id="cli-busca" type="text" placeholder="Buscar por nome ou contato..." oninput="filtrarClientes()" style="flex:1;padding:10px 14px;border:1px solid #dde8e8;border-radius:8px;font-family:'Manrope',sans-serif;font-size:14px;color:#063327;outline:none;">
+      <button onclick="abrirImportClientes()" style="background:#fff;color:#063327;border:1px solid #dde8e8;padding:10px 16px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">↑ Importar</button>
       <button onclick="toggleNovoCliente()" style="background:#063327;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Novo</button>
     </div>
     <div id="form-novo-cli" style="display:none;background:#f0f7f4;border-radius:10px;padding:20px;margin-bottom:20px;border:1px solid #dde8e8;">
@@ -468,6 +470,58 @@ canvas{display:block;width:100%;height:100%;}
       </div>
     </div>
     <div id="cli-lista" style="max-height:360px;overflow-y:auto;"><p style="text-align:center;color:#a7a897;padding:20px;">Carregando...</p></div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR CLIENTES -->
+<div id="mod-import-cli" style="display:none;position:fixed;inset:0;background:rgba(6,51,39,.85);z-index:3200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:16px;padding:32px;width:100%;max-width:560px;box-shadow:0 24px 60px rgba(0,0,0,.4);">
+    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#063327;margin-bottom:6px;">Importar Clientes</div>
+    <div style="font-size:12px;color:#ac9b7c;margin-bottom:24px;">Suba uma planilha .xlsx ou .csv com os dados dos clientes</div>
+
+    <!-- PASSO 1: Upload -->
+    <div id="imp-cli-step1">
+      <div id="imp-cli-dropzone" onclick="document.getElementById('imp-cli-file').click()"
+           ondragover="event.preventDefault();this.style.borderColor='#063327';this.style.background='#f0f7f4'"
+           ondragleave="this.style.borderColor='#dde8e8';this.style.background='#fafafa'"
+           ondrop="impCliDrop(event)"
+           style="border:2px dashed #dde8e8;border-radius:10px;padding:36px;text-align:center;cursor:pointer;background:#fafafa;transition:.2s;">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:600;color:#063327;margin-bottom:4px;">Clique ou arraste o arquivo</div>
+        <div style="font-size:12px;color:#a7a897;">.xlsx ou .csv</div>
+      </div>
+      <input type="file" id="imp-cli-file" accept=".xlsx,.csv" style="display:none" onchange="impCliLer(this.files[0])">
+      <div style="margin-top:16px;background:#f8fdfd;border-radius:8px;padding:12px;font-size:12px;color:#4a6868;border:1px solid #e8f0f0;">
+        <strong>Colunas esperadas:</strong> Nome, Telefone, CPF/CNPJ, Email, Tipo de Serviço<br>
+        <span style="color:#a7a897">Apenas "Nome" é obrigatório. Os demais são opcionais.</span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <button onclick="fecharModal('mod-import-cli')" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:9px 20px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- PASSO 2: Prévia -->
+    <div id="imp-cli-step2" style="display:none">
+      <div style="font-size:13px;color:#a7a897;margin-bottom:10px;">Prévia das primeiras 5 linhas:</div>
+      <div style="overflow-x:auto;margin-bottom:12px;border-radius:8px;border:1px solid #e8f0f0;">
+        <table id="imp-cli-preview" style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead></thead><tbody></tbody>
+        </table>
+      </div>
+      <div id="imp-cli-count" style="font-size:12px;color:#a7a897;margin-bottom:16px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button onclick="impCliVoltar()" style="background:none;border:1px solid #dde8e8;color:#a7a897;padding:9px 20px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;cursor:pointer;">← Voltar</button>
+        <button onclick="impCliIniciar()" style="background:#063327;color:#fff;border:none;padding:9px 24px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Importar →</button>
+      </div>
+    </div>
+
+    <!-- PASSO 3: Progresso -->
+    <div id="imp-cli-step3" style="display:none;text-align:center;padding:10px 0">
+      <div style="height:6px;background:#e8f0f0;border-radius:4px;margin-bottom:12px;">
+        <div id="imp-cli-bar" style="height:100%;background:#063327;border-radius:4px;width:0%;transition:width .3s;"></div>
+      </div>
+      <div id="imp-cli-status" style="font-size:13px;color:#a7a897;">Preparando...</div>
+    </div>
   </div>
 </div>
 
@@ -678,6 +732,113 @@ async function salvarCliente(){
   btn.textContent='Salvar';btn.disabled=false;
   if(r.ok){['cli-nome','cli-contato','cli-cpf','cli-email'].forEach(id=>document.getElementById(id).value='');document.getElementById('cli-servico').value='';toggleNovoCliente();carregarClientes();}
   else alert('Erro ao salvar cliente.');
+}
+
+// ── IMPORTAR CLIENTES ─────────────────────────────────────────────
+let impCliDados = [];
+
+function abrirImportClientes() {
+  impCliDados = [];
+  document.getElementById('imp-cli-step1').style.display = 'block';
+  document.getElementById('imp-cli-step2').style.display = 'none';
+  document.getElementById('imp-cli-step3').style.display = 'none';
+  document.getElementById('imp-cli-file').value = '';
+  document.getElementById('mod-import-cli').style.display = 'flex';
+}
+
+function impCliDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById('imp-cli-dropzone');
+  dz.style.borderColor = '#dde8e8'; dz.style.background = '#fafafa';
+  const f = e.dataTransfer.files[0];
+  if (f) impCliLer(f);
+}
+
+function impCliLer(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'binary' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!rows.length) { alert('Arquivo vazio ou sem dados.'); return; }
+
+    // Mapear colunas automaticamente
+    const MAP = {
+      'Nome': 'nome', 'Nome completo': 'nome', 'Razão Social': 'nome', 'Cliente': 'nome',
+      'Telefone': 'contato', 'WhatsApp': 'contato', 'Celular': 'contato', 'Contato': 'contato',
+      'CPF': 'cpf_cnpj', 'CNPJ': 'cpf_cnpj', 'CPF/CNPJ': 'cpf_cnpj', 'Documento': 'cpf_cnpj',
+      'Email': 'email', 'E-mail': 'email',
+      'Tipo de Serviço': 'tipo_servico', 'Serviço': 'tipo_servico', 'Tipo': 'tipo_servico'
+    };
+
+    impCliDados = rows.map(r => {
+      const obj = {};
+      Object.entries(r).forEach(([k, v]) => { if (MAP[k.trim()]) obj[MAP[k.trim()]] = String(v).trim(); });
+      return obj;
+    }).filter(r => r.nome);
+
+    if (!impCliDados.length) { alert('Nenhuma linha com nome encontrada. Verifique o cabeçalho da planilha.'); return; }
+
+    // Preview
+    const cols = ['nome', 'contato', 'cpf_cnpj', 'email', 'tipo_servico'];
+    const labels = { nome: 'Nome', contato: 'Telefone', cpf_cnpj: 'CPF/CNPJ', email: 'E-mail', tipo_servico: 'Tipo de Serviço' };
+    const tabela = document.getElementById('imp-cli-preview');
+    tabela.innerHTML = `
+      <thead><tr>${cols.map(c => `<th style="background:#063327;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;">${labels[c]}</th>`).join('')}</tr></thead>
+      <tbody>${impCliDados.slice(0, 5).map(r => `<tr>${cols.map(c => `<td style="padding:7px 10px;border-bottom:1px solid #f0f7f7;font-size:12px;color:#063327;">${r[c] || '—'}</td>`).join('')}</tr>`).join('')}</tbody>`;
+
+    document.getElementById('imp-cli-count').textContent = `${impCliDados.length} clientes encontrados na planilha.`;
+    document.getElementById('imp-cli-step1').style.display = 'none';
+    document.getElementById('imp-cli-step2').style.display = 'block';
+  };
+  reader.readAsBinaryString(file);
+}
+
+function impCliVoltar() {
+  document.getElementById('imp-cli-step1').style.display = 'block';
+  document.getElementById('imp-cli-step2').style.display = 'none';
+}
+
+async function impCliIniciar() {
+  document.getElementById('imp-cli-step2').style.display = 'none';
+  document.getElementById('imp-cli-step3').style.display = 'block';
+
+  const total = impCliDados.length;
+  let importados = 0, duplicados = 0, erros = 0;
+
+  // Nomes já existentes
+  const existentes = new Set(todosClientes.map(c => c.nome.toLowerCase().trim()));
+
+  for (let i = 0; i < total; i += 5) {
+    const lote = impCliDados.slice(i, i + 5);
+    await Promise.all(lote.map(async cli => {
+      if (existentes.has((cli.nome || '').toLowerCase().trim())) { duplicados++; return; }
+      try {
+        const r = await fetch('/api/clientes', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: cli.nome,
+            contato: cli.contato || null,
+            cpf_cnpj: cli.cpf_cnpj || null,
+            email: cli.email || null,
+            tipo_servico: cli.tipo_servico || null
+          })
+        });
+        if (r.ok) { existentes.add(cli.nome.toLowerCase().trim()); importados++; }
+        else erros++;
+      } catch { erros++; }
+    }));
+    const pct = Math.round(((i + 5) / total) * 100);
+    document.getElementById('imp-cli-bar').style.width = Math.min(pct, 100) + '%';
+    document.getElementById('imp-cli-status').textContent = `Importando... ${Math.min(i + 5, total)} de ${total}`;
+  }
+
+  document.getElementById('imp-cli-bar').style.width = '100%';
+  document.getElementById('imp-cli-status').innerHTML =
+    `<strong style="color:#063327">Concluído!</strong><br>${importados} importado(s) · ${duplicados} duplicado(s) ignorado(s)${erros ? ` · ${erros} erro(s)` : ''}`;
+
+  await carregarClientes();
+  setTimeout(() => fecharModal('mod-import-cli'), 3000);
 }
 
 // ── CONTRATOS ─────────────────────────────────────────────────────
