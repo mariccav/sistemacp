@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --v1:#1f3e3c; --v2:#2b5050; --v3:#214949;
+  --bg:#f2fdff; --bege:#a7a897; --br:#ffffff;
+  --verde:#2a8f6e; --verm:#c25e5e; --amarelo:#d4a017;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;}
+
+/* HEADER */
+header{background:var(--v1);color:#fff;padding:18px 40px;display:flex;justify-content:space-between;align-items:center;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:2px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;}
+.hd-back:hover{color:#fff;}
+
+/* MAIN */
+.main{max-width:1600px;margin:0 auto;padding:28px 40px;}
+
+/* KPIs */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+.kpi{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid rgba(167,168,151,.25);box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--bege);margin-bottom:6px;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--v1);}
+.kpi-sub{font-size:11px;color:#9aadad;margin-top:4px;}
+.kpi.alerta .kpi-val{color:var(--verm);}
+
+/* BARRA DE AÇÕES */
+.action-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-box{flex:1;min-width:200px;position:relative;}
+.search-box input{width:100%;padding:9px 14px 9px 36px;border:1px solid rgba(167,168,151,.4);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:#fff;}
+.search-box::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;}
+.filter-select{padding:9px 12px;border:1px solid rgba(167,168,151,.4);border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;cursor:pointer;}
+.btn{padding:9px 18px;border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.2s;}
+.btn-primary{background:var(--v1);color:#fff;}
+.btn-primary:hover{background:var(--v2);}
+.btn-outline{background:#fff;color:var(--v1);border:1px solid rgba(167,168,151,.4);}
+.btn-outline:hover{background:var(--bg);}
+.toggle-view{display:flex;border:1px solid rgba(167,168,151,.4);border-radius:10px;overflow:hidden;}
+.toggle-view button{padding:8px 14px;border:none;background:#fff;font-family:'Nunito',sans-serif;font-size:12px;color:var(--bege);cursor:pointer;transition:.2s;}
+.toggle-view button.active{background:var(--v1);color:#fff;}
+
+/* KANBAN */
+.kanban-wrap{overflow-x:auto;padding-bottom:16px;}
+.kanban{display:flex;gap:14px;min-width:max-content;}
+.kanban-col{width:240px;flex-shrink:0;}
+.kanban-col-header{background:var(--v1);color:#fff;padding:10px 14px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;}
+.kanban-col-header .col-title{font-size:12px;font-weight:700;letter-spacing:.3px;}
+.kanban-col-header .col-count{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;font-size:11px;}
+.kanban-body{background:#fff;border:1px solid rgba(167,168,151,.2);border-top:none;border-radius:0 0 10px 10px;min-height:400px;padding:10px 8px;display:flex;flex-direction:column;gap:8px;}
+.kanban-body.drag-over{background:#f0f9f8;border-color:var(--v2);}
+
+/* CARD DO LEAD */
+.lead-card{background:#fff;border:1px solid rgba(167,168,151,.25);border-radius:10px;padding:12px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(31,62,60,.06);}
+.lead-card:hover{border-color:var(--v2);box-shadow:0 3px 12px rgba(31,62,60,.12);}
+.lead-card.dragging{opacity:.5;}
+.card-nome{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--v1);margin-bottom:4px;line-height:1.3;}
+.card-cnpj{font-size:10px;color:var(--bege);margin-bottom:8px;}
+.card-divida{font-size:13px;font-weight:700;color:var(--v1);margin-bottom:6px;}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.tag{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+.tag-setor{background:#f0f7f7;color:var(--v2);}
+.tag-porte{background:#f7f0f0;color:#8b5e5e;}
+.tag-modal{background:#f0f4f7;color:#3a5a7a;}
+.score-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.score-alto{background:#d4f5e9;color:#1a7a50;}
+.score-medio{background:#fef9e7;color:#a07020;}
+.score-baixo{background:#fde8e8;color:var(--verm);}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid #f0f7f7;}
+.card-resp{font-size:10px;color:var(--bege);}
+.card-followup{font-size:10px;font-weight:600;}
+.followup-ok{color:var(--bege);}
+.followup-vencido{color:var(--verm);}
+
+/* LISTA */
+.lista-wrap{display:none;}
+.lista-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.lista-table th{background:var(--v1);color:#fff;padding:12px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;text-align:left;}
+.lista-table td{padding:12px 14px;border-bottom:1px solid #f0f7f7;font-size:13px;}
+.lista-table tr:hover td{background:#f8fdfd;}
+.etapa-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+
+/* PAINEL LATERAL */
+.painel-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.4);z-index:1000;backdrop-filter:blur(2px);}
+.painel-overlay.show{display:block;}
+.painel{position:fixed;top:0;right:-560px;width:560px;height:100vh;background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,.15);z-index:1001;transition:right .3s ease;display:flex;flex-direction:column;}
+.painel.show{right:0;}
+.painel-header{background:var(--v1);color:#fff;padding:20px 24px;flex-shrink:0;}
+.painel-header h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+.painel-header p{font-size:11px;color:var(--bege);}
+.painel-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.painel-close:hover{background:rgba(255,255,255,.3);}
+.painel-etapa-bar{padding:14px 24px;background:#f8fdfd;border-bottom:1px solid #e8f0f0;display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.painel-etapa-bar select,.painel-etapa-bar input{padding:7px 10px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);outline:none;}
+.painel-tabs{display:flex;border-bottom:1px solid #e8f0f0;flex-shrink:0;}
+.painel-tab{flex:1;padding:12px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--bege);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;}
+.painel-tab.active{color:var(--v1);border-bottom-color:var(--v1);}
+.painel-body{flex:1;overflow-y:auto;padding:20px 24px;}
+.painel-footer{padding:16px 24px;border-top:1px solid #e8f0f0;flex-shrink:0;}
+.btn-converter{width:100%;padding:14px;background:var(--v1);color:#fff;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;}
+.btn-converter:hover{background:var(--v2);}
+
+/* ABAS DO PAINEL */
+.field-row{margin-bottom:14px;}
+.field-lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.field-val{font-size:13px;color:var(--v1);font-weight:600;}
+.field-input{width:100%;padding:8px 12px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.field-input:focus{border-color:var(--v2);}
+textarea.field-input{resize:vertical;min-height:80px;}
+.contato-row{background:#f8fdfd;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid #e8f0f0;}
+.contato-nome{font-weight:700;font-size:13px;margin-bottom:6px;}
+.contato-campos{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.btn-wa{background:#25d366;color:#fff;border:none;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;}
+.historico-item{display:flex;gap:12px;margin-bottom:16px;}
+.hist-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:#f0f7f7;}
+.hist-content{flex:1;}
+.hist-tipo{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--bege);}
+.hist-desc{font-size:13px;color:var(--v1);margin:2px 0;}
+.hist-data{font-size:11px;color:var(--bege);}
+.followup-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f7f7;}
+.followup-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--v1);}
+.followup-concluido{text-decoration:line-through;color:var(--bege);}
+
+/* MODAIS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(31,62,60,.7);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:20px;padding:32px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--v1);margin-bottom:20px;}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.modal-row.full{grid-template-columns:1fr;}
+.modal-label{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;}
+.modal-input{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.modal-input:focus{border-color:var(--v2);}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+/* IMPORT MODAL */
+.import-steps{display:flex;gap:8px;margin-bottom:24px;}
+.import-step{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:11px;font-weight:700;color:var(--bege);background:#f8fdfd;}
+.import-step.active{background:var(--v1);color:#fff;}
+.drop-zone{border:2px dashed rgba(167,168,151,.5);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:.2s;}
+.drop-zone:hover,.drop-zone.over{border-color:var(--v1);background:#f0f7f7;}
+.drop-zone p{color:var(--bege);font-size:13px;margin-top:8px;}
+.progress-bar{height:6px;background:#e8f0f0;border-radius:4px;margin:16px 0;}
+.progress-fill{height:100%;background:var(--v1);border-radius:4px;transition:width .3s;}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;}
+.preview-table th{background:var(--v1);color:#fff;padding:8px 10px;text-align:left;}
+.preview-table td{padding:8px 10px;border-bottom:1px solid #f0f7f7;}
+
+/* CONVERTER MODAL */
+.conv-modal{max-width:480px;}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--v1);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:320px;}
+.toast.erro{background:var(--verm);}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--bege);font-size:13px;}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid #e8f0f0;border-top-color:var(--v1);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .main{padding:16px 20px;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .painel{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>CRM — Pipeline Comercial</h1>
+    <p>Cavalcante Pinheiro Advocacia · Gestão de Leads e Transações</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar ao sistema</a>
+</header>
+
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="kpi-row" id="kpi-row">
+    <div class="kpi"><div class="kpi-lbl">Total de Leads</div><div class="kpi-val" id="kpi-total">—</div><div class="kpi-sub">no pipeline</div></div>
+    <div class="kpi"><div class="kpi-lbl">Valor Total</div><div class="kpi-val" id="kpi-valor">—</div><div class="kpi-sub">dívida em negociação</div></div>
+    <div class="kpi alerta"><div class="kpi-lbl">Follow-ups Vencidos</div><div class="kpi-val" id="kpi-vencidos">—</div><div class="kpi-sub">precisam de atenção</div></div>
+    <div class="kpi"><div class="kpi-lbl">Convertidos</div><div class="kpi-val" id="kpi-convertidos">—</div><div class="kpi-sub">este mês</div></div>
+    <div class="kpi"><div class="kpi-lbl">Taxa de Conversão</div><div class="kpi-val" id="kpi-taxa">—</div><div class="kpi-sub">do total do pipeline</div></div>
+  </div>
+
+  <!-- BARRA DE AÇÕES -->
+  <div class="action-bar">
+    <div class="search-box">
+      <input type="text" id="busca" placeholder="Buscar por nome ou CNPJ..." oninput="filtrar()">
+    </div>
+    <select class="filter-select" id="f-etapa" onchange="filtrar()">
+      <option value="">Todas as etapas</option>
+      <option value="novo">Novo</option>
+      <option value="contato_tentado">Contato Tentado</option>
+      <option value="contato_feito">Contato Feito</option>
+      <option value="reuniao_agendada">Reunião Agendada</option>
+      <option value="proposta_enviada">Proposta Enviada</option>
+      <option value="convertido">Convertido</option>
+      <option value="perdido">Perdido</option>
+    </select>
+    <select class="filter-select" id="f-resp" onchange="filtrar()">
+      <option value="">Todos os responsáveis</option>
+      <option>Mariana Pinheiro</option>
+      <option>Diana</option>
+      <option>Jade</option>
+      <option>Mariana Barboza</option>
+      <option>Laila Costa</option>
+    </select>
+    <select class="filter-select" id="f-porte" onchange="filtrar()">
+      <option value="">Todos os portes</option>
+      <option>MEI</option><option>ME</option><option>EPP</option>
+      <option>Médio</option><option>Grande</option>
+    </select>
+    <div class="toggle-view">
+      <button id="btn-kanban" class="active" onclick="setView('kanban')">⊞ Kanban</button>
+      <button id="btn-lista" onclick="setView('lista')">☰ Lista</button>
+    </div>
+    <button class="btn btn-outline" onclick="abrirImport()">↑ Importar</button>
+    <button class="btn btn-primary" onclick="abrirNovoLead()">+ Novo Lead</button>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="kanban-wrap" id="view-kanban">
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="lista-wrap" id="view-lista">
+    <table class="lista-table">
+      <thead>
+        <tr>
+          <th>Empresa</th><th>CNPJ</th><th>Dívida</th><th>Score</th>
+          <th>Setor</th><th>Etapa</th><th>Responsável</th><th>Follow-up</th>
+        </tr>
+      </thead>
+      <tbody id="lista-body"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- PAINEL LATERAL -->
+<div class="painel-overlay" id="painel-overlay" onclick="fecharPainel()"></div>
+<div class="painel" id="painel">
+  <button class="painel-close" onclick="fecharPainel()">✕</button>
+  <div class="painel-header">
+    <h2 id="painel-nome">—</h2>
+    <p id="painel-cnpj">—</p>
+  </div>
+  <div class="painel-etapa-bar">
+    <select id="p-etapa" class="filter-select" style="flex:1">
+      <option value="novo">Novo</option>
+      <option value="contato_tentado">Contato Tentado</option>
+      <option value="contato_feito">Contato Feito</option>
+      <option value="reuniao_agendada">Reunião Agendada</option>
+      <option value="proposta_enviada">Proposta Enviada</option>
+      <option value="convertido">Convertido</option>
+      <option value="perdido">Perdido</option>
+    </select>
+    <select id="p-resp" class="filter-select" style="flex:1">
+      <option>Mariana Pinheiro</option><option>Diana</option>
+      <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+    </select>
+    <input type="date" id="p-followup" style="padding:7px 10px;border:1px solid rgba(167,168,151,.4);border-radius:8px;font-family:Nunito,sans-serif;font-size:12px;outline:none;">
+    <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;" onclick="salvarEtapa()">Salvar</button>
+  </div>
+  <div class="painel-tabs">
+    <button class="painel-tab active" onclick="ptab(this,'pt-dados')">Dados</button>
+    <button class="painel-tab" onclick="ptab(this,'pt-contatos')">Contatos</button>
+    <button class="painel-tab" onclick="ptab(this,'pt-historico')">Histórico</button>
+    <button class="painel-tab" onclick="ptab(this,'pt-followups')">Follow-ups</button>
+  </div>
+  <div class="painel-body">
+    <div id="pt-dados"></div>
+    <div id="pt-contatos" style="display:none"></div>
+    <div id="pt-historico" style="display:none"></div>
+    <div id="pt-followups" style="display:none"></div>
+  </div>
+  <div class="painel-footer">
+    <button class="btn-converter" onclick="abrirConverter()">CONVERTER EM CASO DE TRANSAÇÃO →</button>
+  </div>
+</div>
+
+<!-- MODAL NOVO LEAD -->
+<div class="modal-bg" id="mod-lead">
+  <div class="modal">
+    <h2>Novo Lead</h2>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">CNPJ</label>
+        <input class="modal-input" id="nl-cnpj" placeholder="00.000.000/0001-00" oninput="mascaraCNPJ(this)" onblur="consultarBrasilAPI()">
+      </div>
+      <div>
+        <label class="modal-label">Situação Cadastral</label>
+        <input class="modal-input" id="nl-situacao" readonly style="background:#f8fdfd">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Razão Social *</label>
+        <input class="modal-input" id="nl-razao">
+      </div>
+      <div>
+        <label class="modal-label">Nome Fantasia</label>
+        <input class="modal-input" id="nl-fantasia">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Valor da Dívida (R$)</label>
+        <input class="modal-input" id="nl-divida" type="number" min="0" step="0.01">
+      </div>
+      <div>
+        <label class="modal-label">Score (0–100)</label>
+        <input class="modal-input" id="nl-score" type="number" min="0" max="100">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Setor</label>
+        <input class="modal-input" id="nl-setor" placeholder="Ex: Construção Civil">
+      </div>
+      <div>
+        <label class="modal-label">Porte</label>
+        <select class="modal-input" id="nl-porte">
+          <option value="">Selecione...</option>
+          <option>MEI</option><option>ME</option><option>EPP</option>
+          <option>Médio</option><option>Grande</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Modalidade de Transação</label>
+        <select class="modal-input" id="nl-modalidade">
+          <option value="">Selecione...</option>
+          <option>REFIS Federal</option><option>REFIS Estadual</option>
+          <option>REFIS Municipal</option><option>CARF</option>
+          <option>Negociação Direta</option><option>Outro</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Origem</label>
+        <select class="modal-input" id="nl-origem">
+          <option value="trafego_pago">Tráfego Pago</option>
+          <option value="indicacao">Indicação</option>
+          <option value="organico">Orgânico</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Responsável</label>
+        <select class="modal-input" id="nl-resp">
+          <option>Mariana Pinheiro</option><option>Diana</option>
+          <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Próximo Follow-up</label>
+        <input class="modal-input" id="nl-followup" type="date">
+      </div>
+    </div>
+    <div class="modal-row full">
+      <div>
+        <label class="modal-label">Observações</label>
+        <textarea class="modal-input" id="nl-obs" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLead()">Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div class="modal-bg" id="mod-import">
+  <div class="modal" style="max-width:640px">
+    <h2>Importar Planilha</h2>
+    <div class="import-steps">
+      <div class="import-step active" id="ist-1">1 · Arquivo</div>
+      <div class="import-step" id="ist-2">2 · Prévia</div>
+      <div class="import-step" id="ist-3">3 · Importando</div>
+    </div>
+    <div id="import-step-1">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('over')"
+           ondragleave="this.classList.remove('over')"
+           ondrop="onDrop(event)">
+        <div style="font-size:32px">📂</div>
+        <p><strong>Clique ou arraste</strong> um arquivo .xlsx ou .csv</p>
+        <p style="font-size:11px;margin-top:4px">Colunas esperadas: CNPJ, Nome / Razão Social, Valor da Dívida, Score, Setor, Porte, Modalidade, Argumento</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.csv" style="display:none" onchange="lerArquivo(this.files[0])">
+      <div class="modal-row" style="margin-top:16px">
+        <div>
+          <label class="modal-label">Responsável padrão</label>
+          <select class="modal-input" id="imp-resp">
+            <option>Mariana Pinheiro</option><option>Diana</option>
+            <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+          </select>
+        </div>
+        <div>
+          <label class="modal-label">Origem</label>
+          <select class="modal-input" id="imp-origem">
+            <option value="trafego_pago">Tráfego Pago</option>
+            <option value="indicacao">Indicação</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="import-step-2" style="display:none">
+      <p style="font-size:13px;color:var(--bege);margin-bottom:12px">Prévia das primeiras 5 linhas:</p>
+      <div style="overflow-x:auto"><table class="preview-table" id="preview-table"></table></div>
+      <p style="font-size:12px;color:var(--bege);margin-top:12px" id="imp-total-preview"></p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="voltarImport()">← Voltar</button>
+        <button class="btn btn-primary" onclick="iniciarImport()">Importar →</button>
+      </div>
+    </div>
+    <div id="import-step-3" style="display:none">
+      <div class="progress-bar"><div class="progress-fill" id="imp-progress" style="width:0%"></div></div>
+      <p style="text-align:center;font-size:13px;color:var(--bege)" id="imp-status">Preparando...</p>
+    </div>
+    <div class="modal-actions" id="imp-actions-1">
+      <button class="btn btn-outline" onclick="fecharModal('mod-import')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONVERTER -->
+<div class="modal-bg" id="mod-converter">
+  <div class="modal conv-modal">
+    <h2>Converter em Transação Tributária</h2>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Órgão *</label>
+        <select class="modal-input" id="cv-orgao">
+          <option value="">Selecione...</option>
+          <option>Receita Federal</option><option>PGFN</option>
+          <option>Secretaria Estadual de Fazenda</option>
+          <option>Prefeitura Municipal</option><option>CARF</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Valor da Dívida (R$)</label>
+        <input class="modal-input" id="cv-divida" type="number">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Modalidade</label>
+        <input class="modal-input" id="cv-modalidade">
+      </div>
+      <div>
+        <label class="modal-label">Honorários Iniciais (R$)</label>
+        <input class="modal-input" id="cv-honorarios" type="number">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Honorários Êxito (%)</label>
+        <input class="modal-input" id="cv-exito" type="number" min="0" max="100">
+      </div>
+      <div>
+        <label class="modal-label">Responsável</label>
+        <select class="modal-input" id="cv-resp">
+          <option>Mariana Pinheiro</option><option>Diana</option>
+          <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="fecharModal('mod-converter')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarConverter()">Converter</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ── CONSTANTES ────────────────────────────────────────────────────────────────
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH  = { 'apikey':SK, 'Authorization':'Bearer '+SK, 'Content-Type':'application/json', 'Prefer':'return=representation' };
+const SHR = { 'apikey':SK, 'Authorization':'Bearer '+SK }; // só leitura
+
+const ETAPAS = [
+  { key:'novo',              label:'Novo',              cor:'#4a7a70' },
+  { key:'contato_tentado',   label:'Contato Tentado',   cor:'#5a8a80' },
+  { key:'contato_feito',     label:'Contato Feito',     cor:'#2b6052' },
+  { key:'reuniao_agendada',  label:'Reunião Agendada',  cor:'#1f4e3c' },
+  { key:'proposta_enviada',  label:'Proposta Enviada',  cor:'#1f3e3c' },
+  { key:'convertido',        label:'Convertido',        cor:'#1a6a40' },
+  { key:'perdido',           label:'Perdido',           cor:'#8b5e5e' }
+];
+
+const HIST_ICONS = {
+  ligacao:'📞', whatsapp:'💬', email:'📧',
+  reuniao:'🤝', proposta:'📄', follow_up:'🔔',
+  nota_interna:'📝', outro:'📌'
+};
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let todosLeads = [];
+let leadsFiltrados = [];
+let leadAtivo = null;
+let importData = [];
+let viewAtual = 'kanban';
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const brl = v => v != null ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0}).format(v) : '—';
+const fmtData = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const hoje = () => new Date().toISOString().split('T')[0];
+const cnpjLimpo = v => (v||'').replace(/\D/g,'');
+
+function mascaraCNPJ(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,14);
+  v = v.replace(/^(\d{2})(\d)/,'$1.$2');
+  v = v.replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3');
+  v = v.replace(/\.(\d{3})(\d)/,'.$1/$2');
+  v = v.replace(/(\d{4})(\d)/,'$1-$2');
+  el.value = v;
+}
+
+function toast(msg, erro=false) {
+  const w = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast' + (erro?' erro':'');
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
+function abrirModal(id)  { document.getElementById(id).classList.add('show'); }
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function sbGet(tabela, query='') {
+  const r = await fetch(`${SB}/rest/v1/${tabela}?${query}`, { headers: SHR });
+  return r.ok ? r.json() : [];
+}
+async function sbPost(tabela, body) {
+  const r = await fetch(`${SB}/rest/v1/${tabela}`, { method:'POST', headers:SH, body:JSON.stringify(body) });
+  if (!r.ok) { const t = await r.text(); throw new Error(t); }
+  const d = await r.json();
+  return Array.isArray(d) ? d[0] : d;
+}
+async function sbPatch(tabela, id, body) {
+  const r = await fetch(`${SB}/rest/v1/${tabela}?id=eq.${id}`, { method:'PATCH', headers:SH, body:JSON.stringify(body) });
+  return r.ok;
+}
+
+// ── BRASIL API ────────────────────────────────────────────────────────────────
+async function buscarCNPJ(cnpj) {
+  const c = cnpjLimpo(cnpj);
+  if (c.length !== 14) return null;
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${c}`);
+    return r.ok ? r.json() : null;
+  } catch { return null; }
+}
+
+async function consultarBrasilAPI() {
+  const cnpj = document.getElementById('nl-cnpj').value;
+  if (cnpjLimpo(cnpj).length !== 14) return;
+  toast('Consultando CNPJ...');
+  const d = await buscarCNPJ(cnpj);
+  if (!d) return;
+  document.getElementById('nl-razao').value    = d.razao_social || '';
+  document.getElementById('nl-fantasia').value = d.nome_fantasia || '';
+  document.getElementById('nl-situacao').value = d.descricao_situacao_cadastral || '';
+  if (d.porte) {
+    const mp = {'MICRO EMPRESA':'ME','EMPRESA DE PEQUENO PORTE':'EPP','DEMAIS':'Grande','MEI':'MEI'};
+    const el = document.getElementById('nl-porte');
+    const val = mp[d.porte] || '';
+    if (val) el.value = val;
+  }
+  toast('CNPJ preenchido automaticamente ✓');
+}
+
+// ── CARREGAR LEADS ────────────────────────────────────────────────────────────
+async function carregarLeads() {
+  document.getElementById('kanban-board').innerHTML = '<div class="loading"><div class="spinner"></div><br>Carregando leads...</div>';
+  todosLeads = await sbGet('leads','order=created_at.desc&limit=500');
+  leadsFiltrados = [...todosLeads];
+  renderKPIs();
+  renderView();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const total = todosLeads.length;
+  const valor = todosLeads.reduce((s,l) => s + (l.valor_divida||0), 0);
+  const vencidos = todosLeads.filter(l => l.proximo_followup && l.proximo_followup < hoje() && l.etapa !== 'convertido' && l.etapa !== 'perdido').length;
+  const mesAtual = new Date().toISOString().slice(0,7);
+  const convertidos = todosLeads.filter(l => l.etapa === 'convertido' && (l.updated_at||'').startsWith(mesAtual)).length;
+  const taxa = total > 0 ? Math.round((todosLeads.filter(l=>l.etapa==='convertido').length/total)*100) : 0;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-valor').textContent = brl(valor);
+  document.getElementById('kpi-vencidos').textContent = vencidos;
+  document.getElementById('kpi-convertidos').textContent = convertidos;
+  document.getElementById('kpi-taxa').textContent = taxa + '%';
+}
+
+// ── FILTROS ───────────────────────────────────────────────────────────────────
+function filtrar() {
+  const q    = document.getElementById('busca').value.toLowerCase();
+  const etapa = document.getElementById('f-etapa').value;
+  const resp  = document.getElementById('f-resp').value;
+  const porte = document.getElementById('f-porte').value;
+  leadsFiltrados = todosLeads.filter(l =>
+    (!q    || (l.razao_social||'').toLowerCase().includes(q) || (l.nome_fantasia||'').toLowerCase().includes(q) || (l.cnpj||'').includes(q)) &&
+    (!etapa || l.etapa === etapa) &&
+    (!resp  || l.responsavel === resp) &&
+    (!porte || l.porte === porte)
+  );
+  renderView();
+}
+
+// ── VISTAS ────────────────────────────────────────────────────────────────────
+function setView(v) {
+  viewAtual = v;
+  document.getElementById('view-kanban').style.display = v==='kanban' ? 'block' : 'none';
+  document.getElementById('view-lista').style.display  = v==='lista'  ? 'block' : 'none';
+  document.getElementById('btn-kanban').classList.toggle('active', v==='kanban');
+  document.getElementById('btn-lista').classList.toggle('active',  v==='lista');
+  renderView();
+}
+
+function renderView() {
+  if (viewAtual === 'kanban') renderKanban();
+  else renderLista();
+}
+
+// ── KANBAN ────────────────────────────────────────────────────────────────────
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = '';
+  ETAPAS.forEach(e => {
+    const cards = leadsFiltrados.filter(l => l.etapa === e.key);
+    const col = document.createElement('div');
+    col.className = 'kanban-col';
+    col.innerHTML = `
+      <div class="kanban-col-header" style="background:${e.cor}">
+        <span class="col-title">${e.label}</span>
+        <span class="col-count">${cards.length}</span>
+      </div>
+      <div class="kanban-body" id="col-${e.key}"
+           ondragover="dragOver(event,'${e.key}')"
+           ondrop="dropCard(event,'${e.key}')"
+           ondragleave="dragLeave(event)">
+        ${cards.map(renderCard).join('')}
+        ${cards.length===0?'<p style="text-align:center;color:var(--bege);font-size:11px;padding:20px 0">Nenhum lead</p>':''}
+      </div>`;
+    board.appendChild(col);
+  });
+}
+
+function renderCard(l) {
+  const score = l.score;
+  const scoreBadge = score == null ? '' :
+    score >= 85 ? `<span class="score-badge score-alto">▲ ${score}</span>` :
+    score >= 60 ? `<span class="score-badge score-medio">◆ ${score}</span>` :
+                  `<span class="score-badge score-baixo">▼ ${score}</span>`;
+  const fu = l.proximo_followup;
+  const fuVenc = fu && fu < hoje();
+  const fuHtml = fu ? `<span class="card-followup ${fuVenc?'followup-vencido':'followup-ok'}">${fuVenc?'⚠ ':''}${fmtData(fu)}</span>` : '';
+  return `
+    <div class="lead-card" draggable="true" id="card-${l.id}"
+         ondragstart="dragStart(event,'${l.id}')"
+         ondragend="dragEnd(event)"
+         onclick="abrirLead('${l.id}')">
+      <div class="card-nome">${l.nome_fantasia || l.razao_social}</div>
+      <div class="card-cnpj">${l.cnpj||'—'}</div>
+      ${l.valor_divida ? `<div class="card-divida">${brl(l.valor_divida)}</div>` : ''}
+      <div class="card-tags">
+        ${l.setor?`<span class="tag tag-setor">${l.setor}</span>`:''}
+        ${l.porte?`<span class="tag tag-porte">${l.porte}</span>`:''}
+        ${l.modalidade_transacao?`<span class="tag tag-modal">${l.modalidade_transacao}</span>`:''}
+        ${scoreBadge}
+      </div>
+      <div class="card-footer">
+        <span class="card-resp">${l.responsavel||'—'}</span>
+        ${fuHtml}
+      </div>
+    </div>`;
+}
+
+// ── DRAG & DROP ───────────────────────────────────────────────────────────────
+let dragId = null;
+
+function dragStart(e, id) {
+  dragId = id;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragEnd(e) { e.currentTarget.classList.remove('dragging'); }
+function dragOver(e, etapa) { e.preventDefault(); document.getElementById('col-'+etapa).classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+async function dropCard(e, etapa) {
+  e.preventDefault();
+  document.getElementById('col-'+etapa).classList.remove('drag-over');
+  if (!dragId) return;
+  const lead = todosLeads.find(l => l.id === dragId);
+  if (!lead || lead.etapa === etapa) return;
+  const etapaAnt = lead.etapa;
+  lead.etapa = etapa;
+  renderKanban();
+  const ok = await sbPatch('leads', dragId, { etapa });
+  if (ok) {
+    await sbPost('leads_interacoes', {
+      lead_id: dragId,
+      tipo: 'nota_interna',
+      descricao: `Etapa alterada de "${ETAPAS.find(x=>x.key===etapaAnt)?.label}" para "${ETAPAS.find(x=>x.key===etapa)?.label}"`,
+      criado_por: 'Sistema'
+    });
+    toast('Etapa atualizada ✓');
+  } else {
+    lead.etapa = etapaAnt;
+    renderKanban();
+    toast('Erro ao atualizar etapa', true);
+  }
+  dragId = null;
+}
+
+// ── LISTA ─────────────────────────────────────────────────────────────────────
+function renderLista() {
+  const tbody = document.getElementById('lista-body');
+  if (!leadsFiltrados.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--bege)">Nenhum lead encontrado</td></tr>'; return; }
+  tbody.innerHTML = leadsFiltrados.slice(0,50).map(l => {
+    const e = ETAPAS.find(x=>x.key===l.etapa);
+    const fuVenc = l.proximo_followup && l.proximo_followup < hoje();
+    return `<tr onclick="abrirLead('${l.id}')" style="cursor:pointer">
+      <td><strong>${l.nome_fantasia||l.razao_social}</strong></td>
+      <td>${l.cnpj||'—'}</td>
+      <td>${l.valor_divida ? brl(l.valor_divida) : '—'}</td>
+      <td>${l.score != null ? l.score : '—'}</td>
+      <td>${l.setor||'—'}</td>
+      <td><span class="etapa-pill" style="background:${e?.cor||'#999'};color:#fff">${e?.label||l.etapa}</span></td>
+      <td>${l.responsavel||'—'}</td>
+      <td style="color:${fuVenc?'var(--verm)':'inherit'}">${fuVenc?'⚠ ':''}${fmtData(l.proximo_followup)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── FICHA DO LEAD ─────────────────────────────────────────────────────────────
+async function abrirLead(id) {
+  leadAtivo = todosLeads.find(l => l.id === id);
+  if (!leadAtivo) return;
+  document.getElementById('painel-nome').textContent = leadAtivo.nome_fantasia || leadAtivo.razao_social;
+  document.getElementById('painel-cnpj').textContent = leadAtivo.cnpj || '—';
+  document.getElementById('p-etapa').value    = leadAtivo.etapa || 'novo';
+  document.getElementById('p-resp').value     = leadAtivo.responsavel || 'Mariana Pinheiro';
+  document.getElementById('p-followup').value = leadAtivo.proximo_followup || '';
+  document.getElementById('painel-overlay').classList.add('show');
+  document.getElementById('painel').classList.add('show');
+  // Ativar primeira aba
+  document.querySelectorAll('.painel-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  renderPainelDados();
+  await Promise.all([renderPainelContatos(), renderPainelHistorico(), renderPainelFollowups()]);
+}
+
+function fecharPainel() {
+  document.getElementById('painel-overlay').classList.remove('show');
+  document.getElementById('painel').classList.remove('show');
+  leadAtivo = null;
+}
+
+function ptab(btn, id) {
+  document.querySelectorAll('.painel-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['pt-dados','pt-contatos','pt-historico','pt-followups'].forEach(t=>
+    document.getElementById(t).style.display = t===id?'block':'none'
+  );
+}
+
+async function salvarEtapa() {
+  if (!leadAtivo) return;
+  const body = {
+    etapa: document.getElementById('p-etapa').value,
+    responsavel: document.getElementById('p-resp').value,
+    proximo_followup: document.getElementById('p-followup').value || null
+  };
+  const ok = await sbPatch('leads', leadAtivo.id, body);
+  if (ok) {
+    Object.assign(leadAtivo, body);
+    const idx = todosLeads.findIndex(l=>l.id===leadAtivo.id);
+    if (idx>=0) Object.assign(todosLeads[idx], body);
+    renderView(); renderKPIs();
+    toast('Lead atualizado ✓');
+  } else toast('Erro ao salvar', true);
+}
+
+function renderPainelDados() {
+  const l = leadAtivo;
+  document.getElementById('pt-dados').innerHTML = `
+    <div class="field-row"><div class="field-lbl">Razão Social</div><div class="field-val">${l.razao_social||'—'}</div></div>
+    <div class="field-row"><div class="field-lbl">Valor da Dívida</div><div class="field-val">${brl(l.valor_divida)}</div></div>
+    <div class="field-row"><div class="field-lbl">Setor / CNAE</div><div class="field-val">${l.setor||'—'} ${l.cnae_descricao?'· '+l.cnae_descricao:''}</div></div>
+    <div class="field-row"><div class="field-lbl">Porte</div><div class="field-val">${l.porte||'—'}</div></div>
+    <div class="field-row"><div class="field-lbl">Modalidade de Transação</div><div class="field-val">${l.modalidade_transacao||'—'}</div></div>
+    <div class="field-row"><div class="field-lbl">Origem</div><div class="field-val">${l.origem||'—'}</div></div>
+    <div class="field-row"><div class="field-lbl">Situação Cadastral</div><div class="field-val">${l.situacao_cadastral||'—'}</div></div>
+    <div class="field-row"><div class="field-lbl">Argumento de Anúncio</div><div class="field-val">${l.argumento_anuncio||'—'}</div></div>
+    <div class="field-row">
+      <div class="field-lbl">Observações</div>
+      <textarea class="field-input" id="obs-edit" rows="3">${l.observacoes||''}</textarea>
+      <button class="btn btn-outline" style="margin-top:6px;padding:6px 14px;font-size:12px" onclick="salvarObs()">Salvar obs.</button>
+    </div>`;
+}
+
+async function salvarObs() {
+  const obs = document.getElementById('obs-edit').value;
+  await sbPatch('leads', leadAtivo.id, { observacoes: obs });
+  leadAtivo.observacoes = obs;
+  toast('Observações salvas ✓');
+}
+
+async function renderPainelContatos() {
+  const contatos = await sbGet('leads_contatos', `lead_id=eq.${leadAtivo.id}&order=is_principal.desc`);
+  const el = document.getElementById('pt-contatos');
+  el.innerHTML = `
+    <div style="margin-bottom:14px;display:flex;justify-content:flex-end">
+      <button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="adicionarContato()">+ Adicionar Contato</button>
+    </div>
+    ${contatos.map(c=>`
+      <div class="contato-row">
+        <div class="contato-nome">${c.nome} ${c.is_principal?'<span class="tag tag-setor">Principal</span>':''}</div>
+        <div class="contato-campos">
+          <input class="field-input" value="${c.cargo||''}" placeholder="Cargo" id="cc-cargo-${c.id}">
+          <input class="field-input" value="${c.telefone||''}" placeholder="Telefone" id="cc-tel-${c.id}">
+          <input class="field-input" value="${c.whatsapp||''}" placeholder="WhatsApp" id="cc-wa-${c.id}">
+          <input class="field-input" value="${c.email||''}" placeholder="E-mail" id="cc-email-${c.id}">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="salvarContato('${c.id}')">Salvar</button>
+          ${c.whatsapp?`<button class="btn-wa" onclick="window.open('https://wa.me/55${c.whatsapp.replace(/\D/g,'')}','_blank')">WhatsApp</button>`:''}
+        </div>
+      </div>`).join('')}
+    ${!contatos.length?'<p style="text-align:center;color:var(--bege);padding:30px">Nenhum contato cadastrado</p>':''}
+    <div id="form-contato" style="display:none;background:#f8fdfd;border-radius:10px;padding:14px;border:1px solid #e8f0f0;margin-top:12px">
+      <div class="contato-campos" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+        <input class="field-input" id="nc-nome" placeholder="Nome *">
+        <input class="field-input" id="nc-cargo" placeholder="Cargo">
+        <input class="field-input" id="nc-tel" placeholder="Telefone">
+        <input class="field-input" id="nc-wa" placeholder="WhatsApp">
+        <input class="field-input" id="nc-email" placeholder="E-mail" style="grid-column:1/-1">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-outline" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('form-contato').style.display='none'">Cancelar</button>
+        <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="salvarNovoContato()">Salvar</button>
+      </div>
+    </div>`;
+}
+
+function adicionarContato() {
+  document.getElementById('form-contato').style.display = 'block';
+}
+
+async function salvarContato(id) {
+  const body = {
+    cargo:    document.getElementById('cc-cargo-'+id).value,
+    telefone: document.getElementById('cc-tel-'+id).value,
+    whatsapp: document.getElementById('cc-wa-'+id).value,
+    email:    document.getElementById('cc-email-'+id).value
+  };
+  const ok = await sbPatch('leads_contatos', id, body);
+  if (ok) toast('Contato salvo ✓'); else toast('Erro ao salvar', true);
+}
+
+async function salvarNovoContato() {
+  const nome = document.getElementById('nc-nome').value.trim();
+  if (!nome) { toast('Nome obrigatório', true); return; }
+  await sbPost('leads_contatos', {
+    lead_id:  leadAtivo.id,
+    nome,
+    cargo:    document.getElementById('nc-cargo').value,
+    telefone: document.getElementById('nc-tel').value,
+    whatsapp: document.getElementById('nc-wa').value,
+    email:    document.getElementById('nc-email').value
+  });
+  toast('Contato adicionado ✓');
+  renderPainelContatos();
+}
+
+async function renderPainelHistorico() {
+  const items = await sbGet('leads_interacoes', `lead_id=eq.${leadAtivo.id}&order=created_at.desc`);
+  const el = document.getElementById('pt-historico');
+  el.innerHTML = `
+    <div style="background:#f8fdfd;border-radius:10px;padding:14px;border:1px solid #e8f0f0;margin-bottom:16px">
+      <div class="modal-row" style="margin-bottom:10px">
+        <div>
+          <label class="field-lbl">Tipo</label>
+          <select class="field-input" id="hi-tipo">
+            <option value="ligacao">Ligação</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email">E-mail</option>
+            <option value="reuniao">Reunião</option>
+            <option value="proposta">Proposta</option>
+            <option value="follow_up">Follow-up</option>
+            <option value="nota_interna">Nota Interna</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-lbl">Resultado</label>
+          <input class="field-input" id="hi-resultado" placeholder="Ex: Agendou reunião">
+        </div>
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="field-lbl">Descrição *</label>
+        <textarea class="field-input" id="hi-desc" rows="2" placeholder="O que aconteceu?"></textarea>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <input class="field-input" id="hi-quem" placeholder="Registrado por" style="width:200px">
+        <button class="btn btn-primary" style="font-size:12px;padding:7px 16px" onclick="registrarInteracao()">Registrar</button>
+      </div>
+    </div>
+    <div id="hist-lista">
+      ${items.map(i=>`
+        <div class="historico-item">
+          <div class="hist-icon">${HIST_ICONS[i.tipo]||'📌'}</div>
+          <div class="hist-content">
+            <div class="hist-tipo">${i.tipo?.replace('_',' ')} ${i.resultado?'· '+i.resultado:''}</div>
+            <div class="hist-desc">${i.descricao}</div>
+            <div class="hist-data">${new Date(i.created_at).toLocaleString('pt-BR')} ${i.criado_por?'· '+i.criado_por:''}</div>
+          </div>
+        </div>`).join('')}
+      ${!items.length?'<p style="text-align:center;color:var(--bege);padding:20px">Nenhuma interação registrada</p>':''}
+    </div>`;
+}
+
+async function registrarInteracao() {
+  const desc = document.getElementById('hi-desc').value.trim();
+  if (!desc) { toast('Descreva a interação', true); return; }
+  await sbPost('leads_interacoes', {
+    lead_id:   leadAtivo.id,
+    tipo:      document.getElementById('hi-tipo').value,
+    descricao: desc,
+    resultado: document.getElementById('hi-resultado').value,
+    criado_por: document.getElementById('hi-quem').value
+  });
+  toast('Interação registrada ✓');
+  renderPainelHistorico();
+}
+
+async function renderPainelFollowups() {
+  const items = await sbGet('leads_interacoes', `lead_id=eq.${leadAtivo.id}&tipo=eq.follow_up&order=created_at.desc`);
+  const el = document.getElementById('pt-followups');
+  el.innerHTML = `
+    <div style="background:#f8fdfd;border-radius:10px;padding:14px;border:1px solid #e8f0f0;margin-bottom:16px">
+      <div class="modal-row" style="margin-bottom:8px">
+        <div>
+          <label class="field-lbl">Data</label>
+          <input class="field-input" id="fu-data" type="date">
+        </div>
+        <div>
+          <label class="field-lbl">Descrição</label>
+          <input class="field-input" id="fu-desc" placeholder="O que fazer?">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" style="font-size:12px;padding:7px 16px" onclick="agendarFollowup()">Agendar</button>
+      </div>
+    </div>
+    ${items.map(i=>`
+      <div class="followup-item">
+        <input type="checkbox" title="Marcar concluído" onchange="concluirFollowup('${i.id}',this.checked)">
+        <div>
+          <div style="font-size:13px">${i.descricao}</div>
+          <div style="font-size:11px;color:var(--bege)">${i.resultado||fmtData(i.created_at?.split('T')[0])}</div>
+        </div>
+      </div>`).join('')}
+    ${!items.length?'<p style="text-align:center;color:var(--bege);padding:20px">Nenhum follow-up agendado</p>':''}`;
+}
+
+async function agendarFollowup() {
+  const data = document.getElementById('fu-data').value;
+  const desc = document.getElementById('fu-desc').value.trim();
+  if (!data || !desc) { toast('Data e descrição obrigatórios', true); return; }
+  await sbPost('leads_interacoes', { lead_id: leadAtivo.id, tipo:'follow_up', descricao: desc, resultado: data });
+  await sbPatch('leads', leadAtivo.id, { proximo_followup: data });
+  leadAtivo.proximo_followup = data;
+  toast('Follow-up agendado ✓');
+  renderPainelFollowups();
+}
+
+async function concluirFollowup(id, concluido) {
+  if (concluido) await sbPatch('leads_interacoes', id, { resultado: 'concluido' });
+  toast(concluido ? 'Follow-up concluído ✓' : 'Marcado como pendente');
+}
+
+// ── NOVO LEAD ─────────────────────────────────────────────────────────────────
+function abrirNovoLead() { abrirModal('mod-lead'); }
+
+async function salvarLead() {
+  const razao = document.getElementById('nl-razao').value.trim();
+  if (!razao) { toast('Razão social obrigatória', true); return; }
+  const cnpj = cnpjLimpo(document.getElementById('nl-cnpj').value);
+  const body = {
+    cnpj:                cnpj || null,
+    razao_social:        razao,
+    nome_fantasia:       document.getElementById('nl-fantasia').value || null,
+    valor_divida:        parseFloat(document.getElementById('nl-divida').value) || null,
+    score:               parseFloat(document.getElementById('nl-score').value) || null,
+    setor:               document.getElementById('nl-setor').value || null,
+    porte:               document.getElementById('nl-porte').value || null,
+    modalidade_transacao:document.getElementById('nl-modalidade').value || null,
+    origem:              document.getElementById('nl-origem').value,
+    responsavel:         document.getElementById('nl-resp').value,
+    proximo_followup:    document.getElementById('nl-followup').value || null,
+    observacoes:         document.getElementById('nl-obs').value || null,
+    situacao_cadastral:  document.getElementById('nl-situacao').value || null,
+    etapa: 'novo'
+  };
+  try {
+    const novo = await sbPost('leads', body);
+    todosLeads.unshift(novo);
+    leadsFiltrados = [...todosLeads];
+    renderView(); renderKPIs();
+    fecharModal('mod-lead');
+    toast('Lead cadastrado ✓');
+    // Buscar dados completos do CNPJ se disponível
+    if (cnpj && cnpj.length === 14) {
+      const dados = await buscarCNPJ(cnpj);
+      if (dados && dados.qsa) {
+        for (const s of dados.qsa) {
+          await sbPost('leads_contatos', {
+            lead_id: novo.id, nome: s.nome_socio,
+            cargo: s.qualificacao_socio, origem: 'qsa'
+          });
+        }
+      }
+    }
+  } catch(e) { toast('Erro ao salvar: ' + e.message, true); }
+}
+
+// ── IMPORTAR PLANILHA ─────────────────────────────────────────────────────────
+function abrirImport() {
+  importData = [];
+  document.getElementById('import-step-1').style.display = 'block';
+  document.getElementById('import-step-2').style.display = 'none';
+  document.getElementById('import-step-3').style.display = 'none';
+  document.getElementById('imp-actions-1').style.display = 'flex';
+  ['ist-1','ist-2','ist-3'].forEach((id,i) =>
+    document.getElementById(id).classList.toggle('active', i===0));
+  abrirModal('mod-import');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) lerArquivo(f);
+}
+
+function lerArquivo(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type:'binary' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+    if (!rows.length) { toast('Arquivo vazio', true); return; }
+
+    const MAP = {
+      'CNPJ':'cnpj', 'Nome / Razão Social':'razao_social','Razão Social':'razao_social',
+      'Nome Fantasia':'nome_fantasia', 'Valor da Dívida':'valor_divida',
+      'Score':'score', 'Setor':'setor', 'Porte':'porte',
+      'Modalidade Transação':'modalidade_transacao','Modalidade':'modalidade_transacao',
+      'Argumento de Anúncio':'argumento_anuncio','Argumento':'argumento_anuncio'
+    };
+
+    importData = rows.map(r => {
+      const obj = {};
+      Object.entries(r).forEach(([k,v]) => { if (MAP[k]) obj[MAP[k]] = v; });
+      return obj;
+    }).filter(r => r.razao_social || r.cnpj);
+
+    // Preview
+    const cols = Object.keys(importData[0] || {});
+    const prev = document.getElementById('preview-table');
+    prev.innerHTML = `<thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${importData.slice(0,5).map(r=>`<tr>${cols.map(c=>`<td>${r[c]||''}</td>`).join('')}</tr>`).join('')}</tbody>`;
+    document.getElementById('imp-total-preview').textContent =
+      `${importData.length} linhas encontradas`;
+
+    document.getElementById('import-step-1').style.display = 'none';
+    document.getElementById('import-step-2').style.display = 'block';
+    document.getElementById('imp-actions-1').style.display = 'none';
+    ['ist-1','ist-2','ist-3'].forEach((id,i) =>
+      document.getElementById(id).classList.toggle('active', i===1));
+  };
+  reader.readAsBinaryString(file);
+}
+
+function voltarImport() {
+  document.getElementById('import-step-1').style.display = 'block';
+  document.getElementById('import-step-2').style.display = 'none';
+  document.getElementById('imp-actions-1').style.display = 'flex';
+  ['ist-1','ist-2','ist-3'].forEach((id,i) =>
+    document.getElementById(id).classList.toggle('active', i===0));
+}
+
+async function iniciarImport() {
+  document.getElementById('import-step-2').style.display = 'none';
+  document.getElementById('import-step-3').style.display = 'block';
+  ['ist-1','ist-2','ist-3'].forEach((id,i) =>
+    document.getElementById(id).classList.toggle('active', i===2));
+
+  const resp   = document.getElementById('imp-resp').value;
+  const origem = document.getElementById('imp-origem').value;
+  const total  = importData.length;
+  let importados = 0, duplicados = 0;
+
+  // CNPJs já existentes
+  const existentes = new Set(todosLeads.map(l => cnpjLimpo(l.cnpj||'')).filter(Boolean));
+
+  // Processar em lotes de 5
+  for (let i = 0; i < total; i += 5) {
+    const lote = importData.slice(i, i+5);
+    await Promise.all(lote.map(async row => {
+      const c = cnpjLimpo(row.cnpj||'');
+      if (c && existentes.has(c)) { duplicados++; return; }
+      if (c) existentes.add(c);
+      try {
+        const body = {
+          ...row,
+          cnpj:         c || null,
+          valor_divida: row.valor_divida ? parseFloat(String(row.valor_divida).replace(/[^\d.,]/g,'').replace(',','.')) || null : null,
+          score:        row.score ? parseFloat(row.score) || null : null,
+          responsavel:  resp,
+          origem:       origem,
+          etapa:        'novo'
+        };
+        const novo = await sbPost('leads', body);
+        todosLeads.unshift(novo);
+        importados++;
+
+        // Enriquecer com BrasilAPI (sem bloquear)
+        if (c && c.length === 14) {
+          buscarCNPJ(c).then(async dados => {
+            if (!dados) return;
+            const upd = {};
+            if (!body.razao_social && dados.razao_social) upd.razao_social = dados.razao_social;
+            if (dados.descricao_situacao_cadastral) upd.situacao_cadastral = dados.descricao_situacao_cadastral;
+            if (dados.cnae_fiscal_descricao) upd.cnae_descricao = dados.cnae_fiscal_descricao;
+            if (dados.telefone) upd.telefone_receita = dados.telefone;
+            if (dados.email)    upd.email_receita    = dados.email;
+            if (Object.keys(upd).length) await sbPatch('leads', novo.id, upd);
+            if (dados.qsa) {
+              for (const s of dados.qsa) {
+                await sbPost('leads_contatos', { lead_id: novo.id, nome: s.nome_socio, cargo: s.qualificacao_socio, origem:'qsa' });
+              }
+            }
+          });
+        }
+      } catch {}
+    }));
+    const pct = Math.round(((i+5)/total)*100);
+    document.getElementById('imp-progress').style.width = Math.min(pct,100)+'%';
+    document.getElementById('imp-status').textContent = `Importando... ${Math.min(i+5,total)} de ${total}`;
+  }
+
+  leadsFiltrados = [...todosLeads];
+  renderView(); renderKPIs();
+  document.getElementById('imp-status').textContent =
+    `Concluído: ${importados} importados, ${duplicados} duplicados ignorados.`;
+  document.getElementById('imp-progress').style.width = '100%';
+  setTimeout(() => fecharModal('mod-import'), 2500);
+  toast(`${importados} leads importados ✓`);
+}
+
+// ── CONVERTER ─────────────────────────────────────────────────────────────────
+function abrirConverter() {
+  if (!leadAtivo) return;
+  document.getElementById('cv-divida').value    = leadAtivo.valor_divida || '';
+  document.getElementById('cv-modalidade').value= leadAtivo.modalidade_transacao || '';
+  abrirModal('mod-converter');
+}
+
+async function confirmarConverter() {
+  const orgao = document.getElementById('cv-orgao').value;
+  if (!orgao) { toast('Selecione o órgão', true); return; }
+  try {
+    await sbPost('transacoes', {
+      lead_id:                  leadAtivo.id,
+      cliente_nome:             leadAtivo.razao_social,
+      cliente_cnpj:             leadAtivo.cnpj,
+      orgao,
+      valor_divida:             parseFloat(document.getElementById('cv-divida').value) || null,
+      modalidade:               document.getElementById('cv-modalidade').value,
+      honorarios_previstos:     parseFloat(document.getElementById('cv-honorarios').value) || null,
+      honorarios_exito_percentual: parseFloat(document.getElementById('cv-exito').value) || null,
+      responsavel:              document.getElementById('cv-resp').value,
+      etapa:                    'diagnostico'
+    });
+    await sbPatch('leads', leadAtivo.id, { etapa: 'convertido' });
+    leadAtivo.etapa = 'convertido';
+    const idx = todosLeads.findIndex(l=>l.id===leadAtivo.id);
+    if (idx>=0) todosLeads[idx].etapa = 'convertido';
+    fecharModal('mod-converter');
+    fecharPainel();
+    renderView(); renderKPIs();
+    toast('Lead convertido em transação ✓');
+  } catch(e) { toast('Erro: '+e.message, true); }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+carregarLeads();
+</script>
+</body>
+</html>
