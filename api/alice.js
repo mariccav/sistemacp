@@ -16,8 +16,8 @@ module.exports = async (req, res) => {
   const { mensagem, historico = [], caso = {} } = body;
   if (!mensagem) return res.status(400).json({ erro: 'mensagem é obrigatória' });
 
-  const CHAVE = process.env.ANTHROPIC_API_KEY;
-  if (!CHAVE) return res.status(500).json({ erro: 'ANTHROPIC_API_KEY não configurada' });
+  const CHAVE = process.env.CLAUDE_API_KEY;
+  if (!CHAVE) return res.status(500).json({ erro: 'CLAUDE_API_KEY não configurada' });
 
   const brl = v => v != null ? new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(v) : 'não informado';
 
