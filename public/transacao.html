@@ -1070,8 +1070,64 @@ async function confirmarCobranca(){
 function abrirClickSign(){abrirModal('mod-clicksign');}
 
 async function confirmarClickSign(){
-  toast('Integração ClickSign: adicione CLICKSIGN_TOKEN nas variáveis de ambiente do Vercel para ativar esta funcionalidade.',true);
-  fecharModal('mod-clicksign');
+  const arquivo  = document.getElementById('cs-arquivo').files[0];
+  const nome     = document.getElementById('cs-nome').value.trim();
+  const email    = document.getElementById('cs-email').value.trim();
+  const cpf      = document.getElementById('cs-cpf').value.trim();
+  const mensagem = document.getElementById('cs-msg').value.trim();
+
+  if (!arquivo) { toast('Selecione o PDF do contrato.', true); return; }
+  if (!nome || !email) { toast('Nome e e-mail do signatário são obrigatórios.', true); return; }
+
+  const btnEnv = document.querySelector('#mod-clicksign .btn-primary');
+  btnEnv.textContent = 'Enviando...'; btnEnv.disabled = true;
+
+  // Ler PDF como base64
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result); // data:application/pdf;base64,...
+    reader.onerror = reject;
+    reader.readAsDataURL(arquivo);
+  });
+
+  try {
+    const r = await fetch('/api/clicksign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        arquivo_base64: base64,
+        nome_arquivo:   arquivo.name.replace(/[^a-zA-Z0-9._-]/g, '_'),
+        signatarios:    [{ nome, email, cpf: cpf || null }],
+        mensagem:       mensagem || `Prezado(a) ${nome}, segue o contrato para assinatura. Cavalcante Pinheiro Advocacia.`
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.erro || 'Erro no ClickSign');
+
+    // Salvar envelope_key no caso
+    await sbPatch('transacoes', casoAtivo.id, { clicksign_envelope_key: d.envelope_key });
+    casoAtivo.clicksign_envelope_key = d.envelope_key;
+
+    // Registrar no histórico
+    await sbPost('transacoes_historico', {
+      transacao_id: casoAtivo.id,
+      tipo:         'contrato',
+      descricao:    `Contrato enviado para assinatura via ClickSign — ${nome} (${email}) · envelope: ${d.envelope_key}`,
+      criado_por:   'Sistema'
+    });
+
+    // Atualizar card lateral
+    const cs = document.getElementById('sc-clicksign-status');
+    cs.style.color = 'var(--verde)';
+    cs.innerHTML = `✓ Enviado para <strong>${nome}</strong><br><a href="${d.link}" target="_blank" style="color:var(--verde);font-size:11px;">Ver no ClickSign ↗</a>`;
+
+    fecharModal('mod-clicksign');
+    toast(`Contrato enviado para ${nome} via ClickSign ✓`);
+  } catch(e) {
+    toast('Erro: ' + e.message, true);
+  } finally {
+    btnEnv.textContent = 'Enviar'; btnEnv.disabled = false;
+  }
 }
 
 // ── ENCERRAMENTO ──────────────────────────────────────────────────────────────
