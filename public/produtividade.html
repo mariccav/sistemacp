@@ -171,6 +171,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
 .gtb th{background:rgba(0,0,0,.2);color:var(--bege);padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
 .gtb td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.85);}
 .gbadge{display:inline-flex;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:600;background:rgba(167,168,151,.2);color:var(--bege);}
+.gptab{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(167,168,151,.3);background:rgba(255,255,255,.06);color:var(--bege);transition:.2s;font-family:'Nunito',sans-serif;}
+.gptab:hover{color:#fff;background:rgba(255,255,255,.12);}
+.gptab.active{background:var(--gold);color:#2a1a00;border-color:var(--gold);}
 .dest{background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(212,175,55,.04));border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}
 .dest-t{font-size:30px;}
 .dest-nome{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#d4af37;}
@@ -283,15 +286,41 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
     <div class="dpanel" id="panel-gestao" style="background:#1f3e3c;border-radius:14px;padding:20px;">
       <div id="g-dest" style="display:none"></div>
       <div class="gkpi" id="gkpi"></div>
-      <div class="gcharts">
-        <div class="gchart"><h4>Horas por Colaboradora</h4><canvas id="chart-col" height="180"></canvas></div>
-        <div class="gchart"><h4>Produtividade da Semana</h4><canvas id="chart-sem" height="180"></canvas></div>
+
+      <!-- FILTROS DE PERÍODO -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="gptab active" id="gpt-hoje"   onclick="setGestPer('hoje',this)">Hoje</button>
+          <button class="gptab"        id="gpt-semana" onclick="setGestPer('semana',this)">Esta Semana</button>
+          <button class="gptab"        id="gpt-mes"    onclick="setGestPer('mes',this)">Este Mês</button>
+          <button class="gptab"        id="gpt-m3"     onclick="setGestPer('m3',this)">3 Meses</button>
+          <button class="gptab"        id="gpt-m6"     onclick="setGestPer('m6',this)">6 Meses</button>
+          <button class="gptab"        id="gpt-custom" onclick="setGestPer('custom',this)">Personalizar</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;" id="g-custom-wrap" style="display:none">
+          <input type="date" id="g-ini" onchange="carregarGestao()" style="padding:5px 8px;border:1px solid rgba(167,168,151,.3);border-radius:6px;font-family:'Nunito',sans-serif;font-size:11px;color:#f5f5f0;background:rgba(255,255,255,.1);outline:none;">
+          <span style="color:var(--bege);font-size:11px;">até</span>
+          <input type="date" id="g-fim" onchange="carregarGestao()" style="padding:5px 8px;border:1px solid rgba(167,168,151,.3);border-radius:6px;font-family:'Nunito',sans-serif;font-size:11px;color:#f5f5f0;background:rgba(255,255,255,.1);outline:none;">
+        </div>
+        <select id="g-col" onchange="carregarGestao()" style="padding:6px 10px;border:1px solid rgba(167,168,151,.3);border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;color:#f5f5f0;background:rgba(255,255,255,.1);outline:none;"><option value="">Todas as colaboradoras</option></select>
       </div>
-      <div class="gfil">
-        <span style="font-size:10px;color:var(--bege);font-weight:600">Data:</span>
-        <input type="date" id="g-dt" onchange="carregarGestao()">
-        <select id="g-col" onchange="carregarGestao()"><option value="">Todas</option></select>
+
+      <!-- GRÁFICO HORAS POR COLABORADORA (destaque) -->
+      <div class="gchart" style="margin-bottom:16px;">
+        <h4 id="g-chart-titulo">Horas por Colaboradora — Hoje</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center;">
+          <canvas id="chart-col" height="200"></canvas>
+          <div id="g-colab-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
       </div>
+
+      <!-- GRÁFICO EVOLUÇÃO NO PERÍODO -->
+      <div class="gchart" style="margin-bottom:16px;">
+        <h4 id="g-chart-evol">Evolução por Dia</h4>
+        <canvas id="chart-sem" height="120"></canvas>
+      </div>
+
+      <!-- TABELA DE SESSÕES -->
       <div style="background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden;border:1px solid rgba(167,168,151,.15);">
         <table class="gtb"><thead><tr><th>Colaboradora</th><th>Início</th><th>Fim</th><th>Cliente</th><th>Tarefa</th><th>Tipo</th><th>Dur.</th></tr></thead><tbody id="g-body"></tbody></table>
       </div>
@@ -543,49 +572,148 @@ async function salvarElogio(){
   await sbPost('elogios',{de:ativa.nome,para,mensagem:msg});fmod('mod-elogio');document.getElementById('e-msg').value='';carregarElogios();
 }
 
-// GESTÃO
-async function carregarGestao(){
-  const dt=document.getElementById('g-dt').value||hoje();
-  const cf=document.getElementById('g-col').value;
-  const ini2=new Date(dt+'T00:00:00').toISOString(),fim2=new Date(dt+'T23:59:59').toISOString();
-  let q=`sessoes?inicio=gte.${ini2}&inicio=lte.${fim2}&order=inicio.desc`;
-  if(cf)q+=`&colaboradora=eq.${encodeURIComponent(cf)}`;
-  const rows=await sbGet(q);
-  const cutoff=new Date(Date.now()-10*3600000).toISOString();
-  const onl=await sbGet(`sessoes?fim=is.null&inicio=gte.${cutoff}&select=colaboradora`);
-  const onlN=new Set(onl.map(x=>x.colaboradora)).size;
-  const conc=rows.filter(s=>s.fim);const tot=conc.reduce((a,s)=>a+(s.duracao_minutos||0),0);
-  const porC={};conc.forEach(s=>{porC[s.colaboradora]=(porC[s.colaboradora]||0)+(s.duracao_minutos||0);});
-  const topDay=Object.entries(porC).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('gkpi').innerHTML=[
-    ['Online agora',onlN,''],['Horas equipe',hmin(tot)||'0min',dt===hoje()?'hoje':''],
-    ['Sessões',rows.length,'no dia'],['Destaque',topDay?topDay[0].split(' ')[0]:'—','']
+// GESTÃO — período ativo
+let gestPer = 'hoje';
+
+function setGestPer(p, btn) {
+  gestPer = p;
+  document.querySelectorAll('.gptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const cw = document.getElementById('g-custom-wrap');
+  cw.style.display = p === 'custom' ? 'flex' : 'none';
+  if (p !== 'custom') carregarGestao();
+}
+
+function getGestPeriodo() {
+  const agora = new Date();
+  if (gestPer === 'hoje') {
+    return { ini: hoje()+'T00:00:00.000Z', fim: hoje()+'T23:59:59.999Z', label: 'Hoje', dias: 1 };
+  }
+  if (gestPer === 'semana') {
+    const seg = new Date(agora); seg.setDate(seg.getDate()-seg.getDay()+1); seg.setHours(0,0,0,0);
+    return { ini: seg.toISOString(), fim: agora.toISOString(), label: 'Esta Semana', dias: 7 };
+  }
+  if (gestPer === 'mes') {
+    const ini2 = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    return { ini: ini2.toISOString(), fim: agora.toISOString(), label: 'Este Mês', dias: agora.getDate() };
+  }
+  if (gestPer === 'm3') {
+    const ini2 = new Date(agora); ini2.setMonth(ini2.getMonth()-3); ini2.setHours(0,0,0,0);
+    return { ini: ini2.toISOString(), fim: agora.toISOString(), label: 'Últimos 3 Meses', dias: 90 };
+  }
+  if (gestPer === 'm6') {
+    const ini2 = new Date(agora); ini2.setMonth(ini2.getMonth()-6); ini2.setHours(0,0,0,0);
+    return { ini: ini2.toISOString(), fim: agora.toISOString(), label: 'Últimos 6 Meses', dias: 180 };
+  }
+  if (gestPer === 'custom') {
+    const iniV = document.getElementById('g-ini').value;
+    const fimV = document.getElementById('g-fim').value;
+    if (!iniV || !fimV) return null;
+    return { ini: iniV+'T00:00:00.000Z', fim: fimV+'T23:59:59.999Z', label: `${iniV} a ${fimV}`, dias: 30 };
+  }
+  return null;
+}
+
+async function carregarGestao() {
+  const periodo = getGestPeriodo();
+  if (!periodo) return;
+  const cf = document.getElementById('g-col').value;
+
+  let q = `sessoes?inicio=gte.${periodo.ini}&inicio=lte.${periodo.fim}&order=inicio.desc`;
+  if (cf) q += `&colaboradora=eq.${encodeURIComponent(cf)}`;
+  const rows = await sbGet(q);
+
+  const cutoff = new Date(Date.now()-10*3600000).toISOString();
+  const onl = await sbGet(`sessoes?fim=is.null&inicio=gte.${cutoff}&select=colaboradora`);
+  const onlN = new Set(onl.map(x=>x.colaboradora)).size;
+
+  const conc = rows.filter(s=>s.fim);
+  const tot = conc.reduce((a,s)=>a+(s.duracao_minutos||0), 0);
+  const porC = {}; COLS.forEach(c=>{porC[c.nome]=0;});
+  conc.forEach(s=>{if(porC[s.colaboradora]!==undefined)porC[s.colaboradora]+=(s.duracao_minutos||0);});
+  const top = Object.entries(porC).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('gkpi').innerHTML = [
+    ['Online agora', onlN, ''],
+    ['Total de horas', hmin(tot)||'0min', periodo.label],
+    ['Sessões', rows.length, 'no período'],
+    ['Mais horas', top&&top[1]>0 ? top[0].split(' ')[0] : '—', top&&top[1]>0 ? hmin(top[1]) : '']
   ].map(([l,v,s])=>`<div class="gbox"><div class="lbl">${l}</div><div class="val" style="${String(v).length>5?'font-size:16px':''}">${v}</div>${s?`<div style="font-size:9px;color:var(--bege);margin-top:2px">${s}</div>`:''}</div>`).join('');
-  // Destaque semana
-  const seg=new Date();seg.setDate(seg.getDate()-seg.getDay()+1);seg.setHours(0,0,0,0);
-  const rSem=await sbGet(`sessoes?inicio=gte.${seg.toISOString()}&fim=not.is.null&select=colaboradora,duracao_minutos`);
-  const pSem={};COLS.forEach(c=>{pSem[c.nome]=0;});rSem.forEach(s=>{if(pSem[s.colaboradora]!==undefined)pSem[s.colaboradora]+=(s.duracao_minutos||0);});
-  const topW=Object.entries(pSem).sort((a,b)=>b[1]-a[1])[0];
-  const destEl=document.getElementById('g-dest');
-  if(topW&&topW[1]>0){destEl.style.display='block';destEl.innerHTML=`<div class="dest"><div class="dest-t">🏆</div><div><div class="dest-nome">${topW[0]}</div><div class="dest-sub">Destaque da semana · ${hmin(topW[1])}</div></div></div>`;}
-  // Gráfico colaboradoras
-  const lblsC=COLS.map(c=>c.nome.split(' ')[0]);
-  const dataC=COLS.map(c=>{const min=rows.filter(s=>s.colaboradora===c.nome&&s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0);return parseFloat((min/60).toFixed(1));});
-  if(chCol)chCol.destroy();
-  chCol=new Chart(document.getElementById('chart-col'),{type:'bar',data:{labels:lblsC,datasets:[{data:dataC,backgroundColor:COLS.map(c=>c.cor),borderRadius:7}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'h',font:{family:'Nunito',size:10}},grid:{color:'rgba(255,255,255,.1)'}},x:{ticks:{color:'#a7a897',font:{family:'Nunito',size:10}},grid:{display:false}}}}});
-  // Gráfico semana
-  const dias=[],lblsD=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);dias.push(d.toISOString().split('T')[0]);lblsD.push(d.toLocaleDateString('pt-BR',{weekday:'short'}));}
-  const rDias=await sbGet(`sessoes?inicio=gte.${seg.toISOString()}&fim=not.is.null&select=colaboradora,duracao_minutos,inicio`);
-  const ds=COLS.map(c=>({label:c.nome.split(' ')[0],data:dias.map(d=>{const min=rDias.filter(s=>s.colaboradora===c.nome&&s.inicio.startsWith(d)).reduce((a,s)=>a+(s.duracao_minutos||0),0);return parseFloat((min/60).toFixed(1));}),backgroundColor:c.cor+'99',borderColor:c.cor,borderWidth:2,borderRadius:4}));
-  if(chSem)chSem.destroy();
-  chSem=new Chart(document.getElementById('chart-sem'),{type:'bar',data:{labels:lblsD,datasets:ds},options:{plugins:{legend:{labels:{color:'#a7a897',font:{family:'Nunito',size:9}}}},scales:{x:{stacked:true,ticks:{color:'#a7a897',font:{family:'Nunito',size:10}},grid:{display:false}},y:{stacked:true,ticks:{callback:v=>v+'h',color:'#a7a897',font:{family:'Nunito',size:10}},grid:{color:'rgba(255,255,255,.1)'}}}}});
-  // Tabela
-  const tbody=document.getElementById('g-body');
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--bege);padding:16px;">Nenhuma sessão.</td></tr>';return;}
-  tbody.innerHTML=rows.map(s=>{
-    const c=COLS.find(x=>x.nome===s.colaboradora);
-    const av=c?`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:20px;height:20px;border-radius:50%;background:${c.cor};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${c.ini}</span>${s.colaboradora.split(' ')[0]}</span>`:s.colaboradora;
-    return `<tr><td>${av}</td><td>${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:#5edb9a;font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="gbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
+
+  // Destaque do período
+  const destEl = document.getElementById('g-dest');
+  if (top && top[1]>0) {
+    destEl.style.display='block';
+    destEl.innerHTML=`<div class="dest"><div class="dest-t">🏆</div><div><div class="dest-nome">${top[0]}</div><div class="dest-sub">Mais horas no período · ${hmin(top[1])}</div></div></div>`;
+  } else destEl.style.display='none';
+
+  // ── Gráfico: Horas por Colaboradora (barras horizontais + lista) ──
+  document.getElementById('g-chart-titulo').textContent = `Horas por Colaboradora — ${periodo.label}`;
+  const lblsC = COLS.map(c=>c.nome.split(' ')[0]);
+  const dataC = COLS.map(c=>parseFloat(((porC[c.nome]||0)/60).toFixed(1)));
+  const maxH = Math.max(...dataC, 0.1);
+
+  if (chCol) chCol.destroy();
+  chCol = new Chart(document.getElementById('chart-col'), {
+    type:'bar',
+    data:{ labels:lblsC, datasets:[{ data:dataC, backgroundColor:COLS.map(c=>c.cor), borderRadius:8 }] },
+    options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{callback:v=>v+'h',font:{family:'Nunito',size:10}},grid:{color:'rgba(255,255,255,.1)'}},
+      y:{ticks:{color:'#f5f5f0',font:{family:'Nunito',size:10}},grid:{display:false}}
+    }}
+  });
+
+  // Lista lateral com horas e %
+  document.getElementById('g-colab-list').innerHTML = COLS.map(c=>{
+    const min = porC[c.nome]||0;
+    const pct = maxH > 0 ? Math.round((min/60/maxH)*100) : 0;
+    return `<div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:22px;height:22px;border-radius:50%;background:${c.cor};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0">${c.ini}</span>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#f5f5f0;margin-bottom:2px"><span>${c.nome.split(' ')[0]}</span><strong>${hmin(min)||'—'}</strong></div>
+        <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${c.cor};border-radius:2px;transition:.4s"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Gráfico de evolução por dia ──
+  const nDias = Math.min(periodo.dias, 30);
+  const diasEvol = [], lblsEvol = [];
+  const fimDate = new Date(periodo.fim);
+  for (let i=nDias-1; i>=0; i--) {
+    const d = new Date(fimDate); d.setDate(d.getDate()-i);
+    diasEvol.push(d.toISOString().split('T')[0]);
+    if (nDias <= 7) lblsEvol.push(d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'}));
+    else if (nDias <= 31) lblsEvol.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}));
+    else lblsEvol.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}));
+  }
+  document.getElementById('g-chart-evol').textContent = nDias <= 7 ? 'Evolução por Dia' : nDias <= 31 ? 'Evolução Diária' : 'Evolução Mensal';
+
+  const dsEvol = COLS.map(c=>({
+    label: c.nome.split(' ')[0],
+    data: diasEvol.map(d=>{
+      const min=conc.filter(s=>s.colaboradora===c.nome&&s.inicio.startsWith(d)).reduce((a,s)=>a+(s.duracao_minutos||0),0);
+      return parseFloat((min/60).toFixed(1));
+    }),
+    backgroundColor: c.cor+'cc', borderColor: c.cor, borderWidth:1, borderRadius:3
+  }));
+
+  if (chSem) chSem.destroy();
+  chSem = new Chart(document.getElementById('chart-sem'), {
+    type:'bar', data:{labels:lblsEvol,datasets:dsEvol},
+    options:{plugins:{legend:{labels:{color:'#a7a897',font:{family:'Nunito',size:9},boxWidth:10}}},
+      scales:{x:{stacked:true,ticks:{color:'#a7a897',font:{family:'Nunito',size:9}},grid:{display:false}},
+        y:{stacked:true,ticks:{callback:v=>v+'h',color:'#a7a897',font:{family:'Nunito',size:9}},grid:{color:'rgba(255,255,255,.08)'}}}}
+  });
+
+  // ── Tabela de sessões ──
+  const tbody = document.getElementById('g-body');
+  if (!rows.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--bege);padding:16px;">Nenhuma sessão no período.</td></tr>'; return; }
+  tbody.innerHTML = rows.slice(0,100).map(s=>{
+    const c = COLS.find(x=>x.nome===s.colaboradora);
+    const av = c ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:20px;height:20px;border-radius:50%;background:${c.cor};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${c.ini}</span>${s.colaboradora.split(' ')[0]}</span>` : s.colaboradora;
+    const dataFmt = gestPer!=='hoje' ? `<span style="font-size:10px;color:var(--bege)">${new Date(s.inicio).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} </span>` : '';
+    return `<tr><td>${av}</td><td>${dataFmt}${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:#5edb9a;font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="gbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
   }).join('');
 }
 
@@ -598,7 +726,7 @@ function tab(id,btn){
   if(id==='rank')carregarRanking();
   if(id==='mural')carregarMural();
   if(id==='elogios')carregarElogios();
-  if(id==='gestao'){document.getElementById('g-dt').value=hoje();carregarGestao();}
+  if(id==='gestao'){gestPer='hoje';document.querySelectorAll('.gptab').forEach(b=>b.classList.remove('active'));document.getElementById('gpt-hoje').classList.add('active');carregarGestao();}
 }
 
 renderSelector();
