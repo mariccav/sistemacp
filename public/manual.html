@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Sistema CP — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--gold:#c9a84c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:#fff;color:#1a1a1a;font-size:14px;line-height:1.7;}
+
+/* NAVEGAÇÃO LATERAL */
+.sidebar{position:fixed;left:0;top:0;width:260px;height:100vh;background:var(--v1);overflow-y:auto;padding:32px 0;z-index:100;}
+.sidebar-logo{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,.1);}
+.sidebar-logo h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;}
+.sidebar-logo p{font-size:10px;color:var(--bege);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.sidebar nav{padding:16px 0;}
+.nav-section{padding:12px 24px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(167,168,151,.5);}
+.nav-item{display:block;padding:9px 24px;font-size:12px;color:rgba(255,255,255,.7);text-decoration:none;transition:.2s;border-left:3px solid transparent;}
+.nav-item:hover,.nav-item.active{color:#fff;background:rgba(255,255,255,.07);border-left-color:var(--bege);}
+.nav-item span{margin-right:8px;}
+.btn-pdf{margin:20px 24px 0;display:block;background:var(--gold);color:#fff;border:none;padding:10px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:.5px;}
+.btn-pdf:hover{filter:brightness(1.1);}
+
+/* CONTEÚDO */
+.content{margin-left:260px;min-height:100vh;}
+
+/* CAPA */
+.capa{background:linear-gradient(160deg,#1f3e3c 0%,#2b5050 60%,#214949 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 60px;text-align:center;position:relative;overflow:hidden;}
+.capa::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:rgba(255,255,255,.03);}
+.capa::after{content:'';position:absolute;bottom:-60px;left:-60px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.02);}
+.capa-eyebrow{font-size:10px;color:var(--bege);letter-spacing:4px;text-transform:uppercase;margin-bottom:24px;}
+.capa-titulo{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:700;color:#fff;line-height:1.15;margin-bottom:16px;}
+.capa-titulo em{font-style:italic;color:var(--gold);}
+.capa-linha{width:60px;height:2px;background:var(--gold);margin:24px auto;}
+.capa-sub{font-size:16px;color:rgba(255,255,255,.7);max-width:480px;line-height:1.7;}
+.capa-rodape{position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:10px;color:rgba(167,168,151,.5);letter-spacing:2px;text-transform:uppercase;}
+.versao{position:absolute;top:32px;right:40px;font-size:10px;color:rgba(167,168,151,.5);letter-spacing:1px;}
+
+/* SEÇÕES */
+.secao{padding:72px 80px;border-bottom:1px solid #f0f0f0;}
+.secao:last-child{border-bottom:none;}
+.secao-alt{background:#f8fdfd;}
+.secao-dark{background:var(--v1);color:#fff;}
+.secao-dark .secao-titulo{color:#fff;}
+.secao-dark .secao-sub{color:var(--bege);}
+.secao-dark p{color:rgba(255,255,255,.8);}
+
+.chapeu{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--gold);margin-bottom:12px;}
+.secao-titulo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--v1);line-height:1.25;margin-bottom:16px;}
+.secao-sub{font-size:15px;color:#5a7878;line-height:1.7;max-width:680px;margin-bottom:36px;}
+
+/* GRID DE MÓDULOS */
+.mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px;}
+@media(max-width:900px){.mod-grid{grid-template-columns:repeat(2,1fr);}}
+.mod-card{background:#fff;border-radius:14px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 12px rgba(31,62,60,.06);transition:.2s;}
+.mod-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(31,62,60,.1);}
+.mod-icon{font-size:28px;margin-bottom:12px;}
+.mod-nome{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--v1);margin-bottom:6px;}
+.mod-desc{font-size:12px;color:#5a7878;line-height:1.6;}
+.mod-acesso{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;}
+.acesso-todos{background:#f0f7f4;color:#1a6a40;}
+.acesso-restrito{background:#fff8e6;color:#8a5a00;}
+
+/* POP */
+.pop-card{background:#fff;border-radius:14px;border:1px solid rgba(167,168,151,.2);margin-bottom:24px;overflow:hidden;box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.pop-header{background:var(--v1);padding:16px 24px;display:flex;align-items:center;gap:14px;}
+.pop-num{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}
+.pop-titulo{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#fff;}
+.pop-subtitulo{font-size:10px;color:var(--bege);margin-top:2px;text-transform:uppercase;letter-spacing:1px;}
+.pop-body{padding:24px;}
+.pop-steps{counter-reset:step;}
+.pop-step{display:flex;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #f0f7f7;}
+.pop-step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--v1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px;}
+.step-content strong{display:block;font-size:13px;font-weight:700;color:var(--v1);margin-bottom:3px;}
+.step-content p{font-size:12px;color:#4a6060;line-height:1.6;}
+.step-content .tip{background:#f0f7f4;border-left:3px solid var(--v1);padding:7px 11px;border-radius:0 6px 6px 0;font-size:11px;color:#1a6a40;margin-top:6px;}
+.step-content .atencao{background:#fff8e6;border-left:3px solid #d4af37;padding:7px 11px;border-radius:0 6px 6px 0;font-size:11px;color:#8a5a00;margin-top:6px;}
+
+/* TABELA DE ACESSOS */
+.acesso-table{width:100%;border-collapse:collapse;margin-bottom:32px;}
+.acesso-table th{background:var(--v1);color:#fff;padding:12px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;}
+.acesso-table td{padding:12px 16px;border-bottom:1px solid #f0f7f7;font-size:13px;}
+.acesso-table tr:last-child td{border-bottom:none;}
+.acesso-table tr:nth-child(even) td{background:#f8fdfd;}
+.check{color:#27ae60;font-weight:700;}
+.lock{color:#d4af37;}
+.dash-mark{color:#ccc;}
+
+/* ALERTA */
+.alerta{background:#fff8e6;border:1px solid rgba(212,175,55,.3);border-radius:10px;padding:16px 20px;display:flex;gap:12px;align-items:flex-start;margin-bottom:24px;}
+.alerta-icon{font-size:20px;flex-shrink:0;}
+.alerta p{font-size:13px;color:#8a5a00;line-height:1.6;}
+.info-box{background:#f0f7f4;border:1px solid rgba(31,62,60,.15);border-radius:10px;padding:16px 20px;margin-bottom:24px;}
+.info-box p{font-size:13px;color:#1f3e3c;line-height:1.6;}
+
+/* FLUXO */
+.fluxo{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.fluxo-item{background:var(--v1);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;}
+.fluxo-arr{color:var(--bege);font-size:18px;}
+
+/* REGRAS */
+.regras{list-style:none;}
+.regras li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0f7f7;font-size:13px;}
+.regras li:last-child{border-bottom:none;}
+.regras .ri{font-size:16px;flex-shrink:0;}
+
+/* SUMÁRIO */
+.sumario-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.sum-item{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;border-radius:10px;border:1px solid rgba(167,168,151,.2);text-decoration:none;transition:.2s;}
+.sum-item:hover{border-color:var(--v1);background:#f0f7f4;}
+.sum-num{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--bege);width:32px;text-align:center;}
+.sum-txt strong{display:block;font-size:13px;font-weight:700;color:var(--v1);}
+.sum-txt span{font-size:11px;color:var(--bege);}
+
+/* COLABORADORA CARD */
+.colab-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:32px;}
+.colab-card{text-align:center;padding:16px 10px;}
+.colab-av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;margin:0 auto 10px;}
+.colab-nome{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;color:var(--v1);}
+.colab-cargo{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+
+/* CONTATOS */
+.contatos-box{background:var(--v1);border-radius:14px;padding:28px 32px;color:#fff;}
+.contatos-box h3{font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:18px;}
+.contato-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.contato-row:last-child{border-bottom:none;}
+.contato-icon{font-size:18px;}
+.contato-info strong{display:block;font-size:13px;color:#fff;}
+.contato-info span{font-size:11px;color:var(--bege);}
+
+@media print{
+  .sidebar{display:none;}
+  .content{margin-left:0;}
+  .capa{min-height:auto;padding:60px;}
+  .secao{padding:48px 60px;}
+  @page{margin:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h2>Manual CP</h2>
+    <p>Sistema de Gestão</p>
+  </div>
+  <nav>
+    <div class="nav-section">Início</div>
+    <a class="nav-item active" href="#capa"><span>📋</span>Capa</a>
+    <a class="nav-item" href="#sobre"><span>🏛</span>Sobre o Sistema</a>
+    <a class="nav-item" href="#acessos"><span>🔑</span>Acessos e Perfis</a>
+
+    <div class="nav-section">Módulos</div>
+    <a class="nav-item" href="#produtividade"><span>⏱</span>Produtividade</a>
+    <a class="nav-item" href="#crm"><span>👥</span>CRM</a>
+    <a class="nav-item" href="#contratos"><span>📄</span>Contratos</a>
+    <a class="nav-item" href="#transacao"><span>🤝</span>Transação</a>
+    <a class="nav-item" href="#financeiro"><span>💰</span>Financeiro</a>
+    <a class="nav-item" href="#agentes"><span>✦</span>Agentes IA</a>
+    <a class="nav-item" href="#marketing"><span>📸</span>Instagram</a>
+
+    <div class="nav-section">Referência</div>
+    <a class="nav-item" href="#seguranca"><span>🔒</span>Segurança</a>
+    <a class="nav-item" href="#canais"><span>📞</span>Canais Oficiais</a>
+  </nav>
+  <button class="btn-pdf" onclick="window.print()">⬇ Exportar PDF</button>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="content">
+
+<!-- ══════════════ CAPA ══════════════ -->
+<section class="capa" id="capa">
+  <div class="versao">Versão 1.0 · 2026</div>
+  <div class="capa-eyebrow">Cavalcante Pinheiro Advocacia · OAB/BA 49.675</div>
+  <h1 class="capa-titulo">Manual do<br><em>Sistema CP</em></h1>
+  <div class="capa-linha"></div>
+  <p class="capa-sub">Guia completo de funcionamento, procedimentos operacionais padrão e boas práticas para toda a equipe.</p>
+  <div class="capa-rodape">Empresarial Mundo Plaza · Sala 1006 · Caminho das Árvores · Salvador/BA</div>
+</section>
+
+<!-- ══════════════ SOBRE ══════════════ -->
+<section class="secao" id="sobre">
+  <div class="chapeu">Introdução</div>
+  <h2 class="secao-titulo">O que é o Sistema CP</h2>
+  <p class="secao-sub">O Sistema CP é a plataforma de gestão integrada do escritório Cavalcante Pinheiro Advocacia. Desenvolvida sob medida, reúne em um único endereço todas as ferramentas que a equipe precisa para operar com eficiência, rastreabilidade e segurança.</p>
+
+  <div class="mod-grid">
+    <div class="mod-card"><div class="mod-icon">⏱</div><div class="mod-nome">Produtividade</div><div class="mod-desc">Registro de sessões de trabalho, controle de horas e gamificação do desempenho da equipe.</div><span class="mod-acesso acesso-todos">Toda a equipe</span></div>
+    <div class="mod-card"><div class="mod-icon">👥</div><div class="mod-nome">CRM</div><div class="mod-desc">Pipeline comercial de leads desde a captação até a conversão em caso tributário.</div><span class="mod-acesso acesso-todos">Toda a equipe</span></div>
+    <div class="mod-card"><div class="mod-icon">📄</div><div class="mod-nome">Contratos</div><div class="mod-desc">Geração automática de contratos de honorários e procurações com IA, envio via ClickSign.</div><span class="mod-acesso acesso-todos">Toda a equipe</span></div>
+    <div class="mod-card"><div class="mod-icon">🤝</div><div class="mod-nome">Transação</div><div class="mod-desc">Pipeline de casos de transação tributária com acompanhamento de prazos e histórico.</div><span class="mod-acesso acesso-todos">Toda a equipe</span></div>
+    <div class="mod-card"><div class="mod-icon">💰</div><div class="mod-nome">Financeiro</div><div class="mod-desc">Dashboard de honorários, repasses e despesas com sincronização em tempo real com o Asaas.</div><span class="mod-acesso acesso-restrito">🔒 Apenas Mariana</span></div>
+    <div class="mod-card"><div class="mod-icon">✦</div><div class="mod-nome">Agentes IA</div><div class="mod-desc">Laura (transação tributária), Natalia (comercial) e Helena (contratos) — especialistas artificiais do escritório.</div><span class="mod-acesso acesso-todos">Toda a equipe</span></div>
+  </div>
+
+  <div class="info-box">
+    <p><strong>Acesso:</strong> O sistema está disponível em <strong>sistemacp.vercel.app</strong> em qualquer navegador, computador ou celular. Não requer instalação.</p>
+  </div>
+</section>
+
+<!-- ══════════════ ACESSOS ══════════════ -->
+<section class="secao secao-alt" id="acessos">
+  <div class="chapeu">Perfis de acesso</div>
+  <h2 class="secao-titulo">Quem acessa o quê</h2>
+  <p class="secao-sub">O sistema tem dois níveis de acesso. Módulos operacionais são abertos para toda a equipe. O módulo financeiro e o painel de gestão são restritos e protegidos por senha.</p>
+
+  <div class="colab-grid">
+    <div class="colab-card"><div class="colab-av" style="background:#214949">MP</div><div class="colab-nome">Mariana Pinheiro</div><div class="colab-cargo">Sócia Fundadora</div></div>
+    <div class="colab-card"><div class="colab-av" style="background:#1f3e3c">DC</div><div class="colab-nome">Diana</div><div class="colab-cargo">Coord. Jurídica</div></div>
+    <div class="colab-card"><div class="colab-av" style="background:#2b6052">JL</div><div class="colab-nome">Jade</div><div class="colab-cargo">Operacional</div></div>
+    <div class="colab-card"><div class="colab-av" style="background:#4a7a70">MB</div><div class="colab-nome">Mariana Barboza</div><div class="colab-cargo">Comercial</div></div>
+    <div class="colab-card"><div class="colab-av" style="background:#8a9a8a">LC</div><div class="colab-nome">Laila Costa</div><div class="colab-cargo">Operacional</div></div>
+  </div>
+
+  <table class="acesso-table">
+    <thead><tr><th>Módulo</th><th>Mariana</th><th>Diana</th><th>Jade</th><th>M. Barboza</th><th>Laila</th></tr></thead>
+    <tbody>
+      <tr><td>Produtividade</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>CRM</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Contratos (Helena)</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Transação Tributária</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Natalia ✦ (Comercial)</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Laura ✦ (Transação)</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Instagram & Marketing</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td><strong>Financeiro</strong></td><td class="check">✓</td><td class="lock">🔒</td><td class="lock">🔒</td><td class="lock">🔒</td><td class="lock">🔒</td></tr>
+      <tr><td><strong>Gestão (painel)</strong></td><td class="check">✓</td><td class="lock">🔒</td><td class="lock">🔒</td><td class="lock">🔒</td><td class="lock">🔒</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alerta">
+    <div class="alerta-icon">⚠️</div>
+    <p>O módulo <strong>Financeiro</strong> e o <strong>Painel de Gestão</strong> são protegidos por senha e acessíveis exclusivamente pela Dra. Mariana. Nunca compartilhe essas credenciais.</p>
+  </div>
+</section>
+
+<!-- ══════════════ PRODUTIVIDADE ══════════════ -->
+<section class="secao" id="produtividade">
+  <div class="chapeu">Módulo 01</div>
+  <h2 class="secao-titulo">Produtividade</h2>
+  <p class="secao-sub">Controle de sessões de trabalho da equipe. Cada colaboradora registra o início e fim das suas atividades, informando cliente, tarefa e tipo. O sistema acumula horas, gera rankings e exibe quem está online em tempo real.</p>
+
+  <div class="fluxo">
+    <div class="fluxo-item">Acessar o sistema</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Selecionar seu nome</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Iniciar sessão</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Trabalhar</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Encerrar sessão</div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">1</div><div><div class="pop-titulo">POP — Registrar Sessão de Trabalho</div><div class="pop-subtitulo">Procedimento diário obrigatório</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Acessar o sistema</strong><p>Abra <strong>sistemacp.vercel.app</strong> e clique no card <strong>Produtividade</strong>.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Selecionar seu nome</strong><p>Na tela de seleção, clique no seu card com nome e iniciais. Um ponto verde indica quem já está online.</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Iniciar sessão</strong><p>Clique em <strong>▶ Iniciar Sessão</strong> e preencha: nome do cliente, processo/tarefa, ambiente (escritório ou home office) e tipo de atividade.</p><div class="tip">💡 Seja específica: em vez de "processos", escreva "REFIS PGFN — Lima Diniz".</div></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Encerrar ao final</strong><p>Ao concluir a atividade, clique em <strong>◼ Encerrar</strong>. O tempo é registrado automaticamente.</p><div class="atencao">⚠️ Não deixe sessões abertas ao final do dia. Sessões não encerradas distorcem os dados.</div></div></div>
+        <div class="pop-step"><div class="step-num">5</div><div class="step-content"><strong>Lançamento manual (se necessário)</strong><p>Esqueceu de registrar? Clique em <strong>+ Manual</strong>, informe data, horário de início e fim.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">2</div><div><div class="pop-titulo">POP — Usar o Mural e Elogios</div><div class="pop-subtitulo">Comunicação interna da equipe</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Mural</strong><p>Aba <strong>Mural</strong> — espaço para avisos, atualizações e recados para toda a equipe. Visível para todos.</p><div class="tip">💡 Use para comunicar fechamentos, ausências ou conquistas do escritório.</div></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Elogios ✦</strong><p>Aba <strong>Elogios</strong> — envie reconhecimento a uma colega. Selecione o nome, escreva a mensagem e clique em Enviar.</p><div class="tip">💡 Elogios motivam a equipe. Use sempre que uma colega se destacar.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Ranking</strong><p>A aba <strong>🏆 Ranking</strong> mostra as colaboradoras com mais horas na semana, no mês ou hoje. O pódio é atualizado em tempo real.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CRM ══════════════ -->
+<section class="secao secao-alt" id="crm">
+  <div class="chapeu">Módulo 02</div>
+  <h2 class="secao-titulo">CRM — Pipeline Comercial</h2>
+  <p class="secao-sub">O CRM organiza todos os leads do escritório em um pipeline visual (kanban). Cada lead percorre etapas desde o primeiro contato até a conversão em caso de transação tributária.</p>
+
+  <div class="fluxo">
+    <div class="fluxo-item">Novo Lead</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Contato Tentado</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Contato Feito</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Reunião Agendada</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Proposta Enviada</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Convertido</div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">3</div><div><div class="pop-titulo">POP — Cadastrar um Novo Lead</div><div class="pop-subtitulo">Captação manual</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Acessar o CRM</strong><p>Na landing page, clique em <strong>CRM</strong>. A tela exibe o kanban com todas as colunas.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Novo Lead</strong><p>Clique em <strong>+ Novo Lead</strong>. Digite o CNPJ — o sistema consulta automaticamente a Receita Federal e preenche razão social, CNAE, situação cadastral e sócios.</p><div class="tip">💡 Se não tiver CNPJ, preencha manualmente. O CNPJ enriquece os dados e economiza tempo.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Preencher campos obrigatórios</strong><p>Informe: Razão Social, Setor, Porte, Modalidade de Transação, Origem do Lead e Responsável pelo contato.</p></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Salvar</strong><p>O lead aparece automaticamente na coluna <strong>Novo</strong> do kanban.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">4</div><div><div class="pop-titulo">POP — Importar Leads por Planilha</div><div class="pop-subtitulo">Para importação em volume</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Preparar a planilha</strong><p>Use o arquivo modelo (disponível na área de trabalho: <code>modelo_leads_cp.csv</code>). Colunas: CNPJ · Nome / Razão Social · Valor da Dívida · Score · Setor · Porte · Modalidade · Argumento.</p><div class="atencao">⚠️ Valor da Dívida deve ser número puro: 150000, não R$ 150.000,00</div></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Importar</strong><p>No CRM, clique em <strong>↑ Importar</strong>. Arraste o arquivo .xlsx ou .csv. Veja a prévia de 5 linhas antes de confirmar.</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Aguardar processamento</strong><p>O sistema importa em lotes, consulta a BrasilAPI para cada CNPJ e exibe o resultado: "X importados, Y duplicados ignorados."</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">5</div><div><div class="pop-titulo">POP — Avançar o Lead no Pipeline</div><div class="pop-subtitulo">Manutenção do kanban</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Arrastar o card</strong><p>Para mover um lead de etapa, arraste o card para a coluna correspondente. O sistema registra a mudança automaticamente no histórico.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Registrar interação</strong><p>Clique no card para abrir a ficha. Na aba <strong>Histórico</strong>, registre o que aconteceu: ligação, WhatsApp, reunião ou nota interna.</p><div class="tip">💡 Registre TODA interação. Isso permite à Mariana acompanhar o funil sem precisar perguntar.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Agendar follow-up</strong><p>Na aba <strong>Follow-ups</strong>, defina a data do próximo contato. Leads com follow-up vencido aparecem com alerta vermelho ⚠️.</p></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Usar a Natalia ✦</strong><p>Na aba <strong>Natalia ✦</strong> da ficha do lead, peça: "Prepare o dossiê para a reunião" ou "Gere uma proposta". Ela usa os dados do lead automaticamente.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CONTRATOS ══════════════ -->
+<section class="secao" id="contratos">
+  <div class="chapeu">Módulo 03</div>
+  <h2 class="secao-titulo">Contratos — Helena ◆</h2>
+  <p class="secao-sub">A Helena é a especialista em documentação jurídica do escritório. Ela gera contratos de honorários advocatícios e procurações personalizados, seguindo os modelos padrão do escritório, e envia via ClickSign para assinatura digital.</p>
+
+  <div class="fluxo">
+    <div class="fluxo-item">Informar dados</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Helena gera o documento</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Revisar</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Enviar via ClickSign</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Cliente assina</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Boleto gerado automaticamente</div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">6</div><div><div class="pop-titulo">POP — Gerar Contrato de Honorários</div><div class="pop-subtitulo">Via Helena no módulo Contratos</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Acessar Contratos</strong><p>Na landing page, clique em <strong>Contratos</strong>. A tela da Helena abrirá com o painel de chat à esquerda e a prévia do documento à direita.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Informar o que precisa</strong><p>No chat, descreva o que precisa. Exemplo: <em>"Gerar contrato de honorários para SINBA, equiparação hospitalar, honorários de 8 salários mínimos em 4 parcelas, êxito de 30%."</em></p><div class="tip">💡 Quanto mais detalhes, melhor o contrato. Inclua: nome do cliente, tipo de serviço, valores, datas de vencimento.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Aguardar e revisar</strong><p>A Helena gera o documento completo em segundos. Revise no painel direito com atenção especial a: valores, datas de vencimento, CNPJ e nome do cliente.</p></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Enviar para assinatura</strong><p>Clique em <strong>✍ ClickSign</strong>, informe nome, e-mail e CPF do signatário. O cliente receberá o documento por e-mail para assinar digitalmente.</p></div></div>
+        <div class="pop-step"><div class="step-num">5</div><div class="step-content"><strong>Após a assinatura</strong><p>Quando o cliente assinar, o sistema gera automaticamente a cobrança no Asaas com vencimento em 5 dias úteis. Nenhuma ação adicional é necessária.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">7</div><div><div class="pop-titulo">POP — Gerar Procuração</div><div class="pop-subtitulo">Via Helena</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Solicitar à Helena</strong><p>No chat da Helena, diga: <em>"Gerar procuração para [Nome da Empresa], CNPJ [CNPJ], representada por [Nome do Sócio], CPF [CPF], para [tipo de demanda]."</em></p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Tipos de poderes</strong><p>Informe o tipo: <strong>Poderes gerais (AD JUDICIA ET EXTRA)</strong> para representação ampla, ou <strong>Poderes específicos</strong> (ex: mandado de segurança, transação tributária).</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Revisar e enviar</strong><p>Confira CNPJ, nome do representante e poderes concedidos. Envie via ClickSign para assinatura.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TRANSAÇÃO ══════════════ -->
+<section class="secao secao-alt" id="transacao">
+  <div class="chapeu">Módulo 04</div>
+  <h2 class="secao-titulo">Transação Tributária</h2>
+  <p class="secao-sub">Pipeline completo para acompanhamento de casos de transação tributária, desde o diagnóstico até o encerramento. Inclui gestão de prazos, histórico de movimentações e integração com ClickSign e Asaas.</p>
+
+  <div class="fluxo">
+    <div class="fluxo-item">Diagnóstico</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Proposta</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Adesão</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Protocolo</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Acompanhamento</div><div class="fluxo-arr">→</div>
+    <div class="fluxo-item">Encerrado</div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">8</div><div><div class="pop-titulo">POP — Abrir Novo Caso de Transação</div><div class="pop-subtitulo">A partir do CRM ou avulso</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Via CRM (recomendado)</strong><p>Na ficha do lead no CRM, clique em <strong>CONVERTER EM CASO DE TRANSAÇÃO</strong>. O sistema cria o caso já vinculado ao lead e cria o cliente no Asaas automaticamente.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Via Transação (avulso)</strong><p>No módulo Transação, clique em <strong>+ Novo Caso</strong>. Selecione "Avulso" e preencha todos os campos.</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Preencher informações do caso</strong><p>Obrigatório: <strong>Órgão</strong> (PGFN, RFB, SEFAZ-BA, Prefeitura) e <strong>Cliente</strong>. Recomendado: valor da dívida, modalidade, honorários previstos e percentual de êxito.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">9</div><div><div class="pop-titulo">POP — Gestão de Prazos</div><div class="pop-subtitulo">Controle de vencimentos do caso</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Abrir a ficha do caso</strong><p>Clique no card do caso no kanban. A ficha abre em um modal grande com abas: Dados · Prazos · Histórico · Laura ✦.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Adicionar prazo</strong><p>Na aba <strong>Prazos</strong>, informe descrição e data. Prazos são exibidos com cores: 🔴 Vencido · 🟡 Urgente (≤ 7 dias) · ⚪ Normal · ✓ Concluído.</p><div class="atencao">⚠️ Prazos urgentes geram um banner de alerta no topo do dashboard de Transação.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Marcar como concluído</strong><p>Clique no checkbox ao lado do prazo após cumprir. O prazo fica riscado e sai dos alertas.</p></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Consultar a Laura ✦</strong><p>Na aba <strong>Laura ✦</strong>, peça orientação sobre a estratégia do caso. Ela analisa com base nos dados registrados e fundamenta em legislação real.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FINANCEIRO ══════════════ -->
+<section class="secao" id="financeiro">
+  <div class="chapeu">Módulo 05 · Acesso Restrito</div>
+  <h2 class="secao-titulo">Financeiro</h2>
+  <p class="secao-sub">Módulo exclusivo da Dra. Mariana, acessível apenas pelo Painel de Gestão mediante senha. Exibe honorários recebidos em tempo real via Asaas, repasses, despesas e resultado líquido por mês.</p>
+
+  <div class="alerta">
+    <div class="alerta-icon">🔒</div>
+    <p>Este módulo <strong>não aparece</strong> na página principal para as colaboradoras. O acesso é feito exclusivamente pelo botão <strong>Gestão</strong> com a senha confidencial da Dra. Mariana.</p>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">10</div><div><div class="pop-titulo">POP — Registrar Honorário Recebido Fora do Asaas</div><div class="pop-subtitulo">Pagamentos via PIX, TED ou depósito direto</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Pelo Agente Financeiro</strong><p>Acesse <strong>Financeiro → aba Agente IA</strong>. Diga: <em>"Recebi R$ 5.000 do cliente Lima Diniz via PIX hoje, dia 15."</em> O agente registra automaticamente.</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Pelo botão "+ Lançamento Manual"</strong><p>Na aba do mês, clique em <strong>+ Lançamento Manual</strong>, preencha: cliente, valor, data, conta (Itaú, BB, PIX Direto) e salve.</p><div class="tip">💡 O lançamento aparece imediatamente na tabela e soma ao total do mês.</div></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Quando o boleto do Asaas é pago</strong><p>Nenhuma ação necessária. O sistema sincroniza automaticamente todo mês com o Asaas e identifica cada cliente pelo nome.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ AGENTES ══════════════ -->
+<section class="secao secao-alt" id="agentes">
+  <div class="chapeu">Módulo 06</div>
+  <h2 class="secao-titulo">Agentes de Inteligência Artificial</h2>
+  <p class="secao-sub">O sistema conta com três especialistas artificiais, cada uma com um papel específico. Elas são treinadas com o perfil do escritório e respondem com conhecimento técnico, orientadas a ações práticas.</p>
+
+  <div class="mod-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="mod-card">
+      <div class="mod-icon">✦</div>
+      <div class="mod-nome">Laura</div>
+      <div class="mod-desc">Especialista em transação tributária. Analisa viabilidade, modalidades, descontos e estratégia de negociação com PGFN, RFB e Fazendas. Fundamenta em Lei 13.988/2020 e Portarias PGFN.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--bege)">Acesso: sistemacp.vercel.app/laura.html</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-icon">✦</div>
+      <div class="mod-nome">Natalia</div>
+      <div class="mod-desc">Estrategista comercial. Prepara dossiês de reunião com análise da empresa, oportunidades tributárias, perguntas estratégicas e abordagem de vendas. Gera propostas comerciais personalizadas.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--bege)">Acesso: CRM (aba Natalia ✦ em cada lead) · /natalia.html</div>
+    </div>
+    <div class="mod-card">
+      <div class="mod-icon">◆</div>
+      <div class="mod-nome">Helena</div>
+      <div class="mod-desc">Especialista em documentação jurídica. Gera contratos de honorários e procurações personalizados nos modelos do escritório, com envio direto via ClickSign.</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--bege)">Acesso: sistemacp.vercel.app/contratos</div>
+    </div>
+  </div>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">11</div><div><div class="pop-titulo">POP — Como Usar os Agentes IA</div><div class="pop-subtitulo">Boas práticas de uso</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Seja específica nos pedidos</strong><p>Em vez de "analise o caso", diga "analise a viabilidade de transação individual para empresa com R$ 2M na PGFN, setor de construção, Lucro Presumido."</p><div class="tip">💡 Quanto mais contexto, mais precisa e útil é a resposta.</div></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Use os chips de sugestão</strong><p>Cada agente tem chips prontos para começar. Clique neles para perguntas frequentes sem precisar digitar.</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Valide as informações jurídicas</strong><p>Os agentes fundamentam em normas reais, mas a análise final é sempre da advogada responsável. Nunca envie ao cliente sem revisão da Dra. Mariana.</p><div class="atencao">⚠️ Os agentes são auxiliares, não substituem a responsabilidade técnica da advogada.</div></div></div>
+        <div class="pop-step"><div class="step-num">4</div><div class="step-content"><strong>Contexto do lead (Natalia)</strong><p>Ao usar a Natalia dentro de um lead do CRM, ela já carrega os dados automaticamente. Use os chips: "Preparar dossiê" ou "Gerar proposta".</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ MARKETING ══════════════ -->
+<section class="secao" id="marketing">
+  <div class="chapeu">Módulo 07</div>
+  <h2 class="secao-titulo">Instagram & Marketing</h2>
+  <p class="secao-sub">Dashboard de métricas do Instagram conectado em tempo real, calendário editorial, banco de roteiros de reels e gerador de conteúdo com IA especializada em advocacia tributária.</p>
+
+  <div class="pop-card">
+    <div class="pop-header"><div class="pop-num">12</div><div><div class="pop-titulo">POP — Usar o Módulo de Marketing</div><div class="pop-subtitulo">Rotinas semanais de conteúdo</div></div></div>
+    <div class="pop-body">
+      <div class="pop-steps">
+        <div class="pop-step"><div class="step-num">1</div><div class="step-content"><strong>Acessar via landing</strong><p>Clique no card <strong>Instagram</strong> na página principal. A tela exibe métricas ao vivo (seguidores, engajamento, alcance).</p></div></div>
+        <div class="pop-step"><div class="step-num">2</div><div class="step-content"><strong>Sincronizar métricas</strong><p>Clique em <strong>⟳ Sincronizar</strong> para atualizar os dados do Instagram em tempo real.</p></div></div>
+        <div class="pop-step"><div class="step-num">3</div><div class="step-content"><strong>Usar o Agente CP para conteúdo</strong><p>Na aba <strong>✦ Agente CP</strong>, peça roteiros, legendas ou sugestões de pauta. O agente é especializado em conteúdo jurídico-tributário para Instagram.</p><div class="tip">💡 Exemplos de pedidos: "Crie um roteiro de reel sobre transação tributária para pequenas empresas" ou "Escreva 3 legendas para posts sobre REFIS municipal."</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SEGURANÇA ══════════════ -->
+<section class="secao secao-alt" id="seguranca">
+  <div class="chapeu">Boas Práticas</div>
+  <h2 class="secao-titulo">Segurança e Responsabilidades</h2>
+  <p class="secao-sub">O sistema lida com dados sensíveis de clientes e do escritório. Seguir as regras abaixo é obrigação de toda a equipe.</p>
+
+  <ul class="regras">
+    <li><div class="ri">🔒</div><div><strong>Nunca compartilhe a senha de Gestão.</strong> É pessoal e exclusiva da Dra. Mariana. Qualquer solicitação da senha por outro canal deve ser reportada imediatamente.</div></li>
+    <li><div class="ri">📵</div><div><strong>Não acesse o sistema em redes Wi-Fi públicas</strong> sem VPN. Prefira a rede do escritório ou dados móveis.</div></li>
+    <li><div class="ri">👤</div><div><strong>Sempre saia do sistema</strong> ao usar um computador compartilhado. Clique em "↩ Sair" na tela de produtividade.</div></li>
+    <li><div class="ri">📧</div><div><strong>Nunca envie dados de clientes por canais não oficiais.</strong> Use exclusivamente os e-mails e telefones listados na seção de Canais Oficiais.</div></li>
+    <li><div class="ri">✅</div><div><strong>Registre todas as interações com clientes no sistema.</strong> Reuniões, e-mails importantes, acordos verbais — tudo no histórico do lead ou do caso.</div></li>
+    <li><div class="ri">⏱</div><div><strong>Registre suas sessões de trabalho diariamente.</strong> A falta de registro prejudica o controle de produtividade e o faturamento por hora do escritório.</div></li>
+    <li><div class="ri">🤖</div><div><strong>Valide sempre o que os agentes IA produzem.</strong> Contratos, propostas e pareceres gerados por IA precisam de revisão da Dra. Mariana antes de chegar ao cliente.</div></li>
+    <li><div class="ri">📋</div><div><strong>Mantenha os dados dos leads atualizados.</strong> CNPJ, telefone, e-mail e etapa do pipeline devem refletir a realidade a qualquer momento.</div></li>
+  </ul>
+</section>
+
+<!-- ══════════════ CANAIS ══════════════ -->
+<section class="secao" id="canais">
+  <div class="chapeu">Referência</div>
+  <h2 class="secao-titulo">Canais Oficiais do Escritório</h2>
+  <p class="secao-sub">O escritório se responsabiliza exclusivamente pelas comunicações realizadas pelos canais listados abaixo. Qualquer contato externo solicitando dados ou valores deve ser confirmado antes de qualquer ação.</p>
+
+  <div class="contatos-box">
+    <h3>Cavalcante Pinheiro Advocacia</h3>
+    <div class="contato-row"><div class="contato-icon">📱</div><div class="contato-info"><strong>(71) 99129-2322</strong><span>Dra. Mariana Pinheiro — WhatsApp e chamadas</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📱</div><div class="contato-info"><strong>(71) 99110-2804</strong><span>Telefone institucional do escritório — equipe</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📧</div><div class="contato-info"><strong>mariana@cavalcantepinheiroadv.com.br</strong><span>E-mail da Dra. Mariana</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📧</div><div class="contato-info"><strong>juridico@cavalcantepinheiroadv.com.br</strong><span>Jurídico</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📧</div><div class="contato-info"><strong>financeiro@cavalcantepinheiroadv.com.br</strong><span>Financeiro</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📧</div><div class="contato-info"><strong>diana@cavalcantepinheiroadv.com.br</strong><span>Coordenação Jurídica</span></div></div>
+    <div class="contato-row"><div class="contato-icon">🌐</div><div class="contato-info"><strong>sistemacp.vercel.app</strong><span>Sistema de Gestão Interno</span></div></div>
+    <div class="contato-row"><div class="contato-icon">📍</div><div class="contato-info"><strong>Empresarial Mundo Plaza, sala 1006</strong><span>Caminho das Árvores · Salvador/BA · CEP 41.820-020</span></div></div>
+  </div>
+
+  <div style="margin-top:48px;text-align:center;padding:32px;border-top:1px solid rgba(167,168,151,.2);">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--v1);margin-bottom:6px;">A excelência está no nosso DNA.</div>
+    <div style="font-size:11px;color:var(--bege);letter-spacing:2px;text-transform:uppercase;">Cavalcante Pinheiro Advocacia · OAB/BA 49.675 · 2026</div>
+  </div>
+</section>
+
+</div><!-- /content -->
+
+<script>
+// Highlight nav item on scroll
+const sections = document.querySelectorAll('section[id]');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+  navItems.forEach(n => { n.classList.toggle('active', n.getAttribute('href') === '#'+current); });
+});
+</script>
+</body>
+</html>
