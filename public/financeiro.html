@@ -878,7 +878,8 @@ function sair() {
 }
 
 // Verificar sessão ao carregar
-if (sessionStorage.getItem('cp_auth') === SENHA_HASH) {
+// Aceita sessão do Gestão (gestao_ok) ou login próprio (cp_auth)
+if (sessionStorage.getItem('cp_auth') === SENHA_HASH || sessionStorage.getItem('gestao_ok') === '1') {
   document.getElementById('login-screen').classList.add('hide');
 }
 

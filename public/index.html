@@ -107,9 +107,9 @@ canvas{display:block;width:100%;height:100%;}
     <span class="material-symbols-outlined">handshake</span>
     <span class="font-label-caps text-[11px] uppercase tracking-wider">Transação</span>
   </a>
-  <a class="px-8 py-3 flex items-center space-x-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" href="/financeiro.html">
-    <span class="material-symbols-outlined">payments</span>
-    <span class="font-label-caps text-[11px] uppercase tracking-wider">Financeiro</span>
+  <a class="px-8 py-3 flex items-center space-x-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all cursor-pointer" onclick="abrirGestao()">
+    <span class="material-symbols-outlined">lock</span>
+    <span class="font-label-caps text-[11px] uppercase tracking-wider">Gestão</span>
   </a>
   <a class="px-8 py-3 flex items-center space-x-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all" href="/helena.html">
     <span class="material-symbols-outlined">edit_document</span>
@@ -217,11 +217,6 @@ canvas{display:block;width:100%;height:100%;}
         <p class="text-on-surface-variant text-sm leading-relaxed opacity-80">Pipeline de leads e conversão em transação tributária.</p>
       </div>
 
-      <div class="animate-fade-in-up bg-surface border border-outline-variant p-6 card-hover transition-all duration-300 cursor-pointer" style="animation-delay:.5s" onclick="location.href='/financeiro.html'">
-        <span class="material-symbols-outlined text-primary text-3xl mb-6">account_balance_wallet</span>
-        <h4 class="font-playfair text-on-surface text-xl mb-2 tracking-wide font-medium">Financeiro</h4>
-        <p class="text-on-surface-variant text-sm leading-relaxed opacity-80">Receita, repasses e saúde financeira em tempo real.</p>
-      </div>
 
       <div class="animate-fade-in-up bg-surface border border-outline-variant p-6 card-hover transition-all duration-300 cursor-pointer" style="animation-delay:.6s" onclick="location.href='/helena.html'">
         <span class="material-symbols-outlined text-primary text-3xl mb-6">edit_document</span>
@@ -341,10 +336,10 @@ canvas{display:block;width:100%;height:100%;}
     <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">dashboard</span>
     <span class="font-label-caps text-[9px] font-bold">Painel</span>
   </a>
-  <a href="/financeiro.html" class="flex flex-col items-center space-y-1 text-on-surface-variant">
-    <span class="material-symbols-outlined">payments</span>
-    <span class="font-label-caps text-[9px] font-bold">Financeiro</span>
-  </a>
+  <button onclick="abrirGestao()" class="flex flex-col items-center space-y-1 text-on-surface-variant">
+    <span class="material-symbols-outlined">lock</span>
+    <span class="font-label-caps text-[9px] font-bold">Gestão</span>
+  </button>
   <a href="/crm.html" class="flex flex-col items-center space-y-1 text-on-surface-variant">
     <span class="material-symbols-outlined">group</span>
     <span class="font-label-caps text-[9px] font-bold">CRM</span>
@@ -442,9 +437,21 @@ canvas{display:block;width:100%;height:100%;}
       </div>
     </div>
     <div id="gpanel-fin" style="display:none;">
-      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#f5f5f0;margin-bottom:20px;">Financeiro</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;" id="fin-cards"></div>
-      <a href="/financeiro.html" style="display:block;background:rgba(172,155,124,.15);color:#f5f5f0;text-align:center;padding:14px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(172,155,124,.25);">Acessar Dashboard Financeiro Completo →</a>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:#f5f5f0;">Financeiro</div>
+        <a href="/financeiro.html" target="_blank" style="background:#ac9b7c;color:#063327;padding:9px 20px;border-radius:8px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:.3px;">Dashboard Completo ↗</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;" id="fin-cards"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <a href="/financeiro.html" target="_blank" style="background:rgba(172,155,124,.1);border:1px solid rgba(172,155,124,.3);border-radius:10px;padding:18px;text-decoration:none;display:flex;align-items:center;gap:12px;transition:.2s;" onmouseover="this.style.background='rgba(172,155,124,.2)'" onmouseout="this.style.background='rgba(172,155,124,.1)'">
+          <span style="font-size:24px;">📊</span>
+          <div><div style="font-family:'Playfair Display',serif;font-size:15px;color:#f5f5f0;font-weight:600;">Honorários por Mês</div><div style="font-size:11px;color:#ac9b7c;margin-top:3px;">Histórico completo · abas mensais</div></div>
+        </a>
+        <a href="/financeiro.html" target="_blank" style="background:rgba(172,155,124,.1);border:1px solid rgba(172,155,124,.3);border-radius:10px;padding:18px;text-decoration:none;display:flex;align-items:center;gap:12px;transition:.2s;" onmouseover="this.style.background='rgba(172,155,124,.2)'" onmouseout="this.style.background='rgba(172,155,124,.1)'">
+          <span style="font-size:24px;">🤖</span>
+          <div><div style="font-family:'Playfair Display',serif;font-size:15px;color:#f5f5f0;font-weight:600;">Agente Financeiro</div><div style="font-size:11px;color:#ac9b7c;margin-top:3px;">Consultas e ações via IA</div></div>
+        </a>
+      </div>
     </div>
   </div>
 </div>
