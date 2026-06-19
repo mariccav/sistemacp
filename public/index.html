@@ -288,27 +288,21 @@ canvas{display:block;width:100%;height:100%;}
       </div>
     </div>
 
-    <div class="animate-fade-in-up bg-surface-container-low border border-outline-variant p-10 flex flex-col justify-between" style="animation-delay:1.1s">
-      <div>
-        <h4 class="font-playfair text-2xl text-on-surface mb-6 font-semibold">Painel Gerencial</h4>
-        <div class="space-y-4">
-          <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
-            <span class="text-xs font-manrope text-on-surface-variant">Acesso Restrito</span>
-            <span class="text-xs font-bold font-manrope text-primary uppercase">Mariana</span>
-          </div>
-          <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
-            <span class="text-xs font-manrope text-on-surface-variant">Produtividade · Ao Vivo · Financeiro</span>
-            <span class="text-xs font-bold font-manrope text-on-surface uppercase">Tempo Real</span>
-          </div>
-          <div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
-            <span class="text-xs font-manrope text-on-surface-variant">Contratos por Cliente</span>
-            <span class="text-xs font-bold font-manrope text-primary uppercase">Integrado</span>
-          </div>
+    <div class="animate-fade-in-up bg-surface-container-high border border-outline-variant p-10 flex items-start space-x-8 cursor-pointer card-hover transition-all duration-300" style="animation-delay:1.1s" onclick="abrirGestao()">
+      <div class="relative flex-shrink-0">
+        <div class="w-24 h-32 bg-background border border-primary/30 overflow-hidden flex items-center justify-center">
+          <span class="material-symbols-outlined text-primary text-4xl">lock</span>
         </div>
       </div>
-      <button onclick="abrirGestao()" class="mt-8 bg-primary text-on-primary font-label-caps text-[11px] py-3.5 tracking-[0.2em] font-bold hover:brightness-110 transition-all uppercase">
-        ACESSAR PAINEL DE GESTÃO
-      </button>
+      <div>
+        <h4 class="font-playfair text-2xl text-on-surface mb-1">Gestão</h4>
+        <p class="font-label-caps text-[10px] text-primary mb-4 uppercase tracking-[0.2em] font-bold">Acesso Restrito · Mariana Pinheiro</p>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-6 font-manrope">Painel gerencial com produtividade da equipe, financeiro em tempo real e contratos por cliente.</p>
+        <div class="text-primary font-label-caps text-[11px] font-bold flex items-center space-x-2 uppercase tracking-widest">
+          <span>ACESSAR GESTÃO</span>
+          <span class="material-symbols-outlined text-xs">arrow_forward</span>
+        </div>
+      </div>
     </div>
   </section>
 
