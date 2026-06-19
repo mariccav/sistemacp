@@ -1040,7 +1040,7 @@ async function confirmarCobranca(){
   const venc=document.getElementById('cob-venc').value;
   if(!valor||!venc){toast('Valor e vencimento obrigatórios',true);return;}
   try{
-    const r=await fetch('/api/honorario-transacao',{
+    const r=await fetch('/api/cobrar',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -1151,7 +1151,7 @@ async function confirmarEncerramento(){
     if(casoAtivo.honorarios_exito_percentual&&val){
       const honExito=(casoAtivo.honorarios_exito_percentual/100)*val;
       try{
-        const r=await fetch('/api/honorario-transacao',{
+        const r=await fetch('/api/cobrar',{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             nome_cliente:casoAtivo.cliente_nome,cnpj:casoAtivo.cliente_cnpj,
