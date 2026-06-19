@@ -436,7 +436,7 @@ function abrirIniciar(){document.getElementById('mod-ini').classList.add('show')
 function abrirManual(){document.getElementById('m-dt').value=hoje();document.getElementById('mod-man').classList.add('show');}
 async function iniciar(){
   const cli=document.getElementById('si-cli').value.trim(),proc=document.getElementById('si-proc').value.trim(),amb=document.getElementById('si-amb').value,tipo=document.getElementById('si-tipo').value;
-  const row=await sbPost('sessoes',{colaboradora:ativa.nome,inicio:new Date().toISOString(),cliente:cli,processo:proc,ambiente:amb,tipo_atividade:tipo||null});
+  const row=await sbPost('sessoes',{colaboradora:ativa.nome,cargo:ativa.cargo,inicio:new Date().toISOString(),cliente:cli,processo:proc,ambiente:amb,tipo_atividade:tipo||null});
   if(row){const d=Array.isArray(row)?row[0]:row;sessao={id:d.id,inicio:new Date(d.inicio),cliente:cli,processo:proc};fmod('mod-ini');mostrarAtiva();carregarHoje();}
 }
 async function encerrar(){if(!sessao)return;const fim=new Date();const dur=Math.round((fim-sessao.inicio)/60000);await sbPatch('sessoes',sessao.id,{fim:fim.toISOString(),duracao_minutos:dur});sessao=null;mostrarInativa();carregarHoje();}
@@ -445,7 +445,7 @@ async function salvarManual(){
   if(!dt||!ini2||!fim){alert('Informe data, início e fim.');return;}
   const id=new Date(`${dt}T${ini2}`),fd=new Date(`${dt}T${fim}`),dur=Math.round((fd-id)/60000);
   if(dur<=0){alert('Fim deve ser após início.');return;}
-  await sbPost('sessoes',{colaboradora:ativa.nome,inicio:id.toISOString(),fim:fd.toISOString(),duracao_minutos:dur,cliente:document.getElementById('m-cli').value.trim(),processo:document.getElementById('m-proc').value.trim(),tipo_atividade:document.getElementById('m-tipo').value||null,ambiente:'escritorio'});
+  await sbPost('sessoes',{colaboradora:ativa.nome,cargo:ativa.cargo,inicio:id.toISOString(),fim:fd.toISOString(),duracao_minutos:dur,cliente:document.getElementById('m-cli').value.trim(),processo:document.getElementById('m-proc').value.trim(),tipo_atividade:document.getElementById('m-tipo').value||null,ambiente:'escritorio'});
   fmod('mod-man');carregarHoje();
 }
 
