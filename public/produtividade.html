@@ -222,6 +222,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
     <button class="dtab" onclick="tab('rank',this)">🏆 Ranking</button>
     <button class="dtab" onclick="tab('mural',this)">Mural</button>
     <button class="dtab" onclick="tab('elogios',this)">Elogios ✦</button>
+    <button class="dtab" onclick="tab('tarefas',this)">📋 Tarefas</button>
     <button class="dtab hide" id="tab-gestao" onclick="tab('gestao',this)">Gestão ◆</button>
   </nav>
   <div class="dash-body" style="background:var(--bg)">
@@ -280,6 +281,33 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
       <div class="stit" style="margin-bottom:14px;">✦ Elogios</div>
       <button class="btn-ok" style="margin-bottom:16px" onclick="abrirElogio()">+ Enviar Elogio</button>
       <div class="egrid" id="egrid"></div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div class="dpanel" id="panel-tarefas">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div class="stit">📋 Tarefas da Equipe</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="tf-busca" placeholder="Buscar..." oninput="renderTarefas()" style="padding:7px 11px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);outline:none;width:160px;">
+          <select id="tf-resp" onchange="renderTarefas()" style="padding:7px 10px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;color:var(--v1);outline:none;background:#fff;">
+            <option value="">Todas</option>
+            <option>Mariana Pinheiro</option><option>Diana</option><option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+          </select>
+          <select id="tf-prazo" onchange="renderTarefas()" style="padding:7px 10px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:11px;color:var(--v1);outline:none;background:#fff;">
+            <option value="">Qualquer prazo</option>
+            <option value="hoje">Hoje</option>
+            <option value="semana">Esta semana</option>
+            <option value="vencidas">Vencidas</option>
+          </select>
+          <button onclick="abrirNovaTarefa()" style="padding:7px 16px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">+ Nova</button>
+        </div>
+      </div>
+      <!-- KPIs rápidos -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;" id="tf-kpis"></div>
+      <!-- Kanban -->
+      <div style="overflow-x:auto;padding-bottom:8px;">
+        <div style="display:flex;gap:12px;min-width:max-content;" id="tf-board"></div>
+      </div>
     </div>
 
     <!-- GESTÃO -->
@@ -370,6 +398,41 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
       </select>
     </div>
     <div class="macts"><button class="btn-cancel" onclick="fmod('mod-man')">Cancelar</button><button class="btn-ok" onclick="salvarManual()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAL TAREFA -->
+<div class="mov" id="mod-tarefa">
+  <div class="mbox">
+    <h3>📋 Tarefa</h3>
+    <input type="hidden" id="tf-m-id">
+    <div class="frow"><label>Título *</label><input id="tf-m-titulo" placeholder="Descrição da tarefa"></div>
+    <div class="fg">
+      <div class="frow"><label>Responsável</label>
+        <select id="tf-m-resp">
+          <option value="">Selecione...</option>
+          <option>Mariana Pinheiro</option><option>Diana</option><option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+      <div class="frow"><label>Prazo</label><input type="date" id="tf-m-prazo"></div>
+    </div>
+    <div class="frow"><label>Cliente</label><input id="tf-m-cli" placeholder="Nome do cliente"></div>
+    <div class="frow"><label>Processo</label><input id="tf-m-proc" placeholder="Partes / descrição"></div>
+    <div class="frow"><label>Status</label>
+      <select id="tf-m-status">
+        <option value="a_fazer">A Fazer</option>
+        <option value="em_andamento">Em Andamento</option>
+        <option value="aguardando">Aguardando</option>
+        <option value="concluido">Concluído</option>
+      </select>
+    </div>
+    <div class="macts">
+      <div>
+        <button class="btn-cancel" onclick="fmod('mod-tarefa')">Cancelar</button>
+        <button id="tf-m-del" onclick="excluirTarefaMod()" style="display:none;background:none;border:none;color:var(--verm);font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;margin-left:10px">Excluir</button>
+      </div>
+      <button class="btn-ok" onclick="salvarTarefaMod()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -722,11 +785,150 @@ function tab(id,btn){
   document.querySelectorAll('.dtab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.querySelectorAll('.dpanel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  if(id==='escrit')carregarEscritorio();
-  if(id==='rank')carregarRanking();
-  if(id==='mural')carregarMural();
-  if(id==='elogios')carregarElogios();
+  if(id==='escrit')  carregarEscritorio();
+  if(id==='rank')    carregarRanking();
+  if(id==='mural')   carregarMural();
+  if(id==='elogios') carregarElogios();
+  if(id==='tarefas') carregarTarefas();
   if(id==='gestao'){gestPer='hoje';document.querySelectorAll('.gptab').forEach(b=>b.classList.remove('active'));document.getElementById('gpt-hoje').classList.add('active');carregarGestao();}
+}
+
+// ── TAREFAS ───────────────────────────────────────────────────────
+let todasTarefas=[], tfDragId=null;
+const TF_COLS=[
+  {key:'a_fazer',label:'A Fazer',cor:'#1f3e3c'},
+  {key:'em_andamento',label:'Em Andamento',cor:'#2b6052'},
+  {key:'aguardando',label:'Aguardando',cor:'#d97706'},
+  {key:'concluido',label:'Concluído',cor:'#a7a897'}
+];
+const tfHoje=()=>new Date().toISOString().split('T')[0];
+const tfDaqui7=()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().split('T')[0];};
+const tfFmt=iso=>iso?new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'—';
+
+async function carregarTarefas(){
+  todasTarefas=await sbGet('tarefas_astrea?order=prazo.asc.nullslast,criado_em.desc&limit=500');
+  renderTarefas();
+}
+
+function renderTarefas(){
+  const q=document.getElementById('tf-busca').value.toLowerCase();
+  const resp=document.getElementById('tf-resp').value;
+  const prazo=document.getElementById('tf-prazo').value;
+  const hj=tfHoje();
+  const fil=todasTarefas.filter(t=>{
+    if(resp&&t.responsavel!==resp)return false;
+    if(prazo==='hoje'&&t.prazo!==hj)return false;
+    if(prazo==='semana'&&(!t.prazo||t.prazo>tfDaqui7()||t.prazo<hj))return false;
+    if(prazo==='vencidas'&&(!t.prazo||t.prazo>=hj))return false;
+    if(q){const txt=`${t.titulo} ${t.cliente||''} ${t.responsavel||''}`.toLowerCase();if(!txt.includes(q))return false;}
+    return true;
+  });
+
+  // KPIs
+  const ativas=todasTarefas.filter(t=>t.status!=='concluido');
+  const venc=ativas.filter(t=>t.prazo&&t.prazo<hj);
+  document.getElementById('tf-kpis').innerHTML=[
+    {ico:'📋',v:ativas.length,l:'Ativas'},
+    {ico:'⚠️',v:venc.length,l:'Vencidas',alert:venc.length>0},
+    {ico:'✅',v:todasTarefas.filter(t=>t.status==='concluido').length,l:'Concluídas'}
+  ].map(k=>`<div style="background:#fff;border-radius:8px;padding:10px 14px;border:1px solid rgba(167,168,151,${k.alert?'.5':'.2'});display:flex;align-items:center;gap:8px;${k.alert?'border-color:var(--verm)':''}">
+    <span style="font-size:16px">${k.ico}</span>
+    <div><div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:${k.alert?'var(--verm)':'var(--v1)'}">${k.v}</div><div style="font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px">${k.l}</div></div>
+  </div>`).join('');
+
+  // Kanban
+  const board=document.getElementById('tf-board');
+  board.innerHTML='';
+  TF_COLS.forEach(col=>{
+    const cards=fil.filter(t=>t.status===col.key);
+    const div=document.createElement('div');
+    div.style.cssText='width:250px;flex-shrink:0;display:flex;flex-direction:column;';
+    div.innerHTML=`
+      <div style="background:${col.cor};padding:10px 14px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.5px">${col.label}</span>
+        <span style="background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;font-size:11px;color:#fff;font-weight:700">${cards.length}</span>
+      </div>
+      <div id="tfc-${col.key}" ondragover="tfDragOver(event,'${col.key}')" ondrop="tfDrop(event,'${col.key}')" ondragleave="this.style.background=''"
+        style="background:#fff;border:1px solid rgba(167,168,151,.15);border-top:none;border-radius:0 0 10px 10px;min-height:200px;padding:8px;display:flex;flex-direction:column;gap:7px;max-height:420px;overflow-y:auto;">
+        ${cards.length?cards.map(tfRenderCard).join(''):'<div style="text-align:center;color:var(--bege);font-size:11px;padding:20px 0;font-style:italic">Nenhuma tarefa</div>'}
+      </div>`;
+    board.appendChild(div);
+  });
+}
+
+function tfRenderCard(t){
+  const eq=COLS.find(c=>c.nome===t.responsavel)||{ini:'?',cor:'#999'};
+  const hj=tfHoje();
+  const venc=t.prazo&&t.prazo<hj&&t.status!=='concluido';
+  const urg=t.prazo&&t.prazo>=hj&&t.prazo<=tfDaqui7()&&t.status!=='concluido';
+  const prazoCor=venc?'var(--verm)':urg?'var(--laran,#d97706)':'var(--bege)';
+  const prazoTxt=!t.prazo?'Sem prazo':t.prazo===hj?'Hoje':venc?`Venceu ${tfFmt(t.prazo)}`:tfFmt(t.prazo);
+  return `<div draggable="true" id="tfc-card-${t.id}"
+    ondragstart="tfDragStart(event,'${t.id}')" ondragend="this.style.opacity='1'"
+    onclick="tfAbrirDetalhe('${t.id}')"
+    style="background:#fff;border:1px solid rgba(167,168,151,.2);border-radius:9px;padding:11px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(31,62,60,.05);${venc?'border-color:rgba(194,94,94,.3)':''}">
+    ${t.origem==='astrea'?'<div style="float:right;width:16px;height:16px;border-radius:50%;background:#5c6bc0;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff" title="Via Astrea">A</div>':''}
+    <div style="font-family:\'Cormorant Garamond\',serif;font-size:14px;font-weight:700;color:var(--v1);margin-bottom:4px;line-height:1.3">${t.titulo}</div>
+    ${t.cliente?`<div style="font-size:10px;color:var(--bege);margin-bottom:7px">👤 ${t.cliente}</div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#fff;background:${eq.cor};padding:2px 8px;border-radius:20px">${eq.ini} ${(t.responsavel||'').split(' ')[0]}</span>
+      <span style="font-size:10px;font-weight:700;color:${prazoCor}">${venc?'⚠ ':urg?'🕐 ':''}${prazoTxt}</span>
+    </div>
+  </div>`;
+}
+
+function tfDragStart(e,id){tfDragId=id;e.currentTarget.style.opacity='.5';e.dataTransfer.effectAllowed='move';}
+function tfDragOver(e,col){e.preventDefault();document.getElementById('tfc-'+col).style.background='#f0f9f8';}
+async function tfDrop(e,status){
+  e.preventDefault();
+  document.querySelectorAll('[id^="tfc-"]').forEach(el=>{if(!el.id.includes('card'))el.style.background='';});
+  if(!tfDragId)return;
+  const t=todasTarefas.find(x=>x.id===tfDragId);
+  if(!t||t.status===status)return;
+  t.status=status;
+  renderTarefas();
+  await sbPatch('tarefas_astrea',tfDragId,{status});
+  tfDragId=null;
+}
+
+// Modal de tarefa dentro de produtividade
+let tfEditando=null;
+function abrirNovaTarefa(){
+  tfEditando=null;
+  preencherModalTarefa({titulo:'',responsavel:ativa?.nome||'',prazo:'',cliente:'',processo:'',numero_processo:'',status:'a_fazer'});
+  document.getElementById('mod-tarefa').classList.add('show');
+}
+function tfAbrirDetalhe(id){
+  tfEditando=todasTarefas.find(t=>t.id===id);
+  if(!tfEditando)return;
+  preencherModalTarefa(tfEditando);
+  document.getElementById('mod-tarefa').classList.add('show');
+}
+function preencherModalTarefa(t){
+  document.getElementById('tf-m-id').value=t.id||'';
+  document.getElementById('tf-m-titulo').value=t.titulo||'';
+  document.getElementById('tf-m-resp').value=t.responsavel||'';
+  document.getElementById('tf-m-prazo').value=t.prazo||'';
+  document.getElementById('tf-m-cli').value=t.cliente||'';
+  document.getElementById('tf-m-proc').value=t.processo||'';
+  document.getElementById('tf-m-status').value=t.status||'a_fazer';
+  document.getElementById('tf-m-del').style.display=t.id?'inline-block':'none';
+}
+async function salvarTarefaMod(){
+  const titulo=document.getElementById('tf-m-titulo').value.trim();
+  if(!titulo){alert('Informe o título.');return;}
+  const dados={titulo,responsavel:document.getElementById('tf-m-resp').value||null,prazo:document.getElementById('tf-m-prazo').value||null,cliente:document.getElementById('tf-m-cli').value.trim()||null,processo:document.getElementById('tf-m-proc').value.trim()||null,status:document.getElementById('tf-m-status').value,origem:'manual'};
+  const id=document.getElementById('tf-m-id').value;
+  if(id){await sbPatch('tarefas_astrea',id,dados);const idx=todasTarefas.findIndex(t=>t.id===id);if(idx>=0)Object.assign(todasTarefas[idx],dados);}
+  else{const novo=await sbPost('tarefas_astrea',dados);if(novo){const d=Array.isArray(novo)?novo[0]:novo;todasTarefas.unshift(d);}}
+  fmod('mod-tarefa');renderTarefas();
+}
+async function excluirTarefaMod(){
+  const id=document.getElementById('tf-m-id').value;
+  if(!id||!confirm('Excluir esta tarefa?'))return;
+  await fetch(`${SB}/rest/v1/tarefas_astrea?id=eq.${id}`,{method:'DELETE',headers:SHR});
+  todasTarefas=todasTarefas.filter(t=>t.id!==id);
+  fmod('mod-tarefa');renderTarefas();
 }
 
 renderSelector();
