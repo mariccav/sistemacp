@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefas — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--br:#fff;--verde:#27ae60;--verm:#c25e5e;--gold:#d4af37;--laran:#d97706;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{background:var(--v1);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#fff;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;transition:.2s;}
+.hd-back:hover{color:#fff;}
+
+/* BARRA */
+.barra{background:#fff;border-bottom:1px solid #e8f0f0;padding:12px 28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;}
+.search-wrap{position:relative;flex:1;min-width:180px;}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:var(--bg);}
+.search-wrap::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;}
+.fsel{padding:8px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:var(--bg);outline:none;cursor:pointer;}
+.btn-novo{padding:8px 18px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-novo:hover{background:var(--v2);}
+.toggle-view{display:flex;border:1px solid rgba(167,168,151,.3);border-radius:8px;overflow:hidden;}
+.tv-btn{padding:7px 14px;border:none;background:#fff;font-family:'Nunito',sans-serif;font-size:12px;color:var(--bege);cursor:pointer;transition:.2s;}
+.tv-btn.active{background:var(--v1);color:#fff;}
+
+/* KPIs */
+.kpis{display:flex;gap:10px;padding:14px 28px;flex-shrink:0;overflow-x:auto;}
+.kpi{background:#fff;border-radius:10px;padding:12px 18px;border:1px solid rgba(167,168,151,.2);display:flex;align-items:center;gap:10px;white-space:nowrap;flex-shrink:0;}
+.kpi-icon{font-size:20px;}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--v1);}
+.kpi-lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+
+/* KANBAN */
+.kanban-area{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.kanban-scroll{flex:1;overflow-x:auto;overflow-y:hidden;padding:16px 28px 20px;}
+.kanban{display:flex;gap:14px;height:100%;min-width:max-content;}
+.col{width:280px;flex-shrink:0;display:flex;flex-direction:column;}
+.col-header{border-radius:10px 10px 0 0;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.col-title{font-size:12px;font-weight:700;letter-spacing:.5px;color:#fff;text-transform:uppercase;}
+.col-count{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 9px;font-size:11px;color:#fff;font-weight:700;}
+.col-body{background:#fff;border:1px solid rgba(167,168,151,.15);border-top:none;border-radius:0 0 10px 10px;flex:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:8px;}
+.col-body.drag-over{background:#f0f9f8;border-color:var(--v2);}
+.col-empty{text-align:center;color:var(--bege);font-size:12px;padding:24px 0;font-style:italic;}
+
+/* CARD */
+.tcard{background:#fff;border:1px solid rgba(167,168,151,.2);border-radius:10px;padding:13px;cursor:pointer;transition:.15s;box-shadow:0 1px 4px rgba(31,62,60,.05);position:relative;}
+.tcard:hover{border-color:var(--v2);box-shadow:0 3px 12px rgba(31,62,60,.1);transform:translateY(-1px);}
+.tcard.dragging{opacity:.5;}
+.tcard-titulo{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:var(--v1);margin-bottom:5px;line-height:1.3;padding-right:20px;}
+.tcard-cli{font-size:11px;color:var(--bege);margin-bottom:8px;}
+.tcard-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px;}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.tag-resp{color:#fff;}
+.tag-proc{background:#f0f7f7;color:var(--v2);}
+.tcard-footer{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid #f0f7f7;}
+.prazo-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.prazo-ok{background:#f0f7f4;color:#1a6a40;}
+.prazo-urg{background:#fff8e6;color:#8a5a00;}
+.prazo-venc{background:#fef2f2;color:var(--verm);}
+.origem-dot{width:6px;height:6px;border-radius:50%;background:var(--bege);flex-shrink:0;}
+.origem-dot.astrea{background:#5c6bc0;}
+.origem-dot.manual{background:var(--bege);}
+.astrea-badge{position:absolute;top:10px;right:10px;width:18px;height:18px;background:#5c6bc0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;title:'Via Astrea';}
+
+/* LISTA */
+.lista-area{display:none;flex:1;overflow-y:auto;padding:16px 28px;}
+.lista-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.lista-table th{background:var(--v1);color:#fff;padding:10px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;text-align:left;}
+.lista-table td{padding:10px 14px;border-bottom:1px solid #f0f7f7;font-size:12px;}
+.lista-table tr:hover td{background:#f8fdfd;cursor:pointer;}
+
+/* MODAL DETALHE */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(31,62,60,.6);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:18px;padding:28px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--v1);margin-bottom:6px;}
+.modal-sub{font-size:11px;color:var(--bege);margin-bottom:20px;}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.mfld{margin-bottom:12px;}
+.mfld label{display:block;font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.mfld input,.mfld select,.mfld textarea{width:100%;padding:9px 11px;border:1px solid rgba(167,168,151,.3);border-radius:7px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.mfld textarea{resize:vertical;height:64px;}
+.modal-acts{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.btn-del{background:none;border:none;color:var(--verm);font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+.btn-save{background:var(--v1);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-cancel{background:none;border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:9px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+
+/* RESPONSÁVEL AVATAR */
+.resp-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+
+/* URGÊNCIA highlight */
+@keyframes urgente{0%,100%{box-shadow:0 0 0 0 rgba(193,94,94,.3)}50%{box-shadow:0 0 0 4px rgba(193,94,94,.15)}}
+.tcard.vencida{border-color:rgba(193,94,94,.3);animation:urgente 2s infinite;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Tarefas do Escritório</h1>
+    <p>Via Astrea · Cavalcante Pinheiro Advocacia</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar</a>
+</header>
+
+<!-- BARRA DE FILTROS -->
+<div class="barra">
+  <div class="search-wrap">
+    <input type="text" id="busca" placeholder="Buscar tarefa, cliente ou processo..." oninput="renderView()">
+  </div>
+  <select class="fsel" id="f-resp" onchange="renderView()">
+    <option value="">Todas as responsáveis</option>
+    <option>Mariana Pinheiro</option>
+    <option>Diana</option>
+    <option>Jade</option>
+    <option>Mariana Barboza</option>
+    <option>Laila Costa</option>
+  </select>
+  <select class="fsel" id="f-prazo" onchange="renderView()">
+    <option value="">Qualquer prazo</option>
+    <option value="hoje">Vence hoje</option>
+    <option value="semana">Esta semana</option>
+    <option value="vencidas">Vencidas</option>
+  </select>
+  <div class="toggle-view">
+    <button class="tv-btn active" id="btn-kanban" onclick="setView('kanban')">⊞ Kanban</button>
+    <button class="tv-btn" id="btn-lista" onclick="setView('lista')">☰ Lista</button>
+  </div>
+  <button class="btn-novo" onclick="abrirNova()">+ Nova Tarefa</button>
+</div>
+
+<!-- KPIs -->
+<div class="kpis" id="kpis"></div>
+
+<!-- KANBAN -->
+<div class="kanban-area" id="view-kanban">
+  <div class="kanban-scroll">
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+</div>
+
+<!-- LISTA -->
+<div class="lista-area" id="view-lista">
+  <table class="lista-table">
+    <thead><tr><th>Tarefa</th><th>Responsável</th><th>Cliente</th><th>Prazo</th><th>Status</th><th>Origem</th></tr></thead>
+    <tbody id="lista-body"></tbody>
+  </table>
+</div>
+
+<!-- MODAL DETALHE / NOVA TAREFA -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modal-titulo">Nova Tarefa</h2>
+    <div class="modal-sub" id="modal-sub"></div>
+    <input type="hidden" id="m-id">
+    <div class="mfld"><label>Título *</label><input id="m-titulo" placeholder="Descrição da tarefa"></div>
+    <div class="modal-row">
+      <div class="mfld"><label>Responsável</label>
+        <select id="m-resp">
+          <option value="">Selecione...</option>
+          <option>Mariana Pinheiro</option><option>Diana</option>
+          <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+      <div class="mfld"><label>Prazo</label><input type="date" id="m-prazo"></div>
+    </div>
+    <div class="mfld"><label>Cliente</label><input id="m-cliente" placeholder="Nome do cliente"></div>
+    <div class="mfld"><label>Processo</label><input id="m-processo" placeholder="Partes / descrição"></div>
+    <div class="mfld"><label>Nº do Processo</label><input id="m-numero" placeholder="0000000-00.0000.0.00.0000"></div>
+    <div class="mfld"><label>Status</label>
+      <select id="m-status">
+        <option value="a_fazer">A Fazer</option>
+        <option value="em_andamento">Em Andamento</option>
+        <option value="aguardando">Aguardando</option>
+        <option value="concluido">Concluído</option>
+      </select>
+    </div>
+    <div class="modal-acts">
+      <div>
+        <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-del" id="btn-del" onclick="excluirTarefa()" style="display:none;margin-left:10px">Excluir</button>
+      </div>
+      <button class="btn-save" onclick="salvarTarefa()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONSTANTES ─────────────────────────────────────────────────────
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH  = { 'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation' };
+const SHR = { 'apikey':SK,'Authorization':'Bearer '+SK };
+
+const COLS_DEF = [
+  { key:'a_fazer',      label:'A Fazer',      cor:'#1f3e3c' },
+  { key:'em_andamento', label:'Em Andamento',  cor:'#2b6052' },
+  { key:'aguardando',   label:'Aguardando',    cor:'#d97706' },
+  { key:'concluido',    label:'Concluído',     cor:'#a7a897' }
+];
+
+const EQUIPE = {
+  'Mariana Pinheiro': { ini:'MP', cor:'#214949' },
+  'Diana':            { ini:'DC', cor:'#1f3e3c' },
+  'Jade':             { ini:'JL', cor:'#2b6052' },
+  'Mariana Barboza':  { ini:'MB', cor:'#4a7a70' },
+  'Laila Costa':      { ini:'LC', cor:'#8a9a8a' }
+};
+
+const hoje = () => new Date().toISOString().split('T')[0];
+const daqui7 = () => { const d=new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; };
+const fmtData = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '—';
+
+// ── ESTADO ─────────────────────────────────────────────────────────
+let todas = [], filtradas = [], viewAtual = 'kanban', editando = null;
+let dragId = null;
+
+// ── SUPABASE ───────────────────────────────────────────────────────
+async function sbGet(q) { const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR}); return r.ok?r.json():[]; }
+async function sbPost(t,b) { const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)}); return r.ok?await r.json():null; }
+async function sbPatch(t,id,b) { await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)}); }
+async function sbDelete(t,id) { await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SHR}); }
+
+// ── CARREGAR ───────────────────────────────────────────────────────
+async function carregar() {
+  todas = await sbGet('tarefas_astrea?order=prazo.asc.nullslast,criado_em.desc&limit=500');
+  filtrar();
+  renderKPIs();
+}
+
+// ── FILTRAR ────────────────────────────────────────────────────────
+function filtrar() {
+  const q     = document.getElementById('busca').value.toLowerCase();
+  const resp  = document.getElementById('f-resp').value;
+  const prazo = document.getElementById('f-prazo').value;
+  const hj    = hoje();
+
+  filtradas = todas.filter(t => {
+    if (resp && t.responsavel !== resp) return false;
+    if (prazo === 'hoje'   && t.prazo !== hj) return false;
+    if (prazo === 'semana' && (!t.prazo || t.prazo > daqui7() || t.prazo < hj)) return false;
+    if (prazo === 'vencidas' && (!t.prazo || t.prazo >= hj)) return false;
+    if (q) {
+      const txt = `${t.titulo} ${t.cliente||''} ${t.processo||''} ${t.responsavel||''}`.toLowerCase();
+      if (!txt.includes(q)) return false;
+    }
+    return true;
+  });
+  renderView();
+}
+
+function renderView() { filtrar(); if(viewAtual==='kanban') renderKanban(); else renderLista(); }
+
+// ── KPIs ───────────────────────────────────────────────────────────
+function renderKPIs() {
+  const ativas  = todas.filter(t => t.status !== 'concluido');
+  const vencidas= ativas.filter(t => t.prazo && t.prazo < hoje());
+  const hoje7   = ativas.filter(t => t.prazo && t.prazo >= hoje() && t.prazo <= daqui7());
+  const conc    = todas.filter(t => t.status === 'concluido').length;
+
+  document.getElementById('kpis').innerHTML = [
+    { icon:'📋', val: ativas.length,   lbl:'Ativas' },
+    { icon:'⚠️', val: vencidas.length, lbl:'Vencidas', alert: vencidas.length > 0 },
+    { icon:'📅', val: hoje7.length,    lbl:'Vencem em 7 dias' },
+    { icon:'✅', val: conc,            lbl:'Concluídas' },
+  ].map(k => `
+    <div class="kpi" style="${k.alert?'border-color:var(--verm)':''}">
+      <div class="kpi-icon">${k.icon}</div>
+      <div>
+        <div class="kpi-val" style="${k.alert?'color:var(--verm)':''}">${k.val}</div>
+        <div class="kpi-lbl">${k.lbl}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── KANBAN ─────────────────────────────────────────────────────────
+function renderKanban() {
+  const board = document.getElementById('kanban-board');
+  board.innerHTML = '';
+
+  COLS_DEF.forEach(col => {
+    const cards = filtradas.filter(t => t.status === col.key);
+    const div = document.createElement('div');
+    div.className = 'col';
+    div.innerHTML = `
+      <div class="col-header" style="background:${col.cor}">
+        <span class="col-title">${col.label}</span>
+        <span class="col-count">${cards.length}</span>
+      </div>
+      <div class="col-body" id="col-${col.key}"
+           ondragover="dragOver(event,'${col.key}')"
+           ondrop="dropCard(event,'${col.key}')"
+           ondragleave="dragLeave(event)">
+        ${cards.length ? cards.map(renderCard).join('') : '<div class="col-empty">Nenhuma tarefa</div>'}
+      </div>`;
+    board.appendChild(div);
+  });
+}
+
+function renderCard(t) {
+  const eq   = EQUIPE[t.responsavel] || { ini:'?', cor:'#999' };
+  const venc = t.prazo < hoje() && t.status !== 'concluido';
+  const urg  = t.prazo >= hoje() && t.prazo <= daqui7() && t.status !== 'concluido';
+  const prazoCls = venc ? 'prazo-venc' : urg ? 'prazo-urg' : 'prazo-ok';
+  const prazoTxt = t.prazo ? fmtData(t.prazo) : 'Sem prazo';
+  return `
+    <div class="tcard${venc?' vencida':''}" draggable="true" id="tc-${t.id}"
+         ondragstart="dragStart(event,'${t.id}')" ondragend="dragEnd(event)"
+         onclick="abrirDetalhe('${t.id}')">
+      ${t.origem==='astrea'?'<div class="astrea-badge" title="Via Astrea">A</div>':''}
+      <div class="tcard-titulo">${t.titulo}</div>
+      ${t.cliente?`<div class="tcard-cli">👤 ${t.cliente}</div>`:''}
+      <div class="tcard-tags">
+        <span class="tag tag-resp" style="background:${eq.cor}">${eq.ini} ${t.responsavel?.split(' ')[0]||'—'}</span>
+        ${t.processo?`<span class="tag tag-proc">${t.processo.substring(0,30)}${t.processo.length>30?'…':''}</span>`:''}
+      </div>
+      <div class="tcard-footer">
+        <span class="prazo-badge ${prazoCls}">${venc?'⚠ ':urg?'🕐 ':''}${prazotxt(t)}</span>
+        <div class="origem-dot ${t.origem||'manual'}" title="${t.origem==='astrea'?'Via Astrea':'Manual'}"></div>
+      </div>
+    </div>`;
+}
+
+function prazotxt(t) {
+  if (!t.prazo) return 'Sem prazo';
+  if (t.prazo === hoje()) return 'Hoje';
+  const diff = Math.round((new Date(t.prazo+'T12:00:00') - new Date()) / 86400000);
+  if (diff < 0) return `Venceu há ${Math.abs(diff)} dia${Math.abs(diff)>1?'s':''}`;
+  if (diff === 1) return 'Amanhã';
+  return fmtData(t.prazo);
+}
+
+// ── DRAG & DROP ────────────────────────────────────────────────────
+function dragStart(e, id) { dragId=id; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function dragEnd(e)  { e.currentTarget.classList.remove('dragging'); }
+function dragOver(e, col) { e.preventDefault(); document.getElementById('col-'+col).classList.add('drag-over'); }
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+async function dropCard(e, status) {
+  e.preventDefault();
+  document.getElementById('col-'+status).classList.remove('drag-over');
+  if (!dragId) return;
+  const t = todas.find(x=>x.id===dragId);
+  if (!t || t.status===status) return;
+  t.status = status;
+  renderKanban(); renderKPIs();
+  await sbPatch('tarefas_astrea', dragId, { status });
+  dragId = null;
+}
+
+// ── LISTA ──────────────────────────────────────────────────────────
+function renderLista() {
+  const tbody = document.getElementById('lista-body');
+  if (!filtradas.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--bege)">Nenhuma tarefa encontrada</td></tr>'; return; }
+  const col = COLS_DEF.reduce((a,c)=>{a[c.key]=c;return a;},{});
+  tbody.innerHTML = filtradas.map(t => {
+    const eq = EQUIPE[t.responsavel]||{ini:'?',cor:'#999'};
+    const venc = t.prazo && t.prazo < hoje() && t.status !== 'concluido';
+    return `<tr onclick="abrirDetalhe('${t.id}')">
+      <td><strong>${t.titulo}</strong>${t.numero_processo?`<br><span style="font-size:10px;color:var(--bege)">${t.numero_processo}</span>`:''}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:20px;height:20px;border-radius:50%;background:${eq.cor};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${eq.ini}</span>${t.responsavel||'—'}</span></td>
+      <td>${t.cliente||'—'}</td>
+      <td style="color:${venc?'var(--verm)':'inherit'}">${venc?'⚠ ':''}${prazotxt(t)}</td>
+      <td><span style="background:${col[t.status]?.cor||'#999'};color:#fff;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700">${col[t.status]?.label||t.status}</span></td>
+      <td><span style="font-size:10px;color:${t.origem==='astrea'?'#5c6bc0':'var(--bege)'};font-weight:600">${t.origem==='astrea'?'Astrea':'Manual'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── TOGGLE VIEW ────────────────────────────────────────────────────
+function setView(v) {
+  viewAtual = v;
+  document.getElementById('view-kanban').style.display = v==='kanban' ? 'flex' : 'none';
+  document.getElementById('view-lista').style.display  = v==='lista'  ? 'flex' : 'none';
+  document.getElementById('btn-kanban').classList.toggle('active', v==='kanban');
+  document.getElementById('btn-lista').classList.toggle('active',  v==='lista');
+  renderView();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────
+function abrirNova() {
+  editando = null;
+  document.getElementById('modal-titulo').textContent = 'Nova Tarefa';
+  document.getElementById('modal-sub').textContent = '';
+  document.getElementById('m-id').value = '';
+  ['m-titulo','m-cliente','m-processo','m-numero'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-resp').value = '';
+  document.getElementById('m-prazo').value = '';
+  document.getElementById('m-status').value = 'a_fazer';
+  document.getElementById('btn-del').style.display = 'none';
+  document.getElementById('modal').classList.add('show');
+}
+
+function abrirDetalhe(id) {
+  const t = todas.find(x=>x.id===id);
+  if (!t) return;
+  editando = t;
+  document.getElementById('modal-titulo').textContent = t.titulo;
+  document.getElementById('modal-sub').textContent = t.origem==='astrea' ? '📘 Importada via Astrea' : '✏️ Tarefa manual';
+  document.getElementById('m-id').value = t.id;
+  document.getElementById('m-titulo').value = t.titulo||'';
+  document.getElementById('m-resp').value = t.responsavel||'';
+  document.getElementById('m-prazo').value = t.prazo||'';
+  document.getElementById('m-cliente').value = t.cliente||'';
+  document.getElementById('m-processo').value = t.processo||'';
+  document.getElementById('m-numero').value = t.numero_processo||'';
+  document.getElementById('m-status').value = t.status||'a_fazer';
+  document.getElementById('btn-del').style.display = 'inline-block';
+  document.getElementById('modal').classList.add('show');
+}
+
+function fecharModal() { document.getElementById('modal').classList.remove('show'); editando=null; }
+
+async function salvarTarefa() {
+  const titulo = document.getElementById('m-titulo').value.trim();
+  if (!titulo) { alert('Informe o título da tarefa.'); return; }
+  const dados = {
+    titulo,
+    responsavel:     document.getElementById('m-resp').value||null,
+    prazo:           document.getElementById('m-prazo').value||null,
+    cliente:         document.getElementById('m-cliente').value.trim()||null,
+    processo:        document.getElementById('m-processo').value.trim()||null,
+    numero_processo: document.getElementById('m-numero').value.trim()||null,
+    status:          document.getElementById('m-status').value,
+    origem:          editando?.origem||'manual'
+  };
+  const id = document.getElementById('m-id').value;
+  if (id) {
+    await sbPatch('tarefas_astrea', id, dados);
+    const idx = todas.findIndex(t=>t.id===id);
+    if (idx>=0) Object.assign(todas[idx], dados);
+  } else {
+    const novo = await sbPost('tarefas_astrea', dados);
+    if (novo) { const d=Array.isArray(novo)?novo[0]:novo; todas.unshift(d); }
+  }
+  fecharModal(); renderView(); renderKPIs();
+}
+
+async function excluirTarefa() {
+  const id = document.getElementById('m-id').value;
+  if (!id || !confirm('Excluir esta tarefa?')) return;
+  await sbDelete('tarefas_astrea', id);
+  todas = todas.filter(t=>t.id!==id);
+  fecharModal(); renderView(); renderKPIs();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────
+setView('kanban');
+carregar();
+setInterval(carregar, 5*60*1000); // atualiza a cada 5 min
+</script>
+</body>
+</html>
