@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <script src="/auth.js"></script>
+<script>
+// Financeiro: acesso exclusivo para admin (Mariana)
+(function() {
+  const u = JSON.parse(sessionStorage.getItem('cp_user') || 'null');
+  if (u && !u.is_admin) {
+    window.location.href = '/dashboard.html';
+    throw new Error('acesso negado');
+  }
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard Financeiro — Cavalcante Pinheiro Advocacia</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
