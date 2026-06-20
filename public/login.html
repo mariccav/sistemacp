@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acesso — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:#063327;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+
+.container{width:100%;max-width:420px;}
+.logo-area{text-align:center;margin-bottom:40px;}
+.logo-area img{height:52px;width:auto;filter:brightness(0) invert(1);opacity:.9;margin-bottom:20px;}
+.logo-area h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:1px;}
+.logo-area p{font-size:11px;color:rgba(167,168,151,.7);margin-top:4px;letter-spacing:2px;text-transform:uppercase;}
+
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(167,168,151,.15);border-radius:20px;padding:36px 32px;backdrop-filter:blur(10px);}
+
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:700;}
+.field input{width:100%;padding:13px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.25);border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#fff;outline:none;transition:.2s;}
+.field input::placeholder{color:rgba(167,168,151,.5);}
+.field input:focus{border-color:#a7a897;background:rgba(255,255,255,.12);}
+
+.btn-login{width:100%;padding:14px;background:#ac9b7c;color:#063327;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:.2s;margin-top:8px;}
+.btn-login:hover{filter:brightness(1.1);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;}
+
+.erro{background:rgba(194,94,94,.15);border:1px solid rgba(194,94,94,.3);border-radius:8px;padding:11px 14px;font-size:13px;color:#f5a0a0;margin-bottom:16px;display:none;text-align:center;}
+
+.rodape{text-align:center;margin-top:28px;font-size:10px;color:rgba(167,168,151,.4);letter-spacing:1px;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.container{animation:fadeIn .5s ease;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo-area">
+    <img src="/logo-cp.png" alt="Cavalcante Pinheiro Advocacia">
+    <h1>Sistema CP</h1>
+    <p>Acesso Restrito</p>
+  </div>
+
+  <div class="card">
+    <div class="erro" id="erro">Usuário ou senha incorretos.</div>
+
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="username" placeholder="seu.usuario" autocomplete="username" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+
+    <button class="btn-login" id="btn" onclick="entrar()">Entrar</button>
+  </div>
+
+  <div class="rodape">Cavalcante Pinheiro Advocacia · OAB/BA 49.675</div>
+</div>
+
+<script>
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+
+// Verificar se já está logado
+const existente = sessionStorage.getItem('cp_user');
+if (existente) {
+  try {
+    const u = JSON.parse(existente);
+    if (u.logged_at && Date.now() - u.logged_at < 12 * 3600 * 1000) {
+      window.location.href = '/dashboard.html';
+    }
+  } catch {}
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function entrar() {
+  const username = document.getElementById('username').value.trim().toLowerCase();
+  const senha    = document.getElementById('senha').value;
+  const btn      = document.getElementById('btn');
+  const erro     = document.getElementById('erro');
+
+  if (!username || !senha) { mostrarErro('Preencha usuário e senha.'); return; }
+
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
+  erro.style.display = 'none';
+
+  try {
+    const hash = await sha256(senha);
+    const r = await fetch(
+      `${SB}/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${hash}&ativo=eq.true&select=*`,
+      { headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK } }
+    );
+    const dados = r.ok ? await r.json() : [];
+
+    if (!dados.length) { mostrarErro('Usuário ou senha incorretos.'); return; }
+
+    const u = dados[0];
+    sessionStorage.setItem('cp_user', JSON.stringify({
+      id:       u.id,
+      username: u.username,
+      nome:     u.nome,
+      cargo:    u.cargo,
+      ini:      u.ini,
+      cor:      u.cor,
+      is_admin: u.is_admin,
+      logged_at: Date.now()
+    }));
+
+    // Redirecionar
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = params.get('next') || '/dashboard.html';
+
+  } catch (e) {
+    mostrarErro('Erro de conexão. Tente novamente.');
+  } finally {
+    btn.textContent = 'Entrar';
+    btn.disabled = false;
+  }
+}
+
+function mostrarErro(msg) {
+  const e = document.getElementById('erro');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+
+document.getElementById('username').focus();
+</script>
+</body>
+</html>

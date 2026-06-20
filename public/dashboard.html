@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Cavalcante Pinheiro Advocacia</title>
+<script src="/auth.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--verde:#27ae60;--verm:#c25e5e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-height:100vh;}
+
+/* HEADER */
+header{background:var(--v1);padding:16px 36px;display:flex;align-items:center;justify-content:space-between;}
+.hd-left{display:flex;align-items:center;gap:14px;}
+.hav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;}
+.hnome{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;}
+.hcargo{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+.hd-right{display:flex;align-items:center;gap:12px;}
+.btn-sair{background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;transition:.2s;}
+.btn-sair:hover{color:#fff;}
+.btn-sistema{background:#ac9b7c;color:#063327;border:none;padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;}
+
+main{max-width:1200px;margin:0 auto;padding:28px 36px;}
+
+/* BOAS-VINDAS */
+.greeting{margin-bottom:28px;}
+.greeting h2{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--v1);}
+.greeting p{font-size:14px;color:var(--bege);margin-top:4px;}
+
+/* GRID PRINCIPAL */
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:24px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr;}}
+
+/* TIMER CARD */
+.timer-card{background:var(--v1);border-radius:16px;padding:24px;color:#fff;grid-column:span 1;}
+.tc-lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;}
+.tc-timer{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:700;color:#fff;margin:4px 0;}
+.tc-task{font-size:12px;color:rgba(255,255,255,.7);margin-bottom:16px;min-height:18px;}
+.tc-acts{display:flex;gap:8px;}
+.btn-ini{flex:1;background:#27ae60;color:#fff;border:none;padding:11px;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-ini:hover{filter:brightness(1.1);}
+.btn-enc{background:var(--verm);color:#fff;border:none;padding:11px 16px;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-man{background:rgba(255,255,255,.1);color:var(--bege);border:1px solid rgba(255,255,255,.2);padding:11px 14px;border-radius:9px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+
+/* STATS */
+.stats-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.sc-titulo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v1);margin-bottom:16px;}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f7f7;font-size:13px;}
+.stat-row:last-child{border-bottom:none;}
+.stat-row span:last-child{font-weight:700;color:var(--v1);}
+
+/* ESCRITÓRIO AO VIVO */
+.office-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 8px rgba(31,62,60,.05);}
+.mini-colab{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f7f7;}
+.mini-colab:last-child{border-bottom:none;}
+.mc-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.mc-info{flex:1;}
+.mc-nome{font-size:13px;font-weight:700;color:var(--v1);}
+.mc-task{font-size:10px;color:var(--bege);}
+.mc-status{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;}
+.mc-dot{width:7px;height:7px;border-radius:50%;}
+.mc-dot.on{background:var(--verde);animation:pglow 2s infinite;}
+.mc-dot.off{background:var(--bege);}
+@keyframes pglow{0%,100%{box-shadow:0 0 0 2px rgba(39,174,96,.2)}50%{box-shadow:0 0 0 4px rgba(39,174,96,.08)}}
+
+/* TAREFAS */
+.tarefas-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 8px rgba(31,62,60,.05);grid-column:span 2;}
+.tarefa-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f0f7f7;}
+.tarefa-item:last-child{border-bottom:none;}
+.ti-check{width:18px;height:18px;border-radius:50%;border:2px solid rgba(167,168,151,.4);flex-shrink:0;margin-top:2px;cursor:pointer;transition:.2s;}
+.ti-check:hover{border-color:var(--verde);}
+.ti-info{flex:1;}
+.ti-titulo{font-size:13px;font-weight:600;color:var(--v1);}
+.ti-sub{font-size:11px;color:var(--bege);margin-top:2px;}
+.ti-prazo{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.prazo-ok{background:#f0f7f4;color:#1a6a40;}
+.prazo-urg{background:#fff8e6;color:#8a5a00;}
+.prazo-venc{background:#fef2f2;color:var(--verm);}
+
+/* ACESSO RÁPIDO */
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:700px){.quick-grid{grid-template-columns:repeat(2,1fr);}}
+.quick-card{background:#fff;border-radius:12px;padding:18px 16px;border:1px solid rgba(167,168,151,.2);cursor:pointer;transition:.2s;text-align:center;text-decoration:none;display:block;}
+.quick-card:hover{border-color:var(--v1);background:#f0f7f4;transform:translateY(-2px);}
+.qc-icon{font-size:24px;margin-bottom:8px;}
+.qc-nome{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:var(--v1);}
+.qc-desc{font-size:10px;color:var(--bege);margin-top:3px;}
+
+/* MODAL SESSÃO */
+.mov{display:none;position:fixed;inset:0;background:rgba(31,62,60,.75);z-index:200;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.mov.show{display:flex;}
+.mbox{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:400px;}
+.mbox h3{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--v1);margin-bottom:18px;}
+.frow{margin-bottom:12px;}
+.frow label{display:block;font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+.frow input,.frow select{width:100%;padding:9px 11px;border:1px solid rgba(167,168,151,.3);border-radius:7px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.macts{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+.btn-cancel{background:none;border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:8px 16px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+.btn-ok{background:var(--v1);color:#fff;border:none;padding:8px 20px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+
+.empty{text-align:center;color:var(--bege);font-size:13px;padding:20px 0;font-style:italic;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-left">
+    <div class="hav" id="hav"></div>
+    <div>
+      <div class="hnome" id="hnome"></div>
+      <div class="hcargo" id="hcargo"></div>
+    </div>
+  </div>
+  <div class="hd-right">
+    <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;">
+      <div id="st-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bege);"></div>
+      <span id="st-txt" style="font-size:11px;color:var(--bege);font-weight:600">Offline</span>
+      <span id="st-timer" style="font-size:11px;color:#5edb9a;font-weight:700;margin-left:4px;"></span>
+    </div>
+    <a href="/index.html" class="btn-sistema">Sistema Completo →</a>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+</header>
+
+<main>
+  <div class="greeting">
+    <h2 id="saudacao"></h2>
+    <p id="data-hora"></p>
+  </div>
+
+  <!-- ACESSO RÁPIDO -->
+  <div class="quick-grid" id="quick-grid"></div>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="grid">
+    <!-- TIMER -->
+    <div class="timer-card">
+      <div class="tc-lbl">Tempo de trabalho hoje</div>
+      <div class="tc-timer" id="timer">00:00:00</div>
+      <div class="tc-task" id="tc-task"></div>
+      <div class="tc-acts">
+        <button class="btn-ini" id="btn-ini" onclick="abrirIniciar()">▶ Iniciar</button>
+        <button class="btn-enc" id="btn-enc" onclick="encerrar()" style="display:none">◼ Parar</button>
+        <button class="btn-man" onclick="abrirManual()">+</button>
+      </div>
+    </div>
+
+    <!-- STATS HOJE -->
+    <div class="stats-card">
+      <div class="sc-titulo">Meu Dia</div>
+      <div class="stat-row"><span>Horas hoje</span><span id="s-horas">—</span></div>
+      <div class="stat-row"><span>Sessões</span><span id="s-sessoes">—</span></div>
+      <div class="stat-row"><span>Horas na semana</span><span id="s-semana">—</span></div>
+      <div class="stat-row"><span>Ambiente atual</span><span id="s-amb">—</span></div>
+    </div>
+
+    <!-- ESCRITÓRIO AO VIVO -->
+    <div class="office-card">
+      <div class="sc-titulo">Escritório ao Vivo</div>
+      <div id="office-list"><div class="empty">Carregando...</div></div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div class="tarefas-card">
+      <div class="sc-titulo">Minhas Tarefas</div>
+      <div id="tarefas-list"><div class="empty">Carregando...</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL INICIAR -->
+<div class="mov" id="mod-ini">
+  <div class="mbox">
+    <h3>▶ Iniciar Sessão</h3>
+    <div class="frow"><label>Cliente</label><input id="si-cli" placeholder="Nome do cliente"></div>
+    <div class="frow"><label>Tarefa / Processo</label><input id="si-proc" placeholder="Ex: REFIS, Proposta..."></div>
+    <div class="frow"><label>Ambiente</label><select id="si-amb"><option value="escritorio">🏢 Escritório</option><option value="home">🏠 Home Office</option></select></div>
+    <div class="frow"><label>Tipo</label>
+      <select id="si-tipo"><option value="">Selecione...</option>
+        <option>Petição / Peça Processual</option><option>Consultoria / Parecer</option>
+        <option>Reunião com Cliente</option><option>Reunião Interna</option>
+        <option>Transação Tributária</option><option>Pesquisa Jurídica</option>
+        <option>Gestão / Administrativo</option><option>Comercial / Proposta</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="macts"><button class="btn-cancel" onclick="fmod('mod-ini')">Cancelar</button><button class="btn-ok" onclick="iniciar()">▶ Iniciar</button></div>
+  </div>
+</div>
+
+<script>
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH  = {'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation'};
+const SHR = {'apikey':SK,'Authorization':'Bearer '+SK};
+const COLS=[
+  {nome:'Mariana Pinheiro',cargo:'Sócia Fundadora',ini:'MP',cor:'#214949'},
+  {nome:'Diana',cargo:'Coordenação Jurídica',ini:'DC',cor:'#1f3e3c'},
+  {nome:'Jade',cargo:'Operacional',ini:'JL',cor:'#2b6052'},
+  {nome:'Mariana Barboza',cargo:'Comercial',ini:'MB',cor:'#4a7a70'},
+  {nome:'Laila Costa',cargo:'Operacional',ini:'LC',cor:'#8a9a8a'}
+];
+const hms=t=>{const p=n=>String(n).padStart(2,'0');return`${p(Math.floor(t/3600))}:${p(Math.floor(t%3600/60))}:${p(t%60)}`;};
+const hmin=m=>m<=0?'0min':m<60?`${m}min`:`${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}min`;
+const hoje=()=>new Date().toISOString().split('T')[0];
+const fmt2=iso=>new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const fmtD=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+async function sbGet(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR});return r.ok?r.json():[];}
+async function sbPost(t,b){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)});return r.ok?await r.json():null;}
+async function sbPatch(t,id,b){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)});}
+function fmod(id){document.getElementById(id).classList.remove('show');}
+
+const U = window.CP_USER;
+let sessao=null, timerInt=null;
+
+// HEADER
+document.getElementById('hav').style.background = U.cor;
+document.getElementById('hav').textContent = U.ini;
+document.getElementById('hnome').textContent = U.nome;
+document.getElementById('hcargo').textContent = U.cargo;
+
+// SAUDAÇÃO
+function renderSaudacao(){
+  const h=new Date().getHours();
+  const s=h<12?'Bom dia':'h<18?'Boa tarde':'Boa noite';
+  document.getElementById('saudacao').textContent=`${s}, ${U.nome.split(' ')[0]}.`;
+  document.getElementById('data-hora').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+}
+renderSaudacao();
+
+// ACESSO RÁPIDO
+const LINKS = [
+  {icon:'⏱',nome:'Produtividade',desc:'Registrar sessão',href:'/produtividade.html'},
+  {icon:'📋',nome:'Tarefas',desc:'Ver e criar tarefas',href:'/produtividade.html'},
+  {icon:'👥',nome:'CRM',desc:'Leads e pipeline',href:'/crm.html'},
+  {icon:'📄',nome:'Contratos',desc:'Gerar com Helena',href:'/helena.html'},
+  {icon:'🤝',nome:'Transação',desc:'Casos tributários',href:'/transacao.html'},
+  {icon:'✦',nome:'Laura',desc:'Análise tributária',href:'/laura.html'},
+  {icon:'✦',nome:'Natalia',desc:'Comercial e propostas',href:'/natalia.html'},
+  ...(U.is_admin?[{icon:'💰',nome:'Financeiro',desc:'Dashboard financeiro',href:'/financeiro.html'}]:[]),
+];
+document.getElementById('quick-grid').innerHTML=LINKS.map(l=>`
+  <a href="${l.href}" class="quick-card">
+    <div class="qc-icon">${l.icon}</div>
+    <div class="qc-nome">${l.nome}</div>
+    <div class="qc-desc">${l.desc}</div>
+  </a>`).join('');
+
+// SESSÃO ATIVA
+async function verificarSessao(){
+  const cutoff=new Date(Date.now()-12*3600000).toISOString();
+  const rows=await sbGet(`sessoes?colaboradora=eq.${encodeURIComponent(U.nome)}&fim=is.null&inicio=gte.${cutoff}&order=inicio.desc&limit=1`);
+  if(rows.length){sessao={id:rows[0].id,inicio:new Date(rows[0].inicio),cliente:rows[0].cliente,processo:rows[0].processo};mostrarAtiva();}
+  else mostrarInativa();
+}
+function mostrarAtiva(){
+  document.getElementById('st-dot').style.background='#27ae60';
+  document.getElementById('st-txt').textContent='Online';
+  document.getElementById('btn-ini').style.display='none';
+  document.getElementById('btn-enc').style.display='inline-block';
+  const tt=document.getElementById('tc-task');
+  tt.textContent=`${sessao.cliente||'—'} · ${sessao.processo||'—'}`;
+  clearInterval(timerInt);
+  timerInt=setInterval(()=>{
+    const seg=Math.floor((Date.now()-sessao.inicio.getTime())/1000);
+    document.getElementById('timer').textContent=hms(seg);
+    document.getElementById('st-timer').textContent=hms(seg);
+  },1000);
+}
+function mostrarInativa(){
+  document.getElementById('st-dot').style.background=var('--bege','#a7a897');
+  document.getElementById('st-txt').textContent='Offline';
+  document.getElementById('st-timer').textContent='';
+  document.getElementById('btn-ini').style.display='flex';
+  document.getElementById('btn-enc').style.display='none';
+  document.getElementById('tc-task').textContent='';
+  document.getElementById('timer').textContent='00:00:00';
+  clearInterval(timerInt);
+}
+function abrirIniciar(){document.getElementById('mod-ini').classList.add('show');}
+function abrirManual(){window.location.href='/produtividade.html';}
+async function iniciar(){
+  const cli=document.getElementById('si-cli').value.trim();
+  const proc=document.getElementById('si-proc').value.trim();
+  const amb=document.getElementById('si-amb').value;
+  const tipo=document.getElementById('si-tipo').value;
+  const c=COLS.find(x=>x.nome===U.nome);
+  const row=await sbPost('sessoes',{colaboradora:U.nome,cargo:U.cargo,inicio:new Date().toISOString(),cliente:cli,processo:proc,ambiente:amb,tipo_atividade:tipo||null});
+  if(row){const d=Array.isArray(row)?row[0]:row;sessao={id:d.id,inicio:new Date(d.inicio),cliente:cli,processo:proc};fmod('mod-ini');mostrarAtiva();carregarStats();}
+}
+async function encerrar(){
+  if(!sessao)return;
+  const fim=new Date();
+  const dur=Math.round((fim-sessao.inicio)/60000);
+  await sbPatch('sessoes',sessao.id,{fim:fim.toISOString(),duracao_minutos:dur});
+  sessao=null;mostrarInativa();carregarStats();
+}
+
+// STATS
+async function carregarStats(){
+  const ini=hoje()+'T00:00:00.000Z',fim2=hoje()+'T23:59:59.999Z';
+  const rows=await sbGet(`sessoes?colaboradora=eq.${encodeURIComponent(U.nome)}&inicio=gte.${ini}&inicio=lte.${fim2}`);
+  const conc=rows.filter(s=>s.fim);
+  const tot=conc.reduce((a,s)=>a+(s.duracao_minutos||0),0);
+  document.getElementById('s-horas').textContent=hmin(tot)||'0min';
+  document.getElementById('s-sessoes').textContent=rows.length;
+  const ativa=rows.find(s=>!s.fim);
+  document.getElementById('s-amb').textContent=ativa?(ativa.ambiente==='home'?'🏠 Home':'🏢 Escritório'):'—';
+  const seg=new Date();seg.setDate(seg.getDate()-seg.getDay()+1);seg.setHours(0,0,0,0);
+  const rSem=await sbGet(`sessoes?colaboradora=eq.${encodeURIComponent(U.nome)}&inicio=gte.${seg.toISOString()}&select=duracao_minutos,fim`);
+  const totSem=rSem.filter(s=>s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0);
+  document.getElementById('s-semana').textContent=hmin(totSem)||'0min';
+}
+
+// ESCRITÓRIO
+async function carregarOffice(){
+  const cutoff=new Date(Date.now()-10*3600000).toISOString();
+  const rows=await sbGet(`sessoes?fim=is.null&inicio=gte.${cutoff}&select=colaboradora,cliente,processo,ambiente`);
+  const mapa={};rows.forEach(r=>{mapa[r.colaboradora]=r;});
+  const el=document.getElementById('office-list');
+  el.innerHTML=COLS.map(c=>{
+    const s=mapa[c.nome];
+    return`<div class="mini-colab">
+      <div class="mc-av" style="background:${c.cor}">${c.ini}</div>
+      <div class="mc-info">
+        <div class="mc-nome">${c.nome.split(' ')[0]}</div>
+        <div class="mc-task">${s?`${s.cliente||'—'} · ${s.processo||'—'}`:c.cargo}</div>
+      </div>
+      <div class="mc-status ${s?'on':'off'}">
+        <div class="mc-dot ${s?'on':'off'}"></div>
+        <span style="font-size:10px;font-weight:700;color:${s?'#27ae60':'var(--bege)'}">${s?'Online':'Offline'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// TAREFAS
+async function carregarTarefas(){
+  const hj=hoje();
+  const rows=await sbGet(`tarefas_astrea?responsavel=eq.${encodeURIComponent(U.nome)}&status=neq.concluido&order=prazo.asc.nullslast&limit=8`);
+  const el=document.getElementById('tarefas-list');
+  if(!rows.length){el.innerHTML='<div class="empty">Nenhuma tarefa pendente 🎉</div>';return;}
+  el.innerHTML=rows.map(t=>{
+    const venc=t.prazo&&t.prazo<hj;
+    const urg=t.prazo&&t.prazo>=hj&&t.prazo<=new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+    const cls=venc?'prazo-venc':urg?'prazo-urg':'prazo-ok';
+    const ptxt=t.prazo?(venc?`⚠ Venceu ${fmtD(t.prazo)}`:t.prazo===hj?'Hoje':fmtD(t.prazo)):'Sem prazo';
+    return`<div class="tarefa-item">
+      <div class="ti-check" onclick="concluirTarefa('${t.id}',this)" title="Marcar como concluída"></div>
+      <div class="ti-info">
+        <div class="ti-titulo">${t.titulo}</div>
+        <div class="ti-sub">${t.cliente||''}${t.cliente&&t.processo?' · ':''}${t.processo||''}</div>
+      </div>
+      <span class="ti-prazo ${cls}">${ptxt}</span>
+    </div>`;
+  }).join('');
+}
+
+async function concluirTarefa(id,el){
+  el.style.background='#27ae60';el.style.borderColor='#27ae60';
+  await fetch(`${SB}/rest/v1/tarefas_astrea?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify({status:'concluido'})});
+  setTimeout(()=>carregarTarefas(),600);
+}
+
+function sair(){sessionStorage.removeItem('cp_user');window.location.href='/login.html';}
+
+// Pequeno fix para var() em JS
+function varr(name,fallback){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||fallback;}
+
+// INIT
+verificarSessao();
+carregarStats();
+carregarOffice();
+carregarTarefas();
+setInterval(carregarOffice,30000);
+setInterval(carregarStats,60000);
+</script>
+</body>
+</html>
