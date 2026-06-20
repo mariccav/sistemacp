@@ -604,10 +604,34 @@ async function consultarBrasilAPI() {
 // ── CARREGAR LEADS ────────────────────────────────────────────────────────────
 async function carregarLeads() {
   document.getElementById('kanban-board').innerHTML = '<div class="loading"><div class="spinner"></div><br>Carregando leads...</div>';
-  todosLeads = await sbGet('leads','order=created_at.desc&limit=500');
+  // Admin vê todos; demais veem só os próprios
+  const U = window.CP_USER;
+  const filtroResp = (U && !U.is_admin) ? `&responsavel=eq.${encodeURIComponent(U.nome)}` : '';
+  todosLeads = await sbGet(`leads?order=created_at.desc&limit=500${filtroResp}`);
   leadsFiltrados = [...todosLeads];
   renderKPIs();
   renderView();
+  // Configurar UI conforme perfil
+  configurarUI();
+}
+
+function configurarUI() {
+  const U = window.CP_USER;
+  if (!U) return;
+  if (!U.is_admin) {
+    // Esconder filtro de responsável (só vê os próprios)
+    const fResp = document.getElementById('f-resp');
+    if (fResp) fResp.style.display = 'none';
+    // Mostrar badge "Seus leads"
+    const barra = document.querySelector('.action-bar');
+    if (barra && !document.getElementById('badge-user')) {
+      const badge = document.createElement('div');
+      badge.id = 'badge-user';
+      badge.style.cssText = 'background:var(--v1);color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;';
+      badge.textContent = `👤 ${U.nome.split(' ')[0]}`;
+      barra.insertBefore(badge, barra.firstChild);
+    }
+  }
 }
 
 // ── KPIs ──────────────────────────────────────────────────────────────────────
@@ -713,6 +737,13 @@ function renderCard(l) {
 let dragId = null;
 
 function dragStart(e, id) {
+  const U = window.CP_USER;
+  const lead = todosLeads.find(l => l.id === id);
+  // Não-admins só podem mover os próprios leads
+  if (U && !U.is_admin && lead?.responsavel !== U.nome) {
+    e.preventDefault();
+    return;
+  }
   dragId = id;
   e.currentTarget.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
@@ -1017,7 +1048,17 @@ async function concluirFollowup(id, concluido) {
 }
 
 // ── NOVO LEAD ─────────────────────────────────────────────────────────────────
-function abrirNovoLead() { abrirModal('mod-lead'); }
+function abrirNovoLead() {
+  const U = window.CP_USER;
+  // Pré-preencher responsável
+  const respEl = document.getElementById('nl-resp');
+  if (respEl) {
+    respEl.value = U?.nome || '';
+    // Não-admins não podem mudar o responsável
+    respEl.disabled = !(U?.is_admin);
+  }
+  abrirModal('mod-lead');
+}
 
 async function salvarLead() {
   const razao = document.getElementById('nl-razao').value.trim();
@@ -1033,7 +1074,10 @@ async function salvarLead() {
     porte:               document.getElementById('nl-porte').value || null,
     modalidade_transacao:document.getElementById('nl-modalidade').value || null,
     origem:              document.getElementById('nl-origem').value,
-    responsavel:         document.getElementById('nl-resp').value,
+    // Não-admins ficam sempre como responsável pelo próprio lead
+    responsavel: window.CP_USER?.is_admin
+      ? document.getElementById('nl-resp').value
+      : (window.CP_USER?.nome || document.getElementById('nl-resp').value),
     proximo_followup:    document.getElementById('nl-followup').value || null,
     observacoes:         document.getElementById('nl-obs').value || null,
     situacao_cadastral:  document.getElementById('nl-situacao').value || null,
@@ -1070,6 +1114,18 @@ function abrirImport() {
   document.getElementById('imp-actions-1').style.display = 'flex';
   ['ist-1','ist-2','ist-3'].forEach((id,i) =>
     document.getElementById(id).classList.toggle('active', i===0));
+  // Para não-admins: esconder select de responsável e pré-preencher
+  const U = window.CP_USER;
+  const respRow = document.getElementById('imp-resp')?.closest('.modal-row') ||
+                  document.getElementById('imp-resp')?.parentElement;
+  if (U && !U.is_admin) {
+    if (document.getElementById('imp-resp')) {
+      document.getElementById('imp-resp').value = U.nome;
+      if (respRow) respRow.style.display = 'none';
+    }
+  } else {
+    if (respRow) respRow.style.display = '';
+  }
   abrirModal('mod-import');
 }
 
@@ -1133,7 +1189,9 @@ async function iniciarImport() {
   ['ist-1','ist-2','ist-3'].forEach((id,i) =>
     document.getElementById(id).classList.toggle('active', i===2));
 
-  const resp   = document.getElementById('imp-resp').value;
+  // Não-admins ficam sempre como responsável nos leads importados
+  const U = window.CP_USER;
+  const resp   = (U && !U.is_admin) ? U.nome : document.getElementById('imp-resp').value;
   const origem = document.getElementById('imp-origem').value;
   const total  = importData.length;
   let importados = 0, duplicados = 0;
