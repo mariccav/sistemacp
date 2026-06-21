@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="/auth.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda — Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--verde:#27ae60;--verm:#c25e5e;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{background:var(--v1);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:#fff;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-right{display:flex;align-items:center;gap:10px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;transition:.2s;}
+.hd-back:hover{color:#fff;}
+.btn-hoje{background:#ac9b7c;color:#063327;border:none;padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-novo{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:7px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-novo:hover{background:rgba(255,255,255,.2);}
+
+/* LEGENDA */
+.legenda{background:#fff;border-bottom:1px solid #e8f0f0;padding:8px 28px;display:flex;align-items:center;gap:16px;flex-shrink:0;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#4a6060;font-weight:600;}
+.leg-dot{width:10px;height:10px;border-radius:50%;}
+
+/* CALENDÁRIO */
+.cal-wrap{flex:1;overflow:hidden;padding:16px 28px 20px;}
+#calendar{height:100%;}
+
+/* FullCalendar overrides */
+.fc{font-family:'Nunito',sans-serif!important;}
+.fc-toolbar-title{font-family:'Cormorant Garamond',serif!important;font-size:20px!important;font-weight:700!important;color:var(--v1)!important;}
+.fc-button{background:var(--v1)!important;border-color:var(--v1)!important;font-family:'Nunito',sans-serif!important;font-size:12px!important;font-weight:600!important;}
+.fc-button:hover{background:var(--v2)!important;border-color:var(--v2)!important;}
+.fc-button-active{background:var(--v2)!important;border-color:var(--v2)!important;}
+.fc-today-button{background:#ac9b7c!important;border-color:#ac9b7c!important;color:#063327!important;}
+.fc-col-header-cell-cushion,.fc-daygrid-day-number{font-family:'Nunito',sans-serif!important;font-size:12px!important;color:var(--v1)!important;text-decoration:none!important;}
+.fc-daygrid-day.fc-day-today{background:#f0f7f4!important;}
+.fc-event{border-radius:6px!important;border:none!important;font-size:11px!important;font-family:'Nunito',sans-serif!important;font-weight:600!important;cursor:pointer!important;padding:2px 6px!important;}
+.fc-event-title{font-weight:600!important;}
+.fc-daygrid-event-dot{border-color:currentColor!important;}
+.fc-timegrid-event{border-radius:6px!important;border:none!important;}
+.fc-list-event-dot{border-radius:50%!important;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(31,62,60,.65);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:18px;padding:28px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--v1);margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--bege);margin-bottom:20px;}
+.frow{margin-bottom:14px;}
+.frow label{display:block;font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:700;}
+.frow input,.frow select,.frow textarea{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;transition:.2s;}
+.frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--v2);}
+.frow textarea{resize:vertical;height:64px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.tipo-select{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.tipo-btn{padding:5px 12px;border-radius:20px;border:1px solid rgba(167,168,151,.3);background:#fff;font-family:'Nunito',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;color:#4a6060;}
+.tipo-btn.active{color:#fff;border-color:transparent;}
+.modal-acts{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.btn-del{background:none;border:none;color:var(--verm);font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+.btn-cancel{background:none;border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:9px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+.btn-save{background:var(--v1);color:#fff;border:none;padding:9px 22px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.readonly-badge{display:inline-block;background:#f0f7f4;color:#1a6a40;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle;}
+
+/* MINI STATS */
+.mini-stats{background:#fff;border-bottom:1px solid #e8f0f0;padding:8px 28px;display:flex;gap:20px;flex-shrink:0;}
+.mst{font-size:11px;color:#4a6060;}
+.mst strong{color:var(--v1);font-weight:700;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Agenda</h1>
+    <p>Cavalcante Pinheiro Advocacia · Todos podem ver e adicionar</p>
+  </div>
+  <div class="hd-right">
+    <button class="btn-hoje" onclick="irHoje()">Hoje</button>
+    <button class="btn-novo" onclick="abrirNovo()">+ Novo Evento</button>
+    <a href="/dashboard.html" class="hd-back">← Dashboard</a>
+  </div>
+</header>
+
+<!-- LEGENDA -->
+<div class="legenda">
+  <span style="font-size:11px;color:var(--bege);font-weight:600;text-transform:uppercase;letter-spacing:1px;">Tipo:</span>
+  <div class="leg-item"><div class="leg-dot" style="background:#c25e5e"></div>Audiência</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#1f6e3c"></div>Reunião com Cliente</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#d97706"></div>Prazo</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#5c6bc0"></div>Follow-up CRM</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2b5050"></div>Interno</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#a7a897"></div>Outro</div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--bege)">
+    <div style="width:10px;height:10px;border-radius:2px;background:repeating-linear-gradient(45deg,#e8f0f0,#e8f0f0 2px,#f0f7f7 2px,#f0f7f7 4px)"></div>
+    Importado automaticamente (somente leitura)
+  </div>
+</div>
+
+<!-- MINI STATS -->
+<div class="mini-stats" id="mini-stats">
+  <div class="mst">Hoje: <strong id="ms-hoje">—</strong></div>
+  <div class="mst">Esta semana: <strong id="ms-semana">—</strong></div>
+  <div class="mst">Próx. audiência: <strong id="ms-prox-aud">—</strong></div>
+  <div class="mst">Prazos urgentes: <strong id="ms-prazos">—</strong></div>
+</div>
+
+<!-- CALENDÁRIO -->
+<div class="cal-wrap">
+  <div id="calendar"></div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modal-titulo">Novo Evento</h2>
+    <div class="modal-sub" id="modal-sub">Adicionar à agenda do escritório</div>
+    <input type="hidden" id="ev-id">
+
+    <div class="frow">
+      <label>Tipo</label>
+      <div class="tipo-select" id="tipo-select">
+        <button class="tipo-btn" data-tipo="audiencia" data-cor="#c25e5e" onclick="selecionarTipo(this)">⚖️ Audiência</button>
+        <button class="tipo-btn" data-tipo="reuniao" data-cor="#1f6e3c" onclick="selecionarTipo(this)">🤝 Reunião</button>
+        <button class="tipo-btn" data-tipo="prazo" data-cor="#d97706" onclick="selecionarTipo(this)">📅 Prazo</button>
+        <button class="tipo-btn" data-tipo="interno" data-cor="#2b5050" onclick="selecionarTipo(this)">🏢 Interno</button>
+        <button class="tipo-btn" data-tipo="outro" data-cor="#a7a897" onclick="selecionarTipo(this)">📌 Outro</button>
+      </div>
+    </div>
+
+    <div class="frow"><label>Título *</label><input id="ev-titulo" placeholder="Descrição do evento"></div>
+    <div class="fgrid">
+      <div class="frow"><label>Data e hora início *</label><input type="datetime-local" id="ev-inicio"></div>
+      <div class="frow"><label>Data e hora fim</label><input type="datetime-local" id="ev-fim"></div>
+    </div>
+    <div class="fgrid">
+      <div class="frow"><label>Cliente</label><input id="ev-cliente" placeholder="Nome do cliente"></div>
+      <div class="frow"><label>Processo</label><input id="ev-processo" placeholder="Número ou partes"></div>
+    </div>
+    <div class="frow"><label>Observações</label><textarea id="ev-desc" placeholder="Detalhes adicionais..."></textarea></div>
+
+    <div class="modal-acts">
+      <div>
+        <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-del" id="btn-del" onclick="excluir()" style="display:none;margin-left:10px">Excluir</button>
+      </div>
+      <button class="btn-save" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
+const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+const SH  = {'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation'};
+const SHR = {'apikey':SK,'Authorization':'Bearer '+SK};
+const U   = window.CP_USER;
+
+const CORES = {
+  audiencia:'#c25e5e', reuniao:'#1f6e3c', prazo:'#d97706',
+  followup:'#5c6bc0',  interno:'#2b5050',  outro:'#a7a897'
+};
+
+let calendar, tipoAtivo='outro', corAtiva='#a7a897', editando=null;
+
+async function sbGet(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR});return r.ok?r.json():[];}
+async function sbPost(t,b){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)});return r.ok?await r.json():null;}
+async function sbPatch(t,id,b){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)});}
+async function sbDelete(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SHR});}
+
+// ── CARREGAR EVENTOS ──────────────────────────────────────────────
+async function carregarEventos(info, successCallback) {
+  const ini = info.startStr.split('T')[0];
+  const fim = info.endStr.split('T')[0];
+
+  const [agendaRows, prazosRows, leadsRows] = await Promise.all([
+    sbGet(`agenda?data_inicio=gte.${ini}T00:00:00&data_inicio=lte.${fim}T23:59:59&order=data_inicio.asc`),
+    sbGet(`transacoes_prazos?data_prazo=gte.${ini}&data_prazo=lte.${fim}&concluido=eq.false&select=id,descricao,data_prazo,transacao_id`),
+    sbGet(`leads?proximo_followup=gte.${ini}&proximo_followup=lte.${fim}&etapa=neq.convertido&etapa=neq.perdido&select=id,razao_social,nome_fantasia,proximo_followup,responsavel`)
+  ]);
+
+  const eventos = [];
+
+  // Eventos manuais da agenda
+  agendaRows.forEach(e => {
+    eventos.push({
+      id: e.id,
+      title: e.titulo,
+      start: e.data_inicio,
+      end: e.data_fim || null,
+      allDay: e.dia_todo,
+      backgroundColor: CORES[e.tipo] || e.cor || '#a7a897',
+      borderColor: 'transparent',
+      extendedProps: { ...e, _source: 'agenda' }
+    });
+  });
+
+  // Prazos de transação
+  prazosRows.forEach(p => {
+    eventos.push({
+      id: 'prazo-' + p.id,
+      title: '⚠ ' + p.descricao,
+      start: p.data_prazo,
+      allDay: true,
+      backgroundColor: CORES.prazo,
+      borderColor: 'transparent',
+      extendedProps: { _source: 'prazo', _readonly: true, descricao: p.descricao }
+    });
+  });
+
+  // Follow-ups do CRM
+  leadsRows.forEach(l => {
+    eventos.push({
+      id: 'followup-' + l.id,
+      title: '📞 ' + (l.nome_fantasia || l.razao_social),
+      start: l.proximo_followup,
+      allDay: true,
+      backgroundColor: CORES.followup,
+      borderColor: 'transparent',
+      extendedProps: { _source: 'followup', _readonly: true, cliente: l.razao_social, responsavel: l.responsavel }
+    });
+  });
+
+  successCallback(eventos);
+  atualizarStats(agendaRows, prazosRows, leadsRows);
+}
+
+function atualizarStats(agenda, prazos, leads) {
+  const hj = new Date().toISOString().split('T')[0];
+  const hoje = agenda.filter(e => e.data_inicio?.startsWith(hj)).length +
+               prazos.filter(p => p.data_prazo === hj).length +
+               leads.filter(l => l.proximo_followup === hj).length;
+  const semana = agenda.length + prazos.length + leads.length;
+  const proxAud = agenda.filter(e => e.tipo === 'audiencia' && e.data_inicio >= hj)
+    .sort((a,b) => a.data_inicio.localeCompare(b.data_inicio))[0];
+  const prazosUrgentes = prazos.filter(p => {
+    const d7 = new Date(); d7.setDate(d7.getDate()+7);
+    return p.data_prazo <= d7.toISOString().split('T')[0];
+  }).length;
+  document.getElementById('ms-hoje').textContent = hoje + ' evento(s)';
+  document.getElementById('ms-semana').textContent = semana + ' evento(s)';
+  document.getElementById('ms-prox-aud').textContent = proxAud
+    ? new Date(proxAud.data_inicio+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})
+    : 'Nenhuma';
+  document.getElementById('ms-prazos').textContent = prazosUrgentes > 0
+    ? `⚠ ${prazosUrgentes}` : '0';
+}
+
+// ── CALENDÁRIO ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(el, {
+    locale: 'pt-br',
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    buttonText: { month:'Mês', week:'Semana', day:'Dia', list:'Lista' },
+    height: '100%',
+    events: carregarEventos,
+    eventClick: ({ event }) => {
+      if (event.extendedProps._readonly) {
+        // Evento somente leitura (prazo ou follow-up)
+        const p = event.extendedProps;
+        const src = p._source === 'prazo' ? 'Prazo de Transação' : 'Follow-up do CRM';
+        alert(`${src}\n\n${event.title.replace(/^[⚠📞] /,'')}\n${p.cliente||''}\n${p.responsavel?'Responsável: '+p.responsavel:''}`);
+        return;
+      }
+      abrirEditar(event);
+    },
+    dateClick: ({ dateStr }) => {
+      abrirNovo(dateStr);
+    },
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    firstDay: 1, // Semana começa na segunda
+    nowIndicator: true,
+    businessHours: { daysOfWeek:[1,2,3,4,5], startTime:'08:00', endTime:'19:00' },
+    weekNumbers: false,
+    eventDisplay: 'block',
+    dayMaxEvents: 4,
+  });
+  calendar.render();
+});
+
+function irHoje() { calendar.today(); }
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function abrirNovo(dateStr) {
+  editando = null;
+  document.getElementById('ev-id').value = '';
+  document.getElementById('modal-titulo').textContent = 'Novo Evento';
+  document.getElementById('modal-sub').textContent = `Adicionado por ${U?.nome || 'você'}`;
+  document.getElementById('btn-del').style.display = 'none';
+  ['ev-titulo','ev-cliente','ev-processo','ev-desc'].forEach(id => document.getElementById(id).value = '');
+  // Data padrão
+  const d = dateStr ? new Date(dateStr+'T09:00:00') : new Date();
+  d.setHours(9,0,0,0);
+  const fim = new Date(d); fim.setHours(10,0,0,0);
+  document.getElementById('ev-inicio').value = toLocal(d);
+  document.getElementById('ev-fim').value = toLocal(fim);
+  // Tipo padrão
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+  tipoAtivo = 'outro'; corAtiva = '#a7a897';
+  document.getElementById('modal').classList.add('show');
+}
+
+function abrirEditar(event) {
+  const p = event.extendedProps;
+  editando = p.id;
+  document.getElementById('ev-id').value = p.id;
+  document.getElementById('modal-titulo').textContent = 'Editar Evento';
+  document.getElementById('modal-sub').textContent = `Criado por ${p.criado_por || '—'}`;
+  document.getElementById('ev-titulo').value = p.titulo || event.title;
+  document.getElementById('ev-cliente').value = p.cliente || '';
+  document.getElementById('ev-processo').value = p.processo || '';
+  document.getElementById('ev-desc').value = p.descricao || '';
+  document.getElementById('ev-inicio').value = event.start ? toLocal(event.start) : '';
+  document.getElementById('ev-fim').value = event.end ? toLocal(event.end) : '';
+  document.getElementById('btn-del').style.display = 'inline-block';
+  // Tipo
+  tipoAtivo = p.tipo || 'outro';
+  corAtiva = CORES[tipoAtivo] || '#a7a897';
+  document.querySelectorAll('.tipo-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tipo === tipoAtivo);
+    if (b.dataset.tipo === tipoAtivo) b.style.background = corAtiva;
+    else b.style.background = '';
+  });
+  document.getElementById('modal').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('show');
+  editando = null;
+}
+
+function selecionarTipo(btn) {
+  tipoAtivo = btn.dataset.tipo;
+  corAtiva = btn.dataset.cor;
+  document.querySelectorAll('.tipo-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = '';
+    b.style.color = '';
+  });
+  btn.classList.add('active');
+  btn.style.background = corAtiva;
+  btn.style.color = '#fff';
+}
+
+async function salvar() {
+  const titulo = document.getElementById('ev-titulo').value.trim();
+  const inicio = document.getElementById('ev-inicio').value;
+  if (!titulo) { alert('Informe o título.'); return; }
+  if (!inicio) { alert('Informe a data e hora.'); return; }
+
+  const dados = {
+    titulo,
+    tipo: tipoAtivo,
+    cor: corAtiva,
+    data_inicio: new Date(inicio).toISOString(),
+    data_fim: document.getElementById('ev-fim').value
+      ? new Date(document.getElementById('ev-fim').value).toISOString() : null,
+    cliente: document.getElementById('ev-cliente').value.trim() || null,
+    processo: document.getElementById('ev-processo').value.trim() || null,
+    descricao: document.getElementById('ev-desc').value.trim() || null,
+    criado_por: U?.nome || 'Sistema'
+  };
+
+  const id = document.getElementById('ev-id').value;
+  if (id) {
+    await sbPatch('agenda', id, dados);
+  } else {
+    await sbPost('agenda', dados);
+  }
+  fecharModal();
+  calendar.refetchEvents();
+}
+
+async function excluir() {
+  const id = document.getElementById('ev-id').value;
+  if (!id || !confirm('Excluir este evento?')) return;
+  await sbDelete('agenda', id);
+  fecharModal();
+  calendar.refetchEvents();
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function toLocal(date) {
+  const d = new Date(date);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+</script>
+</body>
+</html>
