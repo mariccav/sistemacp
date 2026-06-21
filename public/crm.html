@@ -1038,6 +1038,16 @@ async function agendarFollowup() {
   await sbPost('leads_interacoes', { lead_id: leadAtivo.id, tipo:'follow_up', descricao: desc, resultado: data });
   await sbPatch('leads', leadAtivo.id, { proximo_followup: data });
   leadAtivo.proximo_followup = data;
+  // Auto-agendar na agenda do responsável
+  try {
+    const resp = leadAtivo.responsavel;
+    if (resp && data) {
+      const dadosAg = { titulo:`📞 Follow-up: ${leadAtivo.nome_fantasia||leadAtivo.razao_social}`, tipo:'followup', cor:'#5c6bc0', data_inicio:data+'T09:00:00', dia_todo:true, cliente:leadAtivo.razao_social, para_usuario:resp, criado_por:'Sistema', origem:'followup', origem_id:leadAtivo.id };
+      const ex = await sbGet(`agenda?origem=eq.followup&origem_id=eq.${leadAtivo.id}`);
+      if (ex.length) { await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dadosAg)}); }
+      else { await sbPost('agenda', dadosAg); }
+    }
+  } catch {}
   toast('Follow-up agendado ✓');
   renderPainelFollowups();
 }

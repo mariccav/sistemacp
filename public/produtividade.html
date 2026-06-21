@@ -920,9 +920,25 @@ async function salvarTarefaMod(){
   if(!titulo){alert('Informe o título.');return;}
   const dados={titulo,responsavel:document.getElementById('tf-m-resp').value||null,prazo:document.getElementById('tf-m-prazo').value||null,cliente:document.getElementById('tf-m-cli').value.trim()||null,processo:document.getElementById('tf-m-proc').value.trim()||null,status:document.getElementById('tf-m-status').value,origem:'manual'};
   const id=document.getElementById('tf-m-id').value;
-  if(id){await sbPatch('tarefas_astrea',id,dados);const idx=todasTarefas.findIndex(t=>t.id===id);if(idx>=0)Object.assign(todasTarefas[idx],dados);}
-  else{const novo=await sbPost('tarefas_astrea',dados);if(novo){const d=Array.isArray(novo)?novo[0]:novo;todasTarefas.unshift(d);}}
+  let tarefaSalva=null;
+  if(id){await sbPatch('tarefas_astrea',id,dados);const idx=todasTarefas.findIndex(t=>t.id===id);if(idx>=0)Object.assign(todasTarefas[idx],dados);tarefaSalva={...dados,id};}
+  else{const novo=await sbPost('tarefas_astrea',dados);if(novo){const d=Array.isArray(novo)?novo[0]:novo;todasTarefas.unshift(d);tarefaSalva=d;}}
+  // Auto-agendar se tiver prazo e responsável
+  if(tarefaSalva?.prazo&&tarefaSalva?.responsavel) autoAgendarTarefa(tarefaSalva);
   fmod('mod-tarefa');renderTarefas();
+}
+
+// Auto-agendar tarefa na agenda da responsável ─────────────────────
+async function autoAgendarTarefa(tarefa){
+  if(!tarefa.prazo||!tarefa.responsavel)return;
+  try{
+    const dados={titulo:tarefa.titulo,tipo:'prazo',cor:'#d97706',data_inicio:tarefa.prazo+'T08:00:00',dia_todo:true,cliente:tarefa.cliente||null,descricao:`Prazo: ${tarefa.titulo}`,para_usuario:tarefa.responsavel,criado_por:'Sistema',origem:'tarefa',origem_id:tarefa.id||null};
+    if(tarefa.id){
+      const ex=await sbGet(`agenda?origem=eq.tarefa&origem_id=eq.${tarefa.id}`);
+      if(ex.length){await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dados)});return;}
+    }
+    await sbPost('agenda',dados);
+  }catch{}
 }
 async function excluirTarefaMod(){
   const id=document.getElementById('tf-m-id').value;

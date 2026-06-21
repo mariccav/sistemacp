@@ -67,6 +67,18 @@ main{max-width:1200px;margin:0 auto;padding:28px 36px;}
 
 /* TAREFAS */
 .tarefas-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 8px rgba(31,62,60,.05);grid-column:span 2;}
+/* AGENDA CARD */
+.agenda-card{background:#fff;border-radius:16px;padding:24px;border:1px solid rgba(167,168,151,.2);box-shadow:0 2px 8px rgba(31,62,60,.05);grid-column:span 3;}
+.agenda-item{display:flex;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px solid #f0f7f7;}
+.agenda-item:last-child{border-bottom:none;}
+.ag-data{min-width:52px;text-align:center;background:var(--bg);border-radius:8px;padding:5px 6px;flex-shrink:0;}
+.ag-dia{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--v1);line-height:1;}
+.ag-mes{font-size:9px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
+.ag-cor{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;}
+.ag-info{flex:1;}
+.ag-titulo{font-size:13px;font-weight:700;color:var(--v1);}
+.ag-sub{font-size:11px;color:var(--bege);margin-top:2px;}
+.ag-hora{font-size:10px;font-weight:600;color:var(--bege);white-space:nowrap;}
 .tarefa-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f0f7f7;}
 .tarefa-item:last-child{border-bottom:none;}
 .ti-check{width:18px;height:18px;border-radius:50%;border:2px solid rgba(167,168,151,.4);flex-shrink:0;margin-top:2px;cursor:pointer;transition:.2s;}
@@ -164,9 +176,21 @@ main{max-width:1200px;margin:0 auto;padding:28px 36px;}
 
     <!-- TAREFAS -->
     <div class="tarefas-card">
-      <div class="sc-titulo">Minhas Tarefas</div>
+      <div class="sc-titulo" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Minhas Tarefas</span>
+        <a href="/produtividade.html" style="font-size:11px;color:var(--bege);text-decoration:none;">Ver todas →</a>
+      </div>
       <div id="tarefas-list"><div class="empty">Carregando...</div></div>
     </div>
+  </div>
+
+  <!-- AGENDA PESSOAL -->
+  <div class="agenda-card" style="margin-top:0">
+    <div class="sc-titulo" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <span>📅 Minha Agenda — Próximos 14 dias</span>
+      <a href="/agenda.html" style="font-size:11px;color:var(--bege);text-decoration:none;font-weight:600;">Abrir calendário completo →</a>
+    </div>
+    <div id="agenda-list"><div class="empty">Carregando...</div></div>
   </div>
 </main>
 
@@ -365,16 +389,75 @@ async function concluirTarefa(id,el){
 
 function sair(){sessionStorage.removeItem('cp_user');window.location.href='/login.html';}
 
-// Pequeno fix para var() em JS
-function varr(name,fallback){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||fallback;}
+// AGENDA PESSOAL ─────────────────────────────────────────────────
+const CORES_AG={audiencia:'#c25e5e',reuniao:'#1f6e3c',prazo:'#d97706',followup:'#5c6bc0',interno:'#2b5050',outro:'#a7a897'};
+async function carregarAgenda(){
+  const hj=hoje();
+  const d14=new Date();d14.setDate(d14.getDate()+14);
+  const fim=d14.toISOString().split('T')[0];
+  const [agRows,prazoRows,leadRows]=await Promise.all([
+    sbGet(`agenda?data_inicio=gte.${hj}T00:00:00&data_inicio=lte.${fim}T23:59:59&order=data_inicio.asc&or=(para_usuario.eq.${encodeURIComponent(U.nome)},para_usuario.is.null)`),
+    sbGet(`transacoes_prazos?data_prazo=gte.${hj}&data_prazo=lte.${fim}&concluido=eq.false&select=id,descricao,data_prazo`),
+    sbGet(`leads?responsavel=eq.${encodeURIComponent(U.nome)}&proximo_followup=gte.${hj}&proximo_followup=lte.${fim}&etapa=neq.convertido&etapa=neq.perdido&select=id,razao_social,nome_fantasia,proximo_followup`)
+  ]);
+  const todos=[];
+  agRows.forEach(e=>todos.push({data:e.data_inicio?.split('T')[0],hora:e.data_inicio?.split('T')[1]?.slice(0,5),titulo:e.titulo,sub:e.cliente||'',cor:CORES_AG[e.tipo]||e.cor||'#a7a897',tipo:e.tipo}));
+  prazoRows.forEach(p=>todos.push({data:p.data_prazo,hora:null,titulo:'⚠ '+p.descricao,sub:'Prazo — Transação',cor:CORES_AG.prazo,tipo:'prazo'}));
+  leadRows.forEach(l=>todos.push({data:l.proximo_followup,hora:null,titulo:'📞 '+(l.nome_fantasia||l.razao_social),sub:'Follow-up CRM',cor:CORES_AG.followup,tipo:'followup'}));
+  todos.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora||'').localeCompare(b.hora||''));
+  const el=document.getElementById('agenda-list');
+  if(!todos.length){el.innerHTML='<div class="empty">Nenhum compromisso nos próximos 14 dias 🎉</div>';return;}
+  let ultimaData='';
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;">'+
+    todos.slice(0,12).map(e=>{
+      const d=new Date(e.data+'T12:00:00');
+      const dia=d.toLocaleDateString('pt-BR',{day:'2-digit'});
+      const mes=d.toLocaleDateString('pt-BR',{month:'short'});
+      const semana=e.data===hj?'Hoje':d.toLocaleDateString('pt-BR',{weekday:'short'});
+      return`<div class="agenda-item" style="border-bottom:none;border-radius:10px;background:#f8fdfd;border:1px solid rgba(167,168,151,.15);padding:10px;">
+        <div class="ag-data"><div style="font-size:9px;font-weight:700;color:${e.data===hj?'var(--verde)':'var(--bege)'};text-transform:uppercase">${semana}</div><div class="ag-dia">${dia}</div><div class="ag-mes">${mes}</div></div>
+        <div class="ag-cor" style="background:${e.cor}"></div>
+        <div class="ag-info">
+          <div class="ag-titulo">${e.titulo}</div>
+          ${e.sub?`<div class="ag-sub">${e.sub}</div>`:''}
+        </div>
+        ${e.hora?`<div class="ag-hora">${e.hora}</div>`:''}
+      </div>`;
+    }).join('')+'</div>'+
+    (todos.length>12?`<div style="text-align:center;padding:10px;font-size:12px;color:var(--bege)">+${todos.length-12} mais — <a href="/agenda.html" style="color:var(--v1);font-weight:700">ver todos</a></div>`:'');
+}
+
+// AUTO-AGENDA: quando tarefa com prazo é salva, cria entrada na agenda ──────
+async function autoAgendarTarefa(tarefa){
+  if(!tarefa.prazo||!tarefa.responsavel) return;
+  try {
+    const dados={
+      titulo:tarefa.titulo,tipo:'prazo',cor:'#d97706',
+      data_inicio:tarefa.prazo+'T08:00:00.000Z',dia_todo:true,
+      cliente:tarefa.cliente||null,
+      descricao:`Prazo: ${tarefa.titulo}`,
+      para_usuario:tarefa.responsavel,
+      criado_por:'Sistema',origem:'tarefa',
+      origem_id:tarefa.id||null
+    };
+    // Verificar se já existe
+    if(tarefa.id){
+      const ex=await sbGet(`agenda?origem=eq.tarefa&origem_id=eq.${tarefa.id}`);
+      if(ex.length){await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dados)});return;}
+    }
+    await sbPost('agenda',dados);
+  } catch {}
+}
 
 // INIT
 verificarSessao();
 carregarStats();
 carregarOffice();
 carregarTarefas();
+carregarAgenda();
 setInterval(carregarOffice,30000);
 setInterval(carregarStats,60000);
+setInterval(carregarAgenda,5*60*1000);
 </script>
 </body>
 </html>
