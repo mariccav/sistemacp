@@ -1,71 +1,223 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="dark" lang="pt-BR">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acesso — Cavalcante Pinheiro Advocacia</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<title>Sistema CP | Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@400;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode:"class",
+  theme:{extend:{
+    colors:{
+      "background":"#001711","surface":"#001711","surface-dim":"#001711",
+      "surface-bright":"#1f3f36","surface-container-low":"#002019",
+      "surface-container":"#02251d","surface-container-high":"#0e2f27",
+      "surface-container-highest":"#1a3a31","on-surface":"#c7eadd",
+      "on-surface-variant":"#c1c8c3","outline":"#8b928e","outline-variant":"#414845",
+      "primary":"#a9cfbe","on-primary":"#13362b","secondary":"#e4c099",
+      "on-secondary":"#422c10","secondary-container":"#5b4224",
+      "on-secondary-container":"#d2af89","surface-variant":"#1a3a31",
+      "on-background":"#c7eadd"
+    },
+    borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+    spacing:{"margin-mobile":"20px","margin-desktop":"64px","container-max":"1200px"},
+    fontFamily:{
+      "headline-lg":["Playfair Display"],"display-lg":["Playfair Display"],
+      "headline-md":["Playfair Display"],"body-md":["Manrope"],
+      "body-lg":["Manrope"],"label-caps":["Manrope"],"button":["Manrope"]
+    },
+    fontSize:{
+      "display-lg":["48px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],
+      "headline-lg":["32px",{"lineHeight":"1.3","fontWeight":"600"}],
+      "headline-lg-mobile":["28px",{"lineHeight":"1.3","fontWeight":"600"}],
+      "headline-md":["24px",{"lineHeight":"1.4","fontWeight":"500"}],
+      "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+      "body-md":["16px",{"lineHeight":"1.6","fontWeight":"400"}],
+      "label-caps":["12px",{"lineHeight":"1.5","letterSpacing":"0.1em","fontWeight":"700"}],
+      "button":["14px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}]
+    }
+  }}
+}
+</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Nunito',sans-serif;background:#063327;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+.fade-in-up{animation:fadeInUp 1.2s cubic-bezier(.22,1,.36,1) forwards;opacity:0;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:.2s;}.delay-2{animation-delay:.4s;}.delay-3{animation-delay:.6s;}
+.glass-panel{background:rgba(0,23,17,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(169,207,190,.1);}
+.gold-glow:hover{box-shadow:0 0 30px rgba(228,192,153,.4);}
+.shimmer{background:linear-gradient(90deg,rgba(228,192,153,0) 0%,rgba(228,192,153,.1) 50%,rgba(228,192,153,0) 100%);background-size:200% 100%;animation:shimmer 3s infinite;}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.office-texture{position:fixed;inset:0;z-index:-2;pointer-events:none;background-color:#001711;}
+.wood-bg{background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuC3ptTjRqUB-VV9Aye72X5VXhbcRokmCBu1uCseiOrG8Jj06U9K5W5ELVAlm5Twd9pBi8C2dAVNnRKveGx3hI3VfuAHi0yhzGtAT38b4hO3Hj5h9dmBvtb438p57tSWyhd06lEfIDr0cEyvfD7l5ZAc0rcZ4-mDM9giwAm9vVKR40oRiaLi_IgfYfDisTqGaTwUqh9XGJqxQFmeeA9GrbEGTUKFzGWJsEcHv1ddkBbuUjuwLn43ZKJ2knGUwM7bcnKrN8wDdaIIsLBy');background-size:cover;background-position:center;opacity:.12;mix-blend-mode:luminosity;}
+.marble-bg{background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuBke6wH592qr5spI5KMz2RsuAQ2L5WnzQ2j9PkGj1bokLEhmu5ZEfKVzbkZWWdt6OyOq3IOD6HTfKL-98gdM7_9cSEVyLMzlIxIvbb1vc5c4dr1FzMSyy956Dr11RfStryE_OTBJTmj8ubmaOZW1baz8pPKrlVn8ha2ytLMvX_wD_vqsdsyzqxsPynN3FJw5rA8AI176k4e3zuzVMciJJ95fMupoIWCxz7mzra1-pm0hBZWzDm0Xf4THOq7CzB66jigWx2Xz6RNyeIj');background-size:cover;background-position:center;opacity:.08;mix-blend-mode:overlay;}
+.ambient-lighting{background:radial-gradient(circle at 10% 10%,rgba(255,221,185,.05) 0%,transparent 50%),radial-gradient(circle at 90% 90%,rgba(169,207,190,.03) 0%,transparent 50%);position:fixed;inset:0;z-index:-1;pointer-events:none;}
+#shader-canvas-DNA{opacity:.4;mix-blend-mode:screen;}
 
-.container{width:100%;max-width:420px;}
-.logo-area{text-align:center;margin-bottom:40px;}
-.logo-area img{height:52px;width:auto;filter:brightness(0) invert(1);opacity:.9;margin-bottom:20px;}
-.logo-area h1{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:1px;}
-.logo-area p{font-size:11px;color:rgba(167,168,151,.7);margin-top:4px;letter-spacing:2px;text-transform:uppercase;}
-
-.card{background:rgba(255,255,255,.06);border:1px solid rgba(167,168,151,.15);border-radius:20px;padding:36px 32px;backdrop-filter:blur(10px);}
-
-.field{margin-bottom:18px;}
-.field label{display:block;font-size:10px;color:#a7a897;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:700;}
-.field input{width:100%;padding:13px 16px;background:rgba(255,255,255,.08);border:1px solid rgba(167,168,151,.25);border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;color:#fff;outline:none;transition:.2s;}
-.field input::placeholder{color:rgba(167,168,151,.5);}
-.field input:focus{border-color:#a7a897;background:rgba(255,255,255,.12);}
-
-.btn-login{width:100%;padding:14px;background:#ac9b7c;color:#063327;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:.2s;margin-top:8px;}
-.btn-login:hover{filter:brightness(1.1);}
-.btn-login:disabled{opacity:.6;cursor:not-allowed;}
-
-.erro{background:rgba(194,94,94,.15);border:1px solid rgba(194,94,94,.3);border-radius:8px;padding:11px 14px;font-size:13px;color:#f5a0a0;margin-bottom:16px;display:none;text-align:center;}
-
-.rodape{text-align:center;margin-top:28px;font-size:10px;color:rgba(167,168,151,.4);letter-spacing:1px;}
-
-@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.container{animation:fadeIn .5s ease;}
+/* FORMULÁRIO DE LOGIN */
+.login-form{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);background:rgba(0,23,17,.6);}
+.login-form.show{display:flex;}
+.login-card{background:rgba(2,37,29,.95);border:1px solid rgba(169,207,190,.15);border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.login-input{width:100%;background:rgba(14,47,39,.8);border:1px solid rgba(169,207,190,.15);border-radius:8px;padding:13px 16px;font-family:'Manrope',sans-serif;font-size:14px;color:#c7eadd;outline:none;transition:.2s;}
+.login-input::placeholder{color:rgba(193,200,195,.4);}
+.login-input:focus{border-color:rgba(228,192,153,.4);box-shadow:0 0 0 2px rgba(228,192,153,.1);}
+.login-label{display:block;font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(193,200,195,.6);margin-bottom:6px;}
+.login-btn{width:100%;background:#e4c099;color:#422c10;border:none;border-radius:8px;padding:14px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;letter-spacing:.05em;cursor:pointer;transition:.2s;margin-top:8px;}
+.login-btn:hover{box-shadow:0 0 30px rgba(228,192,153,.4);filter:brightness(1.05);}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;}
+.login-erro{background:rgba(147,0,10,.3);border:1px solid rgba(255,180,171,.2);border-radius:6px;padding:10px 14px;font-size:12px;color:#ffb4ab;text-align:center;margin-bottom:14px;display:none;}
+.btn-fechar{position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(193,200,195,.5);cursor:pointer;font-size:20px;line-height:1;}
+.btn-fechar:hover{color:#c7eadd;}
 </style>
 </head>
-<body>
-<div class="container">
-  <div class="logo-area">
-    <img src="/logo-cp.png" alt="Cavalcante Pinheiro Advocacia">
-    <h1>Sistema CP</h1>
-    <p>Acesso Restrito</p>
+<body class="bg-background text-on-background font-body-md antialiased overflow-hidden">
+
+<!-- Texturas de fundo -->
+<div class="office-texture wood-bg"></div>
+<div class="office-texture marble-bg"></div>
+<div class="ambient-lighting"></div>
+
+<!-- Shader WebGL (DNA) -->
+<div class="fixed inset-0 w-full h-full -z-10">
+<canvas id="shader-canvas-DNA" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function(){
+  const canvas=document.getElementById('shader-canvas-DNA');
+  function syncSize(){const w=canvas.clientWidth||1280,h=canvas.clientHeight||720;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}}
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(syncSize).observe(canvas);
+  syncSize();
+  const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');if(!gl)return;
+  const vs=`attribute vec2 a_position;varying vec2 v_texCoord;void main(){v_texCoord=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
+  const fs=`precision highp float;uniform float u_time;uniform vec2 u_resolution;varying vec2 v_texCoord;
+void main(){
+  vec2 uv=v_texCoord;vec2 p=(uv-0.5)*2.0;p.x*=u_resolution.x/u_resolution.y;
+  float t=u_time*0.3;float s=sin(t*0.1);float c=cos(t*0.1);p=mat2(c,-s,s,c)*p;
+  float helix=0.0;
+  for(float i=0.0;i<2.0;i++){
+    float offset=i*3.14159;
+    float x=p.x+sin(p.y*2.5+u_time*0.8+offset)*0.35;
+    float line=smoothstep(0.06,0.0,abs(x));
+    float steps=smoothstep(0.04,0.0,abs(sin(p.y*10.0+u_time*0.4)))*step(abs(p.x),0.35);
+    helix+=line*0.7+steps*0.4;
+  }
+  vec3 color1=vec3(0.0,0.08,0.06);vec3 color2=vec3(0.89,0.75,0.60);
+  float mask=smoothstep(1.0,0.2,length(p*0.7));
+  vec3 finalColor=mix(color1,color2,helix*mask*0.5);
+  finalColor+=color2*(0.05*sin(u_time)+0.05)*helix*mask;
+  gl_FragColor=vec4(finalColor,1.0);
+}`;
+  function cs(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const prog=gl.createProgram();
+  gl.attachShader(prog,cs(gl.VERTEX_SHADER,vs));
+  gl.attachShader(prog,cs(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'a_position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const uTime=gl.getUniformLocation(prog,'u_time');
+  const uRes=gl.getUniformLocation(prog,'u_resolution');
+  function render(t){gl.viewport(0,0,canvas.width,canvas.height);if(uTime)gl.uniform1f(uTime,t*0.001);if(uRes)gl.uniform2f(uRes,canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(render);}
+  render(0);
+})();
+</script>
+</div>
+
+<!-- Header -->
+<header class="fixed top-0 w-full flex justify-between items-center px-margin-mobile md:px-margin-desktop h-24 z-50 bg-surface/40 backdrop-blur-md border-b border-white/5">
+  <div class="flex items-center gap-4">
+    <img alt="Cavalcante Pinheiro Advocacia" class="h-10 w-auto object-contain" src="/logo-cp.png" style="filter:brightness(0) invert(1);opacity:.85;">
   </div>
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2 text-secondary font-label-caps text-label-caps">
+      <span class="material-symbols-outlined text-[16px]">lock</span>
+      ACESSO RESTRITO
+    </div>
+  </div>
+</header>
 
-  <div class="card">
-    <div class="erro" id="erro">Usuário ou senha incorretos.</div>
-
-    <div class="field">
-      <label>Usuário</label>
-      <input type="text" id="username" placeholder="seu.usuario" autocomplete="username" onkeydown="if(event.key==='Enter')entrar()">
+<!-- Conteúdo Principal -->
+<main class="relative h-screen flex flex-col items-center justify-center text-center px-margin-mobile">
+  <div class="relative z-10 max-w-4xl w-full flex flex-col items-center">
+    <div class="space-y-6">
+      <p class="font-label-caps text-label-caps text-secondary tracking-[0.4em] uppercase fade-in-up delay-1">
+        Cavalcante Pinheiro · Sociedade Individual de Advocacia
+      </p>
+      <h1 class="font-headline-lg-mobile md:font-display-lg text-headline-lg-mobile md:text-display-lg text-on-background leading-tight fade-in-up delay-2">
+        A excelência está no <br><span class="text-secondary italic">nosso DNA.</span>
+      </h1>
     </div>
 
-    <div class="field">
-      <label>Senha</label>
-      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    <div class="mt-12 w-full max-w-md fade-in-up delay-3">
+      <div class="glass-panel p-1 rounded-xl group overflow-hidden relative">
+        <div class="shimmer absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <button onclick="abrirLogin()" class="relative w-full bg-secondary text-on-secondary font-button text-button py-5 px-8 rounded-lg flex items-center justify-center gap-3 gold-glow transition-all duration-500 transform active:scale-95 group">
+          ENTRAR NO SISTEMA CP
+          <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward_ios</span>
+        </button>
+      </div>
+      <div class="mt-8 flex items-center justify-center gap-4 text-on-surface-variant/40">
+        <div class="h-[1px] w-12 bg-on-surface-variant/20"></div>
+        <span class="font-label-caps text-[10px] tracking-widest uppercase">Autenticação Necessária</span>
+        <div class="h-[1px] w-12 bg-on-surface-variant/20"></div>
+      </div>
     </div>
-
-    <button class="btn-login" id="btn" onclick="entrar()">Entrar</button>
   </div>
 
-  <div class="rodape">Cavalcante Pinheiro Advocacia · OAB/BA 49.675</div>
+  <!-- Badge de status -->
+  <div class="absolute bottom-12 left-margin-mobile md:left-margin-desktop hidden sm:block fade-in-up delay-3">
+    <div class="glass-panel px-6 py-4 rounded-xl flex items-center gap-4">
+      <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+      <div class="flex flex-col items-start">
+        <span class="text-[10px] font-label-caps text-on-surface-variant/60">SISTEMA</span>
+        <span class="text-xs font-semibold text-primary uppercase">Ativo e Seguro</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Nav Mobile -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 md:hidden">
+  <div class="bg-surface/80 backdrop-blur-2xl border-t border-white/10 w-full absolute inset-0 -z-10 rounded-t-2xl shadow-2xl"></div>
+  <button class="flex flex-col items-center justify-center text-on-surface-variant/40">
+    <span class="material-symbols-outlined">monitoring</span>
+    <span class="font-label-caps text-[10px] mt-1">Sistema</span>
+  </button>
+  <button onclick="abrirLogin()" class="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-2xl px-5 py-2">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">lock</span>
+    <span class="font-label-caps text-[10px] mt-1">Entrar</span>
+  </button>
+  <button class="flex flex-col items-center justify-center text-on-surface-variant/40">
+    <span class="material-symbols-outlined">account_balance</span>
+    <span class="font-label-caps text-[10px] mt-1">Escritório</span>
+  </button>
+</nav>
+
+<!-- FORMULÁRIO DE LOGIN (modal) -->
+<div class="login-form" id="login-form">
+  <div class="login-card" style="position:relative">
+    <button class="btn-fechar" onclick="fecharLogin()">✕</button>
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="/logo-cp.png" style="height:36px;width:auto;filter:brightness(0) invert(1);opacity:.8;margin:0 auto 16px;">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:#c7eadd;">Acesso ao Sistema</div>
+      <div style="font-size:11px;color:rgba(193,200,195,.5);margin-top:4px;letter-spacing:2px;text-transform:uppercase;">Cavalcante Pinheiro Advocacia</div>
+    </div>
+    <div id="login-erro" class="login-erro"></div>
+    <div style="margin-bottom:16px;">
+      <label class="login-label">Usuário</label>
+      <input type="text" id="username" class="login-input" placeholder="seu.usuario" autocomplete="username" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label class="login-label">Senha</label>
+      <input type="password" id="senha" class="login-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')entrar()">
+    </div>
+    <button class="login-btn" id="btn-login" onclick="entrar()">ENTRAR</button>
+  </div>
 </div>
 
 <script>
-const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-
 // Verificar se já está logado
 const existente = sessionStorage.getItem('cp_user');
 if (existente) {
@@ -77,6 +229,19 @@ if (existente) {
   } catch {}
 }
 
+function abrirLogin() {
+  document.getElementById('login-form').classList.add('show');
+  setTimeout(() => document.getElementById('username').focus(), 100);
+}
+function fecharLogin() {
+  document.getElementById('login-form').classList.remove('show');
+}
+
+// Fechar ao clicar fora
+document.getElementById('login-form').addEventListener('click', e => {
+  if (e.target === document.getElementById('login-form')) fecharLogin();
+});
+
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
@@ -85,56 +250,41 @@ async function sha256(str) {
 async function entrar() {
   const username = document.getElementById('username').value.trim().toLowerCase();
   const senha    = document.getElementById('senha').value;
-  const btn      = document.getElementById('btn');
-  const erro     = document.getElementById('erro');
+  const btn      = document.getElementById('btn-login');
+  const erro     = document.getElementById('login-erro');
 
   if (!username || !senha) { mostrarErro('Preencha usuário e senha.'); return; }
-
-  btn.textContent = 'Verificando...';
-  btn.disabled = true;
-  erro.style.display = 'none';
+  btn.textContent = 'VERIFICANDO...'; btn.disabled = true; erro.style.display = 'none';
 
   try {
     const hash = await sha256(senha);
     const r = await fetch(
-      `${SB}/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${hash}&ativo=eq.true&select=*`,
-      { headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK } }
+      `https://svwwmxapmppjkmbazhul.supabase.co/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${hash}&ativo=eq.true&select=*`,
+      { headers: { 'apikey': 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw', 'Authorization': 'Bearer sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw' } }
     );
     const dados = r.ok ? await r.json() : [];
-
     if (!dados.length) { mostrarErro('Usuário ou senha incorretos.'); return; }
-
     const u = dados[0];
-    sessionStorage.setItem('cp_user', JSON.stringify({
-      id:       u.id,
-      username: u.username,
-      nome:     u.nome,
-      cargo:    u.cargo,
-      ini:      u.ini,
-      cor:      u.cor,
-      is_admin: u.is_admin,
-      logged_at: Date.now()
-    }));
-
-    // Redirecionar
+    sessionStorage.setItem('cp_user', JSON.stringify({ id:u.id, username:u.username, nome:u.nome, cargo:u.cargo, ini:u.ini, cor:u.cor, is_admin:u.is_admin, logged_at:Date.now() }));
     const params = new URLSearchParams(window.location.search);
     window.location.href = params.get('next') || '/dashboard.html';
-
-  } catch (e) {
-    mostrarErro('Erro de conexão. Tente novamente.');
-  } finally {
-    btn.textContent = 'Entrar';
-    btn.disabled = false;
-  }
+  } catch { mostrarErro('Erro de conexão. Tente novamente.'); }
+  finally { btn.textContent = 'ENTRAR'; btn.disabled = false; }
 }
 
 function mostrarErro(msg) {
-  const e = document.getElementById('erro');
-  e.textContent = msg;
-  e.style.display = 'block';
+  const e = document.getElementById('login-erro');
+  e.textContent = msg; e.style.display = 'block';
 }
 
-document.getElementById('username').focus();
+// Parallax nas texturas
+document.addEventListener('mousemove', e => {
+  const x = (window.innerWidth/2 - e.pageX) / 100;
+  const y = (window.innerHeight/2 - e.pageY) / 100;
+  document.querySelectorAll('.office-texture').forEach(t => {
+    t.style.transform = `translate(${x}px,${y}px) scale(1.05)`;
+  });
+});
 </script>
 </body>
 </html>
