@@ -348,7 +348,7 @@ function buildDocHTML(conteudo) {
 body{font-family:'Avenir','Century Gothic','Trebuchet MS',Arial,sans-serif;font-size:10.5pt;line-height:1.8;color:#1a1a1a;background:#fff;}
 
 /* CAPA */
-.capa{width:100%;min-height:100vh;background:#1f3e3c;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 56px 100px;text-align:center;page-break-after:always;position:relative;}
+.capa{width:100%;height:297mm;background:#1f3e3c;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 56px 80px;text-align:center;page-break-after:always;position:relative;overflow:hidden;}
 .capa-logo{height:72px;width:auto;margin-bottom:56px;filter:brightness(0) invert(1);opacity:.92;}
 .capa-firma{font-size:9pt;letter-spacing:5px;text-transform:uppercase;color:#a7a897;margin-bottom:28px;}
 .capa-linha{width:48px;height:1px;background:#a7a897;margin:0 auto 32px;}
@@ -371,7 +371,7 @@ body{font-family:'Avenir','Century Gothic','Trebuchet MS',Arial,sans-serif;font-
 .pg-header-divisor{height:1px;background:#c8d8d0;margin:0 28px 0;}
 
 /* CONTEÚDO — margens Word: top 35mm, laterais 30mm, bottom 28mm */
-.conteudo{padding:8mm 30mm 14mm;font-size:10.5pt;line-height:1.8;}
+.conteudo{padding:8mm 30mm 30mm;font-size:10.5pt;line-height:1.8;}
 .doc-titulo-principal{font-family:'Cormorant Garamond',serif;font-size:13.5pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:2.5px;color:#1f3e3c;margin-bottom:6px;margin-top:8px;}
 .doc-linha-titulo{width:55px;height:2px;background:#a9a68a;margin:0 auto 28px;}
 p{margin-bottom:10px;text-align:justify;orphans:3;widows:3;}
@@ -484,10 +484,10 @@ async function baixarPDF() {
   if (htmlFooter) htmlFooter.style.display = 'none';
 
   const opt = {
-    margin: [0, 0, 24, 0],  // 24mm de margem inferior para o rodapé
+    margin: 0,
     filename: (docTitulo || 'contrato') + '.pdf',
     image: { type: 'jpeg', quality: 0.97 },
-    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
@@ -511,8 +511,8 @@ async function baixarPDF() {
       }
     }
 
-    // Adicionar rodapé em cada página
-    for (let i = 1; i <= totalPages; i++) {
+    // Adicionar rodapé apenas nas páginas de conteúdo (pular página 1 = capa)
+    for (let i = 2; i <= totalPages; i++) {
       pdf.setPage(i);
 
       // Fundo verde do rodapé
