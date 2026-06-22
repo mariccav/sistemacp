@@ -172,8 +172,18 @@ module.exports = async (req, res) => {
       return res.status(502).json({ erro: erroAct });
     }
 
-    // Link de assinatura: formato correto v3 usa signer_id (não envelope_id)
-    // https://app.clicksign.com/sign/{signer_id} → redireciona para página de assinatura
+    // ── 5. Disparar notificação por e-mail ────────────────────────
+    // O ClickSign v3 não envia e-mail automaticamente na ativação via API.
+    // É necessário chamar /notifications com attributes:{} para disparar.
+    // Rate limit: 1 por minuto — em produção cada envelope notifica uma vez.
+    await fetch(`${BASE}/envelopes/${envelopeId}/notifications`, {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify({ data: { type: 'notifications', attributes: {} } })
+    });
+    // Ignora erro de notificação (rate limit ou falha não deve bloquear a resposta)
+
+    // Link de assinatura: o formato correto usa signer_id (não envelope_id)
     const primeiroSignerId = signerIds[0];
 
     return res.status(200).json({
