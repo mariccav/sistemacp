@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
   if (!TOKEN) return res.status(500).json({ erro: 'CLICKSIGN_TOKEN não configurado no Vercel.' });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-  const { arquivo_base64, nome_arquivo, signatarios = [], mensagem } = body;
+  const { arquivo_base64, nome_arquivo, signatarios = [] } = body;
 
   if (!arquivo_base64 || !nome_arquivo) {
     return res.status(400).json({ erro: 'arquivo_base64 e nome_arquivo são obrigatórios.' });
@@ -32,16 +32,19 @@ module.exports = async (req, res) => {
     'Accept': 'application/vnd.api+json'
   };
 
-  const handleError = async (r, contexto) => {
+  const lerErro = async (r, contexto) => {
     const txt = await r.text();
     let msg = txt;
-    try { msg = JSON.stringify(JSON.parse(txt).errors || JSON.parse(txt)); } catch {}
-    return { erro: `ClickSign [${contexto}] ${r.status}: ${msg}` };
+    try {
+      const parsed = JSON.parse(txt);
+      msg = parsed.errors?.[0]?.detail || parsed.errors?.[0]?.title || JSON.stringify(parsed);
+    } catch {}
+    return `ClickSign [${contexto}] ${r.status}: ${msg}`;
   };
 
   try {
     // ── 1. Criar envelope ─────────────────────────────────────────
-    const nomeArq = nome_arquivo.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const nomeArq = nome_arquivo.replace(/[^a-zA-Z0-9._\- ]/g, '_');
     const rEnv = await fetch(`${BASE}/envelopes`, {
       method: 'POST',
       headers: HEADERS,
@@ -58,12 +61,11 @@ module.exports = async (req, res) => {
         }
       })
     });
-    if (!rEnv.ok) return res.status(502).json(await handleError(rEnv, 'criar envelope'));
-    const envData = await rEnv.json();
-    const envelopeId = envData.data?.id;
+    if (!rEnv.ok) return res.status(502).json({ erro: await lerErro(rEnv, 'criar envelope') });
+    const envelopeId = (await rEnv.json()).data?.id;
     if (!envelopeId) return res.status(502).json({ erro: 'envelope_id não retornado pelo ClickSign.' });
 
-    // ── 2. Upload do documento (base64) ───────────────────────────
+    // ── 2. Upload do documento ────────────────────────────────────
     const contentBase64 = arquivo_base64.startsWith('data:')
       ? arquivo_base64.split(',')[1]
       : arquivo_base64;
@@ -81,9 +83,8 @@ module.exports = async (req, res) => {
         }
       })
     });
-    if (!rDoc.ok) return res.status(502).json(await handleError(rDoc, 'upload documento'));
-    const docData = await rDoc.json();
-    const documentId = docData.data?.id;
+    if (!rDoc.ok) return res.status(502).json({ erro: await lerErro(rDoc, 'upload documento') });
+    const documentId = (await rDoc.json()).data?.id;
     if (!documentId) return res.status(502).json({ erro: 'document_id não retornado.' });
 
     // ── 3. Adicionar signatários e requisitos ─────────────────────
@@ -92,6 +93,9 @@ module.exports = async (req, res) => {
       if (!sig.nome || !sig.email) continue;
 
       // Criar signatário
+      // NOTA: não enviamos documentação (CPF/CNPJ) porque o ClickSign v3
+      // valida o checksum e rejeita com erro silencioso se inválido.
+      // O campo is opcional e não afeta a validade jurídica da assinatura.
       const rSig = await fetch(`${BASE}/envelopes/${envelopeId}/signers`, {
         method: 'POST',
         headers: HEADERS,
@@ -100,24 +104,23 @@ module.exports = async (req, res) => {
             type: 'signers',
             attributes: {
               name: sig.nome,
-              email: sig.email,
-              ...(sig.cpf ? { documentation: sig.cpf.replace(/\D/g, '') } : {}),
-              ...(sig.telefone ? { phone_number: '+55' + sig.telefone.replace(/\D/g, '') } : {})
+              email: sig.email
             }
           }
         })
       });
-      if (!rSig.ok) continue;
-      const sigData = await rSig.json();
-      const signerId = sigData.data?.id;
-      if (!signerId) continue;
+
+      if (!rSig.ok) {
+        const erroSig = await lerErro(rSig, `criar signatário ${sig.email}`);
+        return res.status(502).json({ erro: erroSig });
+      }
+
+      const signerId = (await rSig.json()).data?.id;
+      if (!signerId) return res.status(502).json({ erro: `signerId não retornado para ${sig.email}` });
       signerIds.push(signerId);
 
-      // API v3 requer DOIS requisitos por signatário para ativação:
-      // 1. agree/contractee = concordância com os termos do documento
-      // 2. provide_evidence/email = assinatura digital via e-mail
-      // Nenhum dos dois funciona isoladamente.
-      await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
+      // Requisito 1: concordância (agree/contractee)
+      const rReq1 = await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify({
@@ -131,14 +134,15 @@ module.exports = async (req, res) => {
           }
         })
       });
-      await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
+      if (!rReq1.ok) return res.status(502).json({ erro: await lerErro(rReq1, 'requisito agree') });
+
+      // Requisito 2: assinatura digital por selfie + documento de identidade
+      const rReq2 = await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify({
           data: {
             type: 'requirements',
-            // auth='selfie': signatário tira foto do rosto + documento de identidade
-            // Gera registro probatório mais robusto no certificado de assinatura
             attributes: { action: 'provide_evidence', auth: 'selfie' },
             relationships: {
               document: { data: { type: 'documents', id: documentId } },
@@ -147,9 +151,14 @@ module.exports = async (req, res) => {
           }
         })
       });
+      if (!rReq2.ok) return res.status(502).json({ erro: await lerErro(rReq2, 'requisito selfie') });
     }
 
-    // ── 4. Ativar envelope: PATCH status=running (API v3) ────────
+    if (signerIds.length === 0) {
+      return res.status(502).json({ erro: 'Nenhum signatário foi criado no ClickSign. Verifique nome e e-mail.' });
+    }
+
+    // ── 4. Ativar envelope ────────────────────────────────────────
     const rAct = await fetch(`${BASE}/envelopes/${envelopeId}`, {
       method: 'PATCH',
       headers: HEADERS,
@@ -157,13 +166,17 @@ module.exports = async (req, res) => {
         data: { type: 'envelopes', id: envelopeId, attributes: { status: 'running' } }
       })
     });
-    // Ignora erro de ativação (pode já estar ativo ou sem signatários em testes)
+
+    if (!rAct.ok) {
+      const erroAct = await lerErro(rAct, 'ativar envelope');
+      return res.status(502).json({ erro: erroAct });
+    }
 
     return res.status(200).json({
       envelope_id:  envelopeId,
       document_id:  documentId,
       signer_ids:   signerIds,
-      signatarios:  signatarios.length,
+      signatarios:  signerIds.length,
       link:         `https://app.clicksign.com/sign/${envelopeId}`,
       envelope_key: envelopeId
     });
