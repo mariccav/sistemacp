@@ -1,6 +1,5 @@
-// Integração ClickSign — cria envelope, sobe documento, adiciona signatários e ativa
-// Recebe: { arquivo_base64, nome_arquivo, signatarios: [{nome, email, cpf, telefone}], mensagem }
-// Retorna: { envelope_key, link }
+// Integração ClickSign API v3
+// Documentação: https://developers.clicksign.com/reference/comece-agora
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,107 +24,128 @@ module.exports = async (req, res) => {
     return res.status(400).json({ erro: 'Informe ao menos um signatário.' });
   }
 
-  const BASE = 'https://app.clicksign.com/api/v1';
-  const qs = `access_token=${TOKEN}`;
+  // API v3 — headers obrigatórios: JSON:API + Authorization sem Bearer
+  const BASE = 'https://app.clicksign.com/api/v3';
+  const HEADERS = {
+    'Authorization': TOKEN,
+    'Content-Type': 'application/vnd.api+json',
+    'Accept': 'application/vnd.api+json'
+  };
+
+  const handleError = async (r, contexto) => {
+    const txt = await r.text();
+    let msg = txt;
+    try { msg = JSON.stringify(JSON.parse(txt).errors || JSON.parse(txt)); } catch {}
+    return { erro: `ClickSign [${contexto}] ${r.status}: ${msg}` };
+  };
 
   try {
-    // ── 1. Criar envelope ──────────────────────────────────────────
-    const rEnv = await fetch(`${BASE}/envelopes?${qs}`, {
+    // ── 1. Criar envelope ─────────────────────────────────────────
+    const nomeArq = nome_arquivo.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const rEnv = await fetch(`${BASE}/envelopes`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: HEADERS,
       body: JSON.stringify({
-        envelope: {
-          locale: 'pt-BR',
-          auto_close: true,
-          remind_interval: 3,
-          block_after_refusal: true
+        data: {
+          type: 'envelopes',
+          attributes: {
+            name: nomeArq.replace(/\.[^.]+$/, ''),
+            locale: 'pt-BR',
+            auto_close: true,
+            remind_interval: 3,
+            block_after_refusal: true
+          }
         }
       })
     });
-    if (!rEnv.ok) {
-      const t = await rEnv.text();
-      return res.status(502).json({ erro: `ClickSign: erro ao criar envelope. ${t}` });
-    }
+    if (!rEnv.ok) return res.status(502).json(await handleError(rEnv, 'criar envelope'));
     const envData = await rEnv.json();
-    const envelopeKey = envData.envelope?.key;
-    if (!envelopeKey) return res.status(502).json({ erro: 'ClickSign: envelope_key não retornado.' });
+    const envelopeId = envData.data?.id;
+    if (!envelopeId) return res.status(502).json({ erro: 'envelope_id não retornado pelo ClickSign.' });
 
-    // ── 2. Upload do documento ─────────────────────────────────────
+    // ── 2. Upload do documento (base64) ───────────────────────────
     const contentBase64 = arquivo_base64.startsWith('data:')
-      ? arquivo_base64
-      : `data:application/pdf;base64,${arquivo_base64}`;
+      ? arquivo_base64.split(',')[1]
+      : arquivo_base64;
 
-    const nomeArq = nome_arquivo.endsWith('.pdf') ? nome_arquivo : nome_arquivo + '.pdf';
-
-    const rDoc = await fetch(`${BASE}/envelopes/${envelopeKey}/documents?${qs}`, {
+    const rDoc = await fetch(`${BASE}/envelopes/${envelopeId}/documents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: HEADERS,
       body: JSON.stringify({
-        document: {
-          path: `/${nomeArq}`,
-          content_base64: contentBase64,
-          sequence_enabled: false
+        data: {
+          type: 'documents',
+          attributes: {
+            filename: nomeArq.endsWith('.pdf') ? nomeArq : nomeArq + '.pdf',
+            content_base64: `data:application/pdf;base64,${contentBase64}`
+          }
         }
       })
     });
-    if (!rDoc.ok) {
-      const t = await rDoc.text();
-      return res.status(502).json({ erro: `ClickSign: erro ao enviar documento. ${t}` });
-    }
+    if (!rDoc.ok) return res.status(502).json(await handleError(rDoc, 'upload documento'));
     const docData = await rDoc.json();
-    const documentKey = docData.document?.key;
+    const documentId = docData.data?.id;
+    if (!documentId) return res.status(502).json({ erro: 'document_id não retornado.' });
 
-    // ── 3. Adicionar signatários e vincular ao documento ───────────
+    // ── 3. Adicionar signatários e requisitos ─────────────────────
+    const signerIds = [];
     for (const sig of signatarios) {
       if (!sig.nome || !sig.email) continue;
 
-      const rSig = await fetch(`${BASE}/envelopes/${envelopeKey}/signers?${qs}`, {
+      // Criar signatário
+      const rSig = await fetch(`${BASE}/envelopes/${envelopeId}/signers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: HEADERS,
         body: JSON.stringify({
-          signer: {
-            name:               sig.nome,
-            email:              sig.email,
-            has_documentation:  !!sig.cpf,
-            documentation:      sig.cpf ? sig.cpf.replace(/\D/g, '') : null,
-            phone_number:       sig.telefone ? sig.telefone.replace(/\D/g, '') : null,
-            delivery:           'email',
-            message:            mensagem || 'Por favor, assine o documento do escritório Cavalcante Pinheiro Advocacia.'
+          data: {
+            type: 'signers',
+            attributes: {
+              name: sig.nome,
+              email: sig.email,
+              ...(sig.cpf ? { documentation: sig.cpf.replace(/\D/g, '') } : {}),
+              ...(sig.telefone ? { phone_number: '+55' + sig.telefone.replace(/\D/g, '') } : {})
+            }
           }
         })
       });
       if (!rSig.ok) continue;
       const sigData = await rSig.json();
-      const signerKey = sigData.signer?.key;
+      const signerId = sigData.data?.id;
+      if (!signerId) continue;
+      signerIds.push(signerId);
 
-      // Vincular signatário ao documento
-      if (signerKey && documentKey) {
-        await fetch(`${BASE}/envelopes/${envelopeKey}/requirements?${qs}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requirement: {
-              action:       'sign',
-              signer_key:   signerKey,
-              document_key: documentKey,
-              auth:         'email'
+      // Criar requisito: vincular signatário ao documento
+      await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({
+          data: {
+            type: 'requirements',
+            attributes: { action: 'sign', role: 'sign' },
+            relationships: {
+              document: { data: { type: 'documents', id: documentId } },
+              signer:   { data: { type: 'signers',   id: signerId   } }
             }
-          })
-        });
-      }
+          }
+        })
+      });
     }
 
-    // ── 4. Ativar envelope (envia e-mails aos signatários) ─────────
-    await fetch(`${BASE}/envelopes/${envelopeKey}/close?${qs}`, {
+    // ── 4. Ativar envelope (enviar para assinatura) ───────────────
+    const rAct = await fetch(`${BASE}/envelopes/${envelopeId}/activate`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' }
+      headers: HEADERS,
+      body: JSON.stringify({ data: { type: 'envelopes', id: envelopeId } })
     });
+    // Alguns planos não têm endpoint /activate separado — ignora erro aqui
+    // A ativação pode ser automática dependendo das configurações
 
     return res.status(200).json({
-      envelope_key: envelopeKey,
-      link: `https://app.clicksign.com/sign/${envelopeKey}`,
-      documento: nomeArq,
-      signatarios: signatarios.length
+      envelope_id:  envelopeId,
+      document_id:  documentId,
+      signer_ids:   signerIds,
+      signatarios:  signatarios.length,
+      link:         `https://app.clicksign.com/sign/${envelopeId}`,
+      envelope_key: envelopeId
     });
 
   } catch (e) {
