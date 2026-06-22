@@ -320,9 +320,20 @@ function buildDocHTML(conteudo) {
   const tipo    = tipoMatch    ? tipoMatch[1].trim()    : 'DOCUMENTO JURÍDICO';
   const cliente = clienteMatch ? clienteMatch[1].trim() : '';
 
-  const corpo = conteudo
+  // Extrair apenas o body se Helena gerou HTML completo
+  let corpo = conteudo
     .replace(/<!--META_TIPO:[^-]+-->/g, '')
     .replace(/<!--META_CLIENTE:[^-]+-->/g, '')
+    .trim();
+  // Se Helena gerou HTML completo, extrair só o <body>
+  const bodyMatch = corpo.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) corpo = bodyMatch[1].trim();
+  // Remover tags <html>, <head>, <!DOCTYPE> residuais
+  corpo = corpo
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .replace(/<html[^>]*>/gi, '')
+    .replace(/<\/html>/gi, '')
+    .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
     .trim();
 
   const dataExtenso = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
