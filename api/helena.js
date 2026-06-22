@@ -141,7 +141,7 @@ REGRAS ABSOLUTAS:
       method: 'POST',
       headers: { 'x-api-key': CHAVE, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-opus-4-5',
+        model: 'claude-sonnet-4-5',
         max_tokens: 8000,
         system: systemPrompt,
         messages: mensagens
