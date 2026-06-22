@@ -621,7 +621,8 @@ async function confirmarCS() {
     catch { throw new Error(`Servidor retornou erro ${r.status}. Tente novamente.`); }
     if (!r.ok) throw new Error(d.erro || 'Erro no ClickSign');
     document.getElementById('mod-cs').style.display = 'none';
-    addMsg('agent', `✓ Documento enviado para assinatura via ClickSign!\n\nSignatário: **${nome}** (${email})\nEnvelope: ${d.envelope_key}`);
+    const linkAssinatura = d.link || `https://app.clicksign.com/sign/${d.envelope_id}`;
+    addMsg('agent', `✓ Contrato enviado ao ClickSign com sucesso!\n\n**Signatário:** ${nome} (${email})\n\n**Link de assinatura** (caso o e-mail não chegue, envie este link por WhatsApp):\n${linkAssinatura}\n\n_O signatário receberá um e-mail do ClickSign. Se não chegar em 10 minutos, verifique a pasta de spam ou use o link acima._`);
 
     // Salvar na tabela contratos e vincular ao cliente
     try {
