@@ -312,6 +312,42 @@ function renderDoc(html) {
 }
 
 function buildDocHTML(conteudo) {
+  // Extrair metadados dos comentários que Helena insere
+  const tipoMatch  = conteudo.match(/<!--META_TIPO:([^-]+)-->/);
+  const clienteMatch = conteudo.match(/<!--META_CLIENTE:([^-]+)-->/);
+  const tipo    = tipoMatch  ? tipoMatch[1].trim()    : 'DOCUMENTO JURÍDICO';
+  const cliente = clienteMatch ? clienteMatch[1].trim() : '';
+
+  // Remover os comentários de metadados do corpo
+  const corpo = conteudo
+    .replace(/<!--META_TIPO:[^-]+-->/g, '')
+    .replace(/<!--META_CLIENTE:[^-]+-->/g, '')
+    .trim();
+
+  // Data por extenso
+  const dataExtenso = new Date().toLocaleDateString('pt-BR', {
+    day:'2-digit', month:'long', year:'numeric'
+  });
+
+  // Folha de rosto padronizada CP
+  const capa = `
+  <div style="width:100%;min-height:100vh;background:#1f3e3c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;text-align:center;page-break-after:always;position:relative;box-sizing:border-box;">
+    <img src="https://sistemacp.vercel.app/logo-cp.png" alt="Cavalcante Pinheiro" style="height:64px;width:auto;margin-bottom:52px;filter:brightness(0) invert(1);opacity:.9;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:10pt;letter-spacing:5px;text-transform:uppercase;color:#a7a897;margin-bottom:20px;">Cavalcante Pinheiro Advocacia</div>
+    <div style="width:50px;height:1px;background:#a7a897;margin:0 auto 24px;"></div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20pt;font-weight:600;line-height:1.35;color:#fff;margin-bottom:${cliente?'28px':'0'};">${tipo}</div>
+    ${cliente ? `
+    <div style="width:40px;height:1px;background:rgba(167,168,151,.5);margin:0 auto 20px;"></div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:14pt;color:#d4c9b5;margin-bottom:8px;">${cliente}</div>
+    ` : ''}
+    <div style="font-size:9pt;color:#a7a897;letter-spacing:1px;margin-top:16px;">${dataExtenso}</div>
+    <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:8pt;color:rgba(167,168,151,.6);letter-spacing:.3px;line-height:2;">
+      Mariana Pinheiro — OAB/BA nº 49.675<br>
+      Av. Tancredo Neves, 620, sala 1006 · Caminho das Árvores · Salvador/BA<br>
+      (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
+    </div>
+  </div>`;
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -320,18 +356,9 @@ function buildDocHTML(conteudo) {
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'EB Garamond',Georgia,serif;font-size:11.5pt;line-height:1.75;color:#1a1a1a;background:#fff;}
-.doc-capa{width:100%;min-height:100vh;background:#1f3e3c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;text-align:center;page-break-after:always;}
-.doc-capa img{height:60px;width:auto;margin-bottom:48px;filter:brightness(0) invert(1);}
-.doc-capa-tipo{font-family:'Cormorant Garamond',serif;font-size:10pt;letter-spacing:5px;text-transform:uppercase;color:#a7a897;margin-bottom:16px;}
-.doc-capa-titulo{font-family:'Cormorant Garamond',serif;font-size:22pt;font-weight:600;line-height:1.3;margin-bottom:28px;color:#fff;}
-.doc-capa-linha{width:50px;height:1px;background:#a7a897;margin:16px auto;}
-.doc-capa-cliente{font-family:'Cormorant Garamond',serif;font-size:13pt;color:#d4c9b5;margin-bottom:6px;}
-.doc-capa-data{font-size:9.5pt;color:#a7a897;letter-spacing:1px;}
-.doc-capa-rodape{position:absolute;bottom:40px;font-size:8.5pt;color:rgba(167,168,151,.7);letter-spacing:.3px;line-height:1.8;text-align:center;}
 .doc-conteudo{padding:22mm 22mm 20mm 22mm;}
 .doc-header-interno{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #ddd;}
 .doc-header-interno img{height:32px;width:auto;}
-.doc-header-interno-info{text-align:right;font-size:8pt;color:#888;line-height:1.6;}
 .doc-titulo-principal{font-family:'Cormorant Garamond',serif;font-size:15pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:2px;margin-bottom:24px;color:#1f3e3c;}
 p{margin-bottom:11px;text-align:justify;}
 h2,h3{font-family:'Cormorant Garamond',serif;font-weight:600;color:#1f3e3c;margin-top:18px;margin-bottom:7px;}
@@ -345,14 +372,21 @@ strong{font-weight:600;}
 .testemunhas{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:36px;}
 .testemunha-bloco{font-size:9.5pt;line-height:1.9;}
 .testemunha-linha{border-top:1px solid #aaa;margin-top:28px;padding-top:5px;}
-@media print{
-  .doc-capa{position:relative;page-break-after:always;}
-  @page{margin:0;}
-}
+@media print{@page{margin:0;}}
 </style>
 </head>
 <body>
-${conteudo}
+${capa}
+<div class="doc-conteudo">
+  <div class="doc-header-interno">
+    <img src="https://sistemacp.vercel.app/logo-cp.png" alt="CP" style="height:28px;filter:none;">
+    <div style="text-align:right;font-size:8pt;color:#888;line-height:1.6;">
+      OAB/BA nº 49.675 · (71) 99129-2322<br>
+      mariana@cavalcantepinheiroadv.com.br
+    </div>
+  </div>
+  ${corpo}
+</div>
 </body>
 </html>`;
 }
