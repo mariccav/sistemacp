@@ -137,7 +137,9 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           data: {
             type: 'requirements',
-            attributes: { action: 'provide_evidence', auth: 'email' },
+            // auth='selfie': signatário tira foto do rosto + documento de identidade
+            // Gera registro probatório mais robusto no certificado de assinatura
+            attributes: { action: 'provide_evidence', auth: 'selfie' },
             relationships: {
               document: { data: { type: 'documents', id: documentId } },
               signer:   { data: { type: 'signers',   id: signerId   } }
