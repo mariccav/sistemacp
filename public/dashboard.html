@@ -247,7 +247,7 @@ document.getElementById('hcargo').textContent = U.cargo;
 // SAUDAÇÃO
 function renderSaudacao(){
   const h=new Date().getHours();
-  const s=h<12?'Bom dia':'h<18?'Boa tarde':'Boa noite';
+  const s=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
   document.getElementById('saudacao').textContent=`${s}, ${U.nome.split(' ')[0]}.`;
   document.getElementById('data-hora').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
 }
@@ -293,7 +293,7 @@ function mostrarAtiva(){
   },1000);
 }
 function mostrarInativa(){
-  document.getElementById('st-dot').style.background=var('--bege','#a7a897');
+  document.getElementById('st-dot').style.background='#a7a897';
   document.getElementById('st-txt').textContent='Offline';
   document.getElementById('st-timer').textContent='';
   document.getElementById('btn-ini').style.display='flex';
