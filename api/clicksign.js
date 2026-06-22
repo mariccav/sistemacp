@@ -113,14 +113,31 @@ module.exports = async (req, res) => {
       if (!signerId) continue;
       signerIds.push(signerId);
 
-      // Criar requisito: vincular signatário ao documento
+      // API v3 requer DOIS requisitos por signatário para ativação:
+      // 1. agree/contractee = concordância com os termos do documento
+      // 2. provide_evidence/email = assinatura digital via e-mail
+      // Nenhum dos dois funciona isoladamente.
       await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify({
           data: {
             type: 'requirements',
-            attributes: { action: 'sign', role: 'sign' },
+            attributes: { action: 'agree', role: 'contractee' },
+            relationships: {
+              document: { data: { type: 'documents', id: documentId } },
+              signer:   { data: { type: 'signers',   id: signerId   } }
+            }
+          }
+        })
+      });
+      await fetch(`${BASE}/envelopes/${envelopeId}/requirements`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({
+          data: {
+            type: 'requirements',
+            attributes: { action: 'provide_evidence', auth: 'email' },
             relationships: {
               document: { data: { type: 'documents', id: documentId } },
               signer:   { data: { type: 'signers',   id: signerId   } }
@@ -130,14 +147,15 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ── 4. Ativar envelope (enviar para assinatura) ───────────────
-    const rAct = await fetch(`${BASE}/envelopes/${envelopeId}/activate`, {
+    // ── 4. Ativar envelope: PATCH status=running (API v3) ────────
+    const rAct = await fetch(`${BASE}/envelopes/${envelopeId}`, {
       method: 'PATCH',
       headers: HEADERS,
-      body: JSON.stringify({ data: { type: 'envelopes', id: envelopeId } })
+      body: JSON.stringify({
+        data: { type: 'envelopes', id: envelopeId, attributes: { status: 'running' } }
+      })
     });
-    // Alguns planos não têm endpoint /activate separado — ignora erro aqui
-    // A ativação pode ser automática dependendo das configurações
+    // Ignora erro de ativação (pode já estar ativo ou sem signatários em testes)
 
     return res.status(200).json({
       envelope_id:  envelopeId,
