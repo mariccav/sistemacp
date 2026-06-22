@@ -359,13 +359,16 @@ body{font-family:'Avenir','Century Gothic','Trebuchet MS',Arial,sans-serif;font-
 .capa-rodape{position:absolute;bottom:36px;left:0;right:0;text-align:center;font-size:7.5pt;color:rgba(167,168,151,.5);letter-spacing:.3px;line-height:2;}
 
 /* CABEÇALHO — faixa dupla + logo à direita */
-.pg-header{padding:18px 30px 0;display:flex;align-items:flex-end;gap:20px;}
-.pg-header-linhas{flex:1;padding-bottom:12px;}
-.linha-ouro{height:5px;background:#a9a68a;margin-bottom:3px;}
-.linha-verde{height:2px;background:#1f3e3c;}
-.pg-header-logo{flex-shrink:0;padding-bottom:6px;}
-.pg-header-logo img{height:56px;width:auto;}
-.pg-header-divisor{height:1px;background:#e0e8e0;margin:0 30px;}
+.pg-header{padding:16px 28px 0;display:flex;align-items:flex-end;gap:24px;}
+.pg-header-linhas{flex:1;padding-bottom:14px;}
+.linha-ouro{height:6px;background:#a9a490;margin-bottom:4px;border-radius:1px;}
+.linha-verde{height:2.5px;background:#1f3e3c;border-radius:1px;}
+.pg-header-logo{flex-shrink:0;padding-bottom:4px;}
+.pg-header-logo img{
+  height:72px;width:auto;
+  mix-blend-mode:multiply;
+}
+.pg-header-divisor{height:1px;background:#c8d8d0;margin:0 28px 0;}
 
 /* CONTEÚDO — margens Word: top 35mm, laterais 30mm, bottom 28mm */
 .conteudo{padding:8mm 30mm 14mm;font-size:10.5pt;line-height:1.8;}
@@ -475,17 +478,83 @@ async function baixarPDF() {
   if (!docAtual) return;
   const el = document.querySelector('.doc-preview-inner');
   if (!el) return;
+
+  // Esconder o rodapé HTML (será adicionado via jsPDF em cada página)
+  const htmlFooter = el.querySelector('.pg-footer');
+  if (htmlFooter) htmlFooter.style.display = 'none';
+
   const opt = {
-    margin: 0,
-    filename: docTitulo + '.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
+    margin: [0, 0, 24, 0],  // 24mm de margem inferior para o rodapé
+    filename: (docTitulo || 'contrato') + '.pdf',
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
+
   try {
-    await html2pdf().set(opt).from(el).save();
+    const pdf = await html2pdf().set(opt).from(el).toPdf().get('pdf');
+
+    const W = 210;   // largura A4 mm
+    const H = 297;   // altura A4 mm
+    const FY = 274;  // onde começa o rodapé
+    const FH = 23;   // altura do rodapé
+
+    // Remover última página se estiver em branco
+    let totalPages = pdf.internal.getNumberOfPages();
+    if (totalPages > 1) {
+      pdf.setPage(totalPages);
+      const lastPageText = pdf.internal.pages[totalPages];
+      // Heurística: se a última página tem poucas instruções, é vazia
+      if (lastPageText && lastPageText.length < 5) {
+        pdf.deletePage(totalPages);
+        totalPages = totalPages - 1;
+      }
+    }
+
+    // Adicionar rodapé em cada página
+    for (let i = 1; i <= totalPages; i++) {
+      pdf.setPage(i);
+
+      // Fundo verde do rodapé
+      pdf.setFillColor(45, 80, 80);
+      pdf.rect(0, FY, W, FH, 'F');
+
+      // Linha separadora superior
+      pdf.setDrawColor(255, 255, 255);
+      pdf.setLineWidth(0.1);
+      pdf.setGState(new pdf.GState({ opacity: 0.2 }));
+      pdf.line(0, FY, W, FY);
+      pdf.setGState(new pdf.GState({ opacity: 1 }));
+
+      // Divisores verticais
+      pdf.setDrawColor(255, 255, 255);
+      pdf.setLineWidth(0.1);
+      pdf.setGState(new pdf.GState({ opacity: 0.15 }));
+      pdf.line(75, FY+3, 75, FY+FH-3);
+      pdf.line(140, FY+3, 140, FY+FH-3);
+      pdf.setGState(new pdf.GState({ opacity: 1 }));
+
+      // Texto
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(200, 225, 220);
+
+      // Coluna 1: telefone + email
+      pdf.text('(71) 99110-2804', 12, FY + 8);
+      pdf.text('contato@cavalcantepinheiroadv.com.br', 12, FY + 15);
+
+      // Coluna 2: endereço
+      pdf.text('Empresarial Mundo Plaza, sala 1006,', 80, FY + 8);
+      pdf.text('Caminho das Arvores, Salvador/BA.', 80, FY + 15);
+
+      // Coluna 3: site
+      pdf.text('www.cavalcantepinheiroadv.com.br', 145, FY + 11);
+    }
+
+    if (htmlFooter) htmlFooter.style.display = '';
+    pdf.save((docTitulo || 'contrato') + '.pdf');
+
   } catch(e) {
-    // Fallback: print
+    if (htmlFooter) htmlFooter.style.display = '';
     window.print();
   }
 }
