@@ -172,12 +172,16 @@ module.exports = async (req, res) => {
       return res.status(502).json({ erro: erroAct });
     }
 
+    // Link de assinatura: formato correto v3 usa signer_id (não envelope_id)
+    // https://app.clicksign.com/sign/{signer_id} → redireciona para página de assinatura
+    const primeiroSignerId = signerIds[0];
+
     return res.status(200).json({
       envelope_id:  envelopeId,
       document_id:  documentId,
       signer_ids:   signerIds,
       signatarios:  signerIds.length,
-      link:         `https://app.clicksign.com/sign/${envelopeId}`,
+      link:         `https://app.clicksign.com/sign/${primeiroSignerId}`,
       envelope_key: envelopeId
     });
 
