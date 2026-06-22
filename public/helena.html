@@ -312,81 +312,238 @@ function renderDoc(html) {
 }
 
 function buildDocHTML(conteudo) {
-  // Extrair metadados dos comentários que Helena insere
-  const tipoMatch  = conteudo.match(/<!--META_TIPO:([^-]+)-->/);
+  const tipoMatch    = conteudo.match(/<!--META_TIPO:([^-]+)-->/);
   const clienteMatch = conteudo.match(/<!--META_CLIENTE:([^-]+)-->/);
-  const tipo    = tipoMatch  ? tipoMatch[1].trim()    : 'DOCUMENTO JURÍDICO';
+  const tipo    = tipoMatch    ? tipoMatch[1].trim()    : 'DOCUMENTO JURÍDICO';
   const cliente = clienteMatch ? clienteMatch[1].trim() : '';
 
-  // Remover os comentários de metadados do corpo
   const corpo = conteudo
     .replace(/<!--META_TIPO:[^-]+-->/g, '')
     .replace(/<!--META_CLIENTE:[^-]+-->/g, '')
     .trim();
 
-  // Data por extenso
-  const dataExtenso = new Date().toLocaleDateString('pt-BR', {
-    day:'2-digit', month:'long', year:'numeric'
-  });
-
-  // Folha de rosto padronizada CP
-  const capa = `
-  <div style="width:100%;min-height:100vh;background:#1f3e3c;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 48px;text-align:center;page-break-after:always;position:relative;box-sizing:border-box;">
-    <img src="https://sistemacp.vercel.app/logo-cp.png" alt="Cavalcante Pinheiro" style="height:64px;width:auto;margin-bottom:52px;filter:brightness(0) invert(1);opacity:.9;">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:10pt;letter-spacing:5px;text-transform:uppercase;color:#a7a897;margin-bottom:20px;">Cavalcante Pinheiro Advocacia</div>
-    <div style="width:50px;height:1px;background:#a7a897;margin:0 auto 24px;"></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:20pt;font-weight:600;line-height:1.35;color:#fff;margin-bottom:${cliente?'28px':'0'};">${tipo}</div>
-    ${cliente ? `
-    <div style="width:40px;height:1px;background:rgba(167,168,151,.5);margin:0 auto 20px;"></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:14pt;color:#d4c9b5;margin-bottom:8px;">${cliente}</div>
-    ` : ''}
-    <div style="font-size:9pt;color:#a7a897;letter-spacing:1px;margin-top:16px;">${dataExtenso}</div>
-    <div style="position:absolute;bottom:40px;left:0;right:0;text-align:center;font-size:8pt;color:rgba(167,168,151,.6);letter-spacing:.3px;line-height:2;">
-      Mariana Pinheiro — OAB/BA nº 49.675<br>
-      Av. Tancredo Neves, 620, sala 1006 · Caminho das Árvores · Salvador/BA<br>
-      (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
-    </div>
-  </div>`;
+  const dataExtenso = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'EB Garamond',Georgia,serif;font-size:11.5pt;line-height:1.75;color:#1a1a1a;background:#fff;}
-.doc-conteudo{padding:22mm 22mm 20mm 22mm;}
-.doc-header-interno{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #ddd;}
-.doc-header-interno img{height:32px;width:auto;}
-.doc-titulo-principal{font-family:'Cormorant Garamond',serif;font-size:15pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:2px;margin-bottom:24px;color:#1f3e3c;}
-p{margin-bottom:11px;text-align:justify;}
-h2,h3{font-family:'Cormorant Garamond',serif;font-weight:600;color:#1f3e3c;margin-top:18px;margin-bottom:7px;}
-h2{font-size:11.5pt;text-transform:uppercase;letter-spacing:.5px;}
-h3{font-size:11pt;}
-strong{font-weight:600;}
-.assinaturas{margin-top:36px;}
-.assinaturas-data{text-align:center;margin-bottom:28px;}
-.assinaturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;}
-.assinatura-linha{border-top:1px solid #222;padding-top:7px;margin-top:44px;font-size:10pt;text-align:center;}
-.testemunhas{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:36px;}
-.testemunha-bloco{font-size:9.5pt;line-height:1.9;}
-.testemunha-linha{border-top:1px solid #aaa;margin-top:28px;padding-top:5px;}
-@media print{@page{margin:0;}}
+
+/* AVENIR com fallbacks — usa Avenir nativo no Mac, Nunito na web */
+body{
+  font-family:'Avenir','Century Gothic','Trebuchet MS','Nunito',sans-serif;
+  font-size:10.5pt;
+  line-height:1.8;
+  color:#1a1a1a;
+  background:#fff;
+}
+
+/* ── CAPA ──────────────────────────────── */
+.capa{
+  width:100%;
+  min-height:100vh;
+  background:#1f3e3c;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:70px 56px 100px;
+  text-align:center;
+  page-break-after:always;
+  position:relative;
+}
+.capa-logo{height:68px;width:auto;margin-bottom:56px;filter:brightness(0) invert(1);opacity:.92;}
+.capa-escritorio{
+  font-family:'Avenir','Century Gothic',sans-serif;
+  font-size:9pt;
+  letter-spacing:5px;
+  text-transform:uppercase;
+  color:#a7a897;
+  margin-bottom:28px;
+  font-weight:500;
+}
+.capa-linha{width:48px;height:1px;background:#a7a897;margin:0 auto 32px;}
+.capa-linha-fina{width:32px;height:1px;background:rgba(167,168,151,.4);margin:0 auto 24px;}
+.capa-tipo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24pt;
+  font-weight:600;
+  line-height:1.25;
+  color:#fff;
+  margin-bottom:0;
+  letter-spacing:.5px;
+}
+.capa-cliente{
+  font-family:'Cormorant Garamond',serif;
+  font-size:14pt;
+  font-weight:400;
+  color:rgba(212,201,181,.9);
+  margin-top:24px;
+  font-style:italic;
+}
+.capa-data{
+  font-size:8.5pt;
+  color:rgba(167,168,151,.7);
+  letter-spacing:2px;
+  margin-top:14px;
+  text-transform:uppercase;
+}
+.capa-rodape{
+  position:absolute;
+  bottom:36px;
+  left:0;right:0;
+  text-align:center;
+  font-size:7.5pt;
+  color:rgba(167,168,151,.55);
+  letter-spacing:.4px;
+  line-height:2;
+}
+
+/* ── CABEÇALHO DAS PÁGINAS DE CONTEÚDO ── */
+.pg-header{
+  background:#1f3e3c;
+  padding:10px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.pg-header img{height:26px;width:auto;filter:brightness(0) invert(1);opacity:.88;}
+.pg-header-info{
+  font-family:'Avenir','Century Gothic',sans-serif;
+  font-size:7pt;
+  color:rgba(167,168,151,.7);
+  text-align:right;
+  letter-spacing:.3px;
+  line-height:1.7;
+}
+
+/* ── CONTEÚDO ────────────────────────── */
+.conteudo{padding:14mm 22mm 16mm;}
+
+.doc-titulo-principal{
+  font-family:'Cormorant Garamond',serif;
+  font-size:14pt;
+  font-weight:700;
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:2.5px;
+  color:#1f3e3c;
+  margin-bottom:8px;
+  margin-top:4px;
+}
+.doc-linha-titulo{width:60px;height:2px;background:#1f3e3c;margin:0 auto 28px;}
+
+/* Partes do contrato */
+p{margin-bottom:10px;text-align:justify;hyphens:auto;}
+strong{font-weight:700;color:#111;}
+
+h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:11pt;
+  font-weight:700;
+  color:#1f3e3c;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-top:24px;
+  margin-bottom:8px;
+  border-bottom:1px solid #e0e8e8;
+  padding-bottom:4px;
+}
+h3{
+  font-family:'Cormorant Garamond',serif;
+  font-size:10.5pt;
+  font-weight:600;
+  color:#1f3e3c;
+  margin-top:16px;
+  margin-bottom:6px;
+}
+
+/* Assinaturas */
+.assinaturas{margin-top:40px;page-break-inside:avoid;}
+.assinaturas-local{text-align:center;margin-bottom:36px;font-size:10pt;}
+.assinaturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-bottom:28px;}
+.assinatura-bloco{text-align:center;}
+.assinatura-linha{
+  border-top:1px solid #333;
+  padding-top:8px;
+  margin-top:52px;
+  font-size:9.5pt;
+  line-height:1.6;
+}
+.testemunhas{margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:48px;}
+.testemunha-bloco{font-size:9pt;line-height:2;}
+.testemunha-linha{border-top:1px solid #aaa;margin-top:32px;padding-top:6px;}
+
+/* ── RODAPÉ ─────────────────────────── */
+.pg-footer{
+  background:#f8fafa;
+  border-top:1px solid #e0e8e8;
+  padding:8px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:20px;
+}
+.pg-footer-esq{
+  font-size:7pt;
+  color:#9aadad;
+  line-height:1.6;
+}
+.pg-footer-dir{
+  font-size:7pt;
+  color:#9aadad;
+  text-align:right;
+}
+
+@media print{
+  @page{margin:0;}
+  .capa{page-break-after:always;}
+}
 </style>
 </head>
 <body>
-${capa}
-<div class="doc-conteudo">
-  <div class="doc-header-interno">
-    <img src="https://sistemacp.vercel.app/logo-cp.png" alt="CP" style="height:28px;filter:none;">
-    <div style="text-align:right;font-size:8pt;color:#888;line-height:1.6;">
-      OAB/BA nº 49.675 · (71) 99129-2322<br>
-      mariana@cavalcantepinheiroadv.com.br
-    </div>
+
+<!-- CAPA -->
+<div class="capa">
+  <img class="capa-logo" src="https://sistemacp.vercel.app/logo-cp.png" alt="Cavalcante Pinheiro Advocacia">
+  <div class="capa-escritorio">Cavalcante Pinheiro Advocacia</div>
+  <div class="capa-linha"></div>
+  <div class="capa-tipo">${tipo}</div>
+  ${cliente ? `<div class="capa-linha-fina" style="margin-top:24px;"></div><div class="capa-cliente">${cliente}</div>` : ''}
+  <div class="capa-data" style="margin-top:${cliente?'14px':'28px'};">${dataExtenso}</div>
+  <div class="capa-rodape">
+    Mariana Pinheiro — OAB/BA nº 49.675<br>
+    Av. Tancredo Neves, 620, sala 1006 · Caminho das Árvores · Salvador/BA<br>
+    (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
   </div>
+</div>
+
+<!-- PÁGINAS DE CONTEÚDO -->
+<div class="pg-header">
+  <img src="https://sistemacp.vercel.app/logo-cp.png" alt="CP">
+  <div class="pg-header-info">
+    OAB/BA nº 49.675 · (71) 99129-2322<br>
+    mariana@cavalcantepinheiroadv.com.br
+  </div>
+</div>
+
+<div class="conteudo">
   ${corpo}
 </div>
+
+<div class="pg-footer">
+  <div class="pg-footer-esq">
+    Cavalcante Pinheiro Sociedade Individual de Advocacia<br>
+    CNPJ 64.607.361/0001-83
+  </div>
+  <div class="pg-footer-dir">
+    Salvador/BA · ${dataExtenso}
+  </div>
+</div>
+
 </body>
 </html>`;
 }
