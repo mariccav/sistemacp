@@ -573,20 +573,31 @@ async function confirmarCS() {
   btn.textContent = 'Gerando PDF...'; btn.disabled = true;
 
   try {
-    // Gerar PDF compacto para envio (scale 1.2 + quality 0.75 = ~1-2MB, dentro do limite Vercel 4.5MB)
-    // O download continua em alta qualidade — só o envio ao ClickSign usa essa versão compacta
     const el = document.querySelector('.doc-preview-inner');
-    const opt = {
-      margin: 0,
-      image: { type: 'jpeg', quality: 0.75 },
-      html2canvas: { scale: 1.2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    const pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
 
-    // Verificar tamanho antes de enviar (limite Vercel: 4.5MB)
-    if (pdfBlob.size > 4 * 1024 * 1024) {
-      throw new Error(`PDF gerado muito grande (${(pdfBlob.size/1024/1024).toFixed(1)}MB). Tente recarregar e enviar novamente.`);
+    // Compressão adaptativa: tenta 3 níveis de qualidade até caber no limite do Vercel (4.5MB)
+    // O download via botão PDF continua em alta qualidade — só o envio usa versão compacta
+    const niveis = [
+      { scale: 1.2, quality: 0.55 },  // tentativa 1: qualidade boa
+      { scale: 1.0, quality: 0.40 },  // tentativa 2: compacto
+      { scale: 0.9, quality: 0.25 },  // tentativa 3: mínimo legível
+    ];
+
+    let pdfBlob;
+    for (let i = 0; i < niveis.length; i++) {
+      const { scale, quality } = niveis[i];
+      btn.textContent = `Gerando PDF${i > 0 ? ` (tentativa ${i+1})` : ''}...`;
+      const opt = {
+        margin: 0,
+        image: { type: 'jpeg', quality },
+        html2canvas: { scale, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      pdfBlob = await html2pdf().set(opt).from(el).outputPdf('blob');
+      const sizeMB = pdfBlob.size / 1024 / 1024;
+      console.log(`Nível ${i+1}: ${sizeMB.toFixed(2)}MB (scale=${scale}, quality=${quality})`);
+      if (sizeMB < 3.5) break; // dentro do limite seguro
+      if (i === niveis.length - 1) throw new Error(`Documento muito extenso para envio automático (${sizeMB.toFixed(1)}MB). Baixe o PDF e envie manualmente pelo ClickSign.`);
     }
 
     const base64 = await blobToBase64(pdfBlob);
@@ -603,11 +614,11 @@ async function confirmarCS() {
       })
     });
 
-    // Tratar resposta não-JSON (ex: HTTP 413 do Vercel)
+    // Tratar resposta não-JSON (ex: HTTP 413 residual do Vercel)
     const txt = await r.text();
     let d;
     try { d = JSON.parse(txt); }
-    catch { throw new Error(r.status === 413 ? 'PDF muito grande para envio. Tente com scale menor.' : `Resposta inesperada do servidor (${r.status}): ${txt.slice(0,100)}`); }
+    catch { throw new Error(`Servidor retornou erro ${r.status}. Tente novamente.`); }
     if (!r.ok) throw new Error(d.erro || 'Erro no ClickSign');
     document.getElementById('mod-cs').style.display = 'none';
     addMsg('agent', `✓ Documento enviado para assinatura via ClickSign!\n\nSignatário: **${nome}** (${email})\nEnvelope: ${d.envelope_key}`);
