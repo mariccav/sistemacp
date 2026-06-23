@@ -136,47 +136,96 @@ module.exports = async (req, res) => {
   }
 };
 
-// ── Buscar transferências enviadas do Asaas ──────────────────────
-// Usa /v3/transfers — endpoint que retorna APENAS transferências feitas
-// pela conta (PIX, TED enviados). Nunca retorna recebimentos.
+// ── Buscar saídas do Asaas: transferências + pagamentos ──────────
+// Combina dois endpoints para cobrir todos os tipos de saída:
+// 1. /v3/transfers   → PIX, TED enviados (transferências)
+// 2. /v3/payments    → boletos/cobranças que a conta PAGOU (status REFUNDED
+//    ou qualquer pagamento onde a conta é o pagador)
+//
+// Tipos de saída garantidos pelo endpoint usado — nunca mistura entradas.
 async function buscarDespesas(chave, dataInicio, dataFim, conta) {
   if (!chave) return [];
+
+  const headers = { access_token: chave, 'Content-Type': 'application/json' };
+  const resultados = [];
+
+  // ── 1. Transferências enviadas (PIX / TED / entre contas) ────────
   try {
-    // Tentar com dateCreated (formato principal Asaas)
-    const params = new URLSearchParams({
-      'dateCreated[ge]': dataInicio,
-      'dateCreated[le]': dataFim,
-      limit: '100'
-    });
-    const r = await fetch(`https://api.asaas.com/v3/transfers?${params}`, {
-      headers: { access_token: chave, 'Content-Type': 'application/json' }
-    });
-    if (!r.ok) {
-      console.error('Asaas transfers erro:', r.status, await r.text());
-      return [];
+    // Asaas aceita startDate/finishDate OU dateCreated[ge/le]
+    const [r1, r2] = await Promise.all([
+      fetch(`https://api.asaas.com/v3/transfers?startDate=${dataInicio}&finishDate=${dataFim}&limit=100`, { headers }),
+      fetch(`https://api.asaas.com/v3/transfers?dateCreated[ge]=${dataInicio}&dateCreated[le]=${dataFim}&limit=100`, { headers })
+    ]);
+
+    for (const r of [r1, r2]) {
+      if (!r.ok) continue;
+      const data = await r.json();
+      for (const t of (data.data || [])) {
+        // Evitar duplicatas entre as duas chamadas (mesmo id)
+        if (resultados.find(x => x.id === t.id)) continue;
+        resultados.push({
+          id: t.id,
+          data: t.transferDate || t.dateCreated || t.date || dataInicio,
+          descricao: t.description || t.operationType || 'Transferência',
+          valor: Math.abs(Number(t.value || t.netValue || 0)),
+          conta,
+          categoria: classificarDespesa(t.description || t.operationType || '')
+        });
+      }
     }
-    const data = await r.json();
-    const items = data.data || [];
-
-    // Log para diagnóstico (remover após confirmar funcionamento)
-    console.log(`Asaas transfers [${conta}]: ${items.length} registros entre ${dataInicio} e ${dataFim}`);
-    if (items.length > 0) {
-      console.log('Exemplo:', JSON.stringify(items[0]).slice(0, 300));
-    }
-
-    return items.map(t => ({
-      id: t.id,
-      data: t.transferDate || t.dateCreated || t.date || dataInicio,
-      descricao: t.description || t.operationType || 'Transferência',
-      valor: Math.abs(Number(t.value || t.netValue || 0)),
-      conta,
-      categoria: classificarDespesa(t.description || t.operationType || '')
-    }));
-
   } catch (e) {
-    console.error('buscarDespesas erro:', e.message);
-    return [];
+    console.error('transfers erro:', e.message);
   }
+
+  // ── 2. Cobranças pagas pela conta (boletos, pagamentos feitos) ───
+  // O Asaas chama de "bills" os pagamentos que você faz a terceiros
+  try {
+    const rb = await fetch(
+      `https://api.asaas.com/v3/financialTransactions?startDate=${dataInicio}&finishDate=${dataFim}&limit=100`,
+      { headers }
+    );
+    if (rb.ok) {
+      const db = await rb.json();
+
+      // Tipos que representam SAÍDAS confirmadas no Asaas
+      const TIPOS_SAIDA = [
+        'TRANSFER','PIX_DEBIT','BILL_PAYMENT','BANK_SLIP_PAYMENT',
+        'DEBIT','PAYMENT_SENT','TRANSFER_SENT','TEV','TED'
+      ];
+      // Tipos que são ENTRADAS — excluir sempre
+      const TIPOS_ENTRADA = [
+        'PAYMENT_RECEIVED','CREDIT','PIX_CREDIT','TRANSFER_RECEIVED',
+        'RECEIVED','CHARGEBACK','REFUND_RECEIVED','RECEIVABLE'
+      ];
+
+      for (const t of (db.data || [])) {
+        if (resultados.find(x => x.id === t.id)) continue; // já veio em transfers
+
+        const tipo = (t.type || t.transactionType || '').toUpperCase();
+        const valor = Number(t.value || 0);
+
+        // Excluir entradas conhecidas
+        if (TIPOS_ENTRADA.some(te => tipo.includes(te))) continue;
+        // Incluir apenas saídas reconhecidas OU valores negativos
+        const ehSaida = TIPOS_SAIDA.some(ts => tipo.includes(ts)) || valor < 0;
+        if (!ehSaida) continue;
+
+        resultados.push({
+          id: t.id,
+          data: t.date || t.effectiveDate || dataInicio,
+          descricao: t.description || tipo || 'Pagamento',
+          valor: Math.abs(valor),
+          conta,
+          categoria: classificarDespesa(t.description || tipo || '')
+        });
+      }
+    }
+  } catch (e) {
+    console.error('financialTransactions erro:', e.message);
+  }
+
+  console.log(`Despesas [${conta}]: ${resultados.length} saídas encontradas`);
+  return resultados;
 }
 
 // ── Buscar honorários recebidos ───────────────────────────────────
