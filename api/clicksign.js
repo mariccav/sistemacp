@@ -44,7 +44,8 @@ module.exports = async (req, res) => {
 
   try {
     // ── 1. Criar envelope ─────────────────────────────────────────
-    const nomeArq = nome_arquivo.replace(/[^a-zA-Z0-9._\- ]/g, '_');
+    // Preserva acentos/cedilha no nome do envelope; remove apenas caracteres inválidos para filename
+    const nomeArq = nome_arquivo.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
     const rEnv = await fetch(`${BASE}/envelopes`, {
       method: 'POST',
       headers: HEADERS,

@@ -602,13 +602,24 @@ async function confirmarCS() {
 
     const base64 = await blobToBase64(pdfBlob);
 
+    // Nome padronizado para o ClickSign baseado no tipo do documento
+    const tipoUpper = (docTitulo || '').toUpperCase();
+    let nomeClickSign;
+    if (tipoUpper.includes('PROCURA')) {
+      nomeClickSign = 'PROCURAÇÃO';
+    } else if (tipoUpper.includes('CONTRATO')) {
+      nomeClickSign = 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS';
+    } else {
+      nomeClickSign = docTitulo || 'DOCUMENTO';
+    }
+
     btn.textContent = 'Enviando...';
     const r = await fetch('/api/clicksign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         arquivo_base64: base64,
-        nome_arquivo: docTitulo.replace(/\s+/g,'_') + '.pdf',
+        nome_arquivo: nomeClickSign + '.pdf',
         signatarios: [{ nome, email, cpf: cpf || null }],
         mensagem: `Prezado(a) ${nome}, segue o documento para assinatura. Cavalcante Pinheiro Advocacia.`
       })
