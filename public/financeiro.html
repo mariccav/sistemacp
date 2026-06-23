@@ -910,7 +910,9 @@ const SB_KEY  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
 const SB_HEAD = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
 async function sbGet(tabela, mes, ano) {
-  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?mes=eq.${mes}&ano=eq.${ano}&order=criado_em.asc`, { headers: SB_HEAD });
+  // Despesas: filtrar excluídas (soft delete para evitar re-importação do Asaas)
+  const filtroExtra = tabela === 'despesas' ? '&excluido=neq.true' : '';
+  const r = await fetch(`${SB_URL}/rest/v1/${tabela}?mes=eq.${mes}&ano=eq.${ano}${filtroExtra}&order=criado_em.asc`, { headers: SB_HEAD });
   return r.ok ? r.json() : [];
 }
 async function sbInsert(tabela, dados) {
@@ -1014,7 +1016,11 @@ async function excluirRepasse(id) {
 }
 async function excluirDespesa(id) {
   if (!confirm('Excluir esta despesa?')) return;
-  await sbDelete('despesas', id);
+  // Soft delete: marca como excluído para o sync não re-importar do Asaas
+  await fetch(`${SB_URL}/rest/v1/despesas?id=eq.${id}`, {
+    method: 'PATCH', headers: SB_HEAD,
+    body: JSON.stringify({ excluido: true })
+  });
   carregarMes(mesAtivo, anoAtivo);
 }
 

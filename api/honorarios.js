@@ -84,8 +84,10 @@ module.exports = async (req, res) => {
       try {
         const asaasIds = todasAsaas.map(d => d.id).join(',');
         if (asaasIds) {
+          // Buscar asaas_ids já existentes OU já excluídos (soft delete)
+          // — não re-importar nenhum dos dois
           const rExist = await fetch(
-            `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&asaas_id=in.(${asaasIds})&select=asaas_id`,
+            `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&asaas_id=in.(${asaasIds})&select=asaas_id,excluido`,
             { headers: { ...SB_HEAD, 'Prefer': 'return=representation' } }
           );
           const jaExistem = rExist.ok ? (await rExist.json()).map(d => d.asaas_id) : [];
@@ -114,7 +116,7 @@ module.exports = async (req, res) => {
 
       // Retornar os dados já salvos no Supabase (manuais + importados)
       const rTodos = await fetch(
-        `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&order=data_pagamento.asc`,
+        `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&excluido=neq.true&order=data_pagamento.asc`,
         { headers: { ...SB_HEAD, 'Prefer': 'return=representation' } }
       );
       const todos = rTodos.ok ? await rTodos.json() : [];
