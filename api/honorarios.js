@@ -112,30 +112,37 @@ module.exports = async (req, res) => {
   }
 };
 
-// ── Buscar despesas/saídas do Asaas ──────────────────────────────
+// ── Buscar despesas/saídas do Asaas via financialTransactions ────
+// Cobre: PIX, TED, boletos pagos, tarifas — tudo que sai da conta
 async function buscarDespesas(chave, dataInicio, dataFim, conta) {
   if (!chave) return [];
   try {
-    // Transferências realizadas
     const params = new URLSearchParams({
-      'transferDate[ge]': dataInicio,
-      'transferDate[le]': dataFim,
+      startDate: dataInicio,
+      finishDate: dataFim,
+      type: 'DEBIT',
       limit: '100'
     });
-    const r = await fetch(`https://api.asaas.com/v3/transfers?${params}`, {
+    const r = await fetch(`https://api.asaas.com/v3/financialTransactions?${params}`, {
       headers: { access_token: chave, 'Content-Type': 'application/json' }
     });
-    if (!r.ok) return [];
+    if (!r.ok) {
+      console.error('Asaas financialTransactions erro:', r.status, await r.text());
+      return [];
+    }
     const data = await r.json();
     return (data.data || []).map(t => ({
       id: t.id,
-      data: t.transferDate || dataInicio,
-      descricao: t.description || t.operationType || 'Transferência',
-      valor: Math.abs(t.value || t.netValue || 0),
+      data: t.date || t.effectiveDate || dataInicio,
+      descricao: t.description || t.type || 'Saída',
+      valor: Math.abs(t.value || 0),
       conta,
-      categoria: classificarDespesa(t.description || t.operationType || '')
+      categoria: classificarDespesa(t.description || t.type || '')
     }));
-  } catch { return []; }
+  } catch (e) {
+    console.error('buscarDespesas erro:', e.message);
+    return [];
+  }
 }
 
 // ── Buscar honorários recebidos ───────────────────────────────────
