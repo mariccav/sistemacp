@@ -92,6 +92,17 @@ module.exports = async (req, res) => {
           );
           const jaExistem = rExist.ok ? (await rExist.json()).map(d => d.asaas_id) : [];
 
+          // ── Regras de exclusão automática ──────────────────────────
+          // Definidas pela Mariana — aplicadas a todos os meses futuros
+          const EXCLUIR_SE = [
+            // Taxas internas do Asaas (mensageria, boleto, PIX, cartão, WhatsApp)
+            desc => desc.startsWith('Taxa '),
+            // Transferências para conta pessoal da Mariana
+            desc => desc.toUpperCase().includes('MARIANA CARVALHO')
+          ];
+
+          const autoExcluir = (desc) => EXCLUIR_SE.some(fn => fn(desc || ''));
+
           // 3. Inserir apenas os novos (não duplicar)
           const novos = todasAsaas.filter(d => !jaExistem.includes(d.id));
           if (novos.length > 0) {
@@ -102,7 +113,8 @@ module.exports = async (req, res) => {
               categoria: d.categoria,
               valor: d.valor,
               conta: d.conta,
-              asaas_id: d.id
+              asaas_id: d.id,
+              excluido: autoExcluir(d.descricao)   // ← já nasce excluído se bater regra
             }));
             await fetch(`${SB_URL}/rest/v1/despesas`, {
               method: 'POST', headers: SB_HEAD, body: JSON.stringify(payload)
