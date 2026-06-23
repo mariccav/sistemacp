@@ -951,7 +951,7 @@ async function salvarRepasse() {
   if (id) await sbUpdate('repasses', id, dados);
   else    await sbInsert('repasses', dados);
   fecharModal('modal-repasse');
-  carregarVivo();
+  carregarMes(mesAtivo, anoAtivo);
 }
 
 async function salvarDespesa() {
@@ -967,18 +967,18 @@ async function salvarDespesa() {
   if (id) await sbUpdate('despesas', id, dados);
   else    await sbInsert('despesas', dados);
   fecharModal('modal-despesa');
-  carregarVivo();
+  carregarMes(mesAtivo, anoAtivo);
 }
 
 async function excluirRepasse(id) {
   if (!confirm('Excluir este repasse?')) return;
   await sbDelete('repasses', id);
-  carregarVivo();
+  carregarMes(mesAtivo, anoAtivo);
 }
 async function excluirDespesa(id) {
   if (!confirm('Excluir esta despesa?')) return;
   await sbDelete('despesas', id);
-  carregarVivo();
+  carregarMes(mesAtivo, anoAtivo);
 }
 
 // Render especial das seções editáveis da aba ao vivo
