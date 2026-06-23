@@ -56,8 +56,28 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  const { mes, ano, tipo } = req.query || {};
+  const { mes, ano, tipo, debug } = req.query || {};
   if (!mes || !ano) return res.status(400).json({ erro: 'Informe mes e ano.' });
+
+  // ── Modo debug: retorna resposta bruta do Asaas para diagnóstico ──
+  if (debug === 'asaas') {
+    const chave = process.env.ASAAS_KEY_PESSOAL;
+    const m2 = String(mes).padStart(2,'0');
+    const dataI = `${ano}-${m2}-01`;
+    const dataF = `${ano}-${m2}-${new Date(Number(ano),Number(mes),0).getDate()}`;
+    const heads = { access_token: chave, 'Content-Type': 'application/json' };
+
+    const [rT, rF] = await Promise.all([
+      fetch(`https://api.asaas.com/v3/transfers?startDate=${dataI}&finishDate=${dataF}&limit=5`, { headers: heads }),
+      fetch(`https://api.asaas.com/v3/financialTransactions?startDate=${dataI}&finishDate=${dataF}&limit=5`, { headers: heads })
+    ]);
+
+    return res.status(200).json({
+      periodo: `${dataI} a ${dataF}`,
+      transfers: { status: rT.status, data: rT.ok ? await rT.json() : await rT.text() },
+      financialTransactions: { status: rF.status, data: rF.ok ? await rF.json() : await rF.text() }
+    });
+  }
 
   const m = String(mes).padStart(2, '0');
   const a = String(ano);
