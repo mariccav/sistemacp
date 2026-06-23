@@ -137,32 +137,64 @@ module.exports = async (req, res) => {
 };
 
 // ── Buscar despesas/saídas do Asaas via financialTransactions ────
-// Cobre: PIX, TED, boletos pagos, tarifas — tudo que sai da conta
+// Filtragem em duas camadas para garantir que só saídas entrem:
+//   1. Parâmetro transactionType=DEBIT na URL (se o Asaas aceitar)
+//   2. Verificação do sinal do value: valor negativo = saída da conta
 async function buscarDespesas(chave, dataInicio, dataFim, conta) {
   if (!chave) return [];
+
+  // Tipos de transação do Asaas que representam ENTRADAS (recebimentos)
+  // Qualquer transação com esses tipos será excluída mesmo que venha na lista
+  const TIPOS_ENTRADA = [
+    'PAYMENT_RECEIVED','RECEIVED_FROM_CUSTOMER','CREDIT','PIX_CREDIT',
+    'TRANSFER_RECEIVED','REVERSED_TRANSFER','CHARGEBACK_DISPUTE',
+    'REFUND_RECEIVED','RECEIVED'
+  ];
+
   try {
+    // Buscar sem filtro de type — alguns planos Asaas ignoram esse parâmetro
     const params = new URLSearchParams({
       startDate: dataInicio,
       finishDate: dataFim,
-      type: 'DEBIT',
       limit: '100'
     });
     const r = await fetch(`https://api.asaas.com/v3/financialTransactions?${params}`, {
       headers: { access_token: chave, 'Content-Type': 'application/json' }
     });
     if (!r.ok) {
-      console.error('Asaas financialTransactions erro:', r.status, await r.text());
+      const txt = await r.text();
+      console.error('Asaas financialTransactions erro:', r.status, txt);
       return [];
     }
     const data = await r.json();
-    return (data.data || []).map(t => ({
+    const todas = data.data || [];
+
+    // ── FILTRO DUPLO: garante que só saídas passem ──────────────────
+    const saidas = todas.filter(t => {
+      const valor = Number(t.value || 0);
+      const tipo  = (t.type || t.transactionType || '').toUpperCase();
+
+      // Regra 1: valor negativo = saída da conta (mais confiável)
+      if (valor < 0) return true;
+
+      // Regra 2: valor zero ou positivo com tipo de entrada = excluir
+      if (valor >= 0 && TIPOS_ENTRADA.some(te => tipo.includes(te))) return false;
+
+      // Regra 3: valor positivo sem tipo reconhecido = excluir (segurança)
+      if (valor > 0) return false;
+
+      return false;
+    });
+
+    return saidas.map(t => ({
       id: t.id,
       data: t.date || t.effectiveDate || dataInicio,
       descricao: t.description || t.type || 'Saída',
-      valor: Math.abs(t.value || 0),
+      valor: Math.abs(Number(t.value || 0)),
       conta,
       categoria: classificarDespesa(t.description || t.type || '')
     }));
+
   } catch (e) {
     console.error('buscarDespesas erro:', e.message);
     return [];
