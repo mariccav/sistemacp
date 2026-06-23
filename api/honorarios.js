@@ -112,9 +112,17 @@ module.exports = async (req, res) => {
         console.warn('Sync Asaas→Supabase: coluna asaas_id não encontrada. Execute o SQL de migração.');
       }
 
+      // Retornar os dados já salvos no Supabase (manuais + importados)
+      const rTodos = await fetch(
+        `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&order=data_pagamento.asc`,
+        { headers: { ...SB_HEAD, 'Prefer': 'return=representation' } }
+      );
+      const todos = rTodos.ok ? await rTodos.json() : [];
+
       return res.status(200).json({
         mes: Number(mes), ano: Number(ano),
-        sincronizados: todasAsaas.length
+        sincronizados: todasAsaas.length,
+        despesas: todos          // ← retorna tudo para o frontend usar diretamente
       });
     }
 

@@ -1212,14 +1212,15 @@ async function carregarMes(mes, ano) {
       mesTitulo: nomeMes
     };
 
-    // Sincronizar Asaas → Supabase (em background, não bloqueia a tela)
-    fetch(`/api/honorarios?mes=${mes}&ano=${ano}&tipo=despesas`).catch(() => {});
-
-    // Buscar tudo do Supabase — manuais + importadas do Asaas, todas editáveis
-    const [repasses, despesas] = await Promise.all([
+    // Sincronizar Asaas → Supabase e receber despesas em uma só chamada
+    // (await garante que os dados estejam salvos antes de renderizar)
+    const [repasses, syncResp] = await Promise.all([
       sbGet('repasses', mes, ano),
-      sbGet('despesas', mes, ano)
+      fetch(`/api/honorarios?mes=${mes}&ano=${ano}&tipo=despesas`)
+        .then(r => r.ok ? r.json() : { despesas: [] })
+        .catch(() => ({ despesas: [] }))
     ]);
+    const despesas = syncResp.despesas || [];
 
     const repTotal = (repasses||[]).reduce((s,r) => s + parseFloat(r.valor||0), 0);
     const desTotal = despesas.reduce((s,d) => s + parseFloat(d.valor||0), 0);
