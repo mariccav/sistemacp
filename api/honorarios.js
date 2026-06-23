@@ -136,63 +136,41 @@ module.exports = async (req, res) => {
   }
 };
 
-// ── Buscar despesas/saídas do Asaas via financialTransactions ────
-// Filtragem em duas camadas para garantir que só saídas entrem:
-//   1. Parâmetro transactionType=DEBIT na URL (se o Asaas aceitar)
-//   2. Verificação do sinal do value: valor negativo = saída da conta
+// ── Buscar transferências enviadas do Asaas ──────────────────────
+// Usa /v3/transfers — endpoint que retorna APENAS transferências feitas
+// pela conta (PIX, TED enviados). Nunca retorna recebimentos.
 async function buscarDespesas(chave, dataInicio, dataFim, conta) {
   if (!chave) return [];
-
-  // Tipos de transação do Asaas que representam ENTRADAS (recebimentos)
-  // Qualquer transação com esses tipos será excluída mesmo que venha na lista
-  const TIPOS_ENTRADA = [
-    'PAYMENT_RECEIVED','RECEIVED_FROM_CUSTOMER','CREDIT','PIX_CREDIT',
-    'TRANSFER_RECEIVED','REVERSED_TRANSFER','CHARGEBACK_DISPUTE',
-    'REFUND_RECEIVED','RECEIVED'
-  ];
-
   try {
-    // Buscar sem filtro de type — alguns planos Asaas ignoram esse parâmetro
+    // Tentar com dateCreated (formato principal Asaas)
     const params = new URLSearchParams({
-      startDate: dataInicio,
-      finishDate: dataFim,
+      'dateCreated[ge]': dataInicio,
+      'dateCreated[le]': dataFim,
       limit: '100'
     });
-    const r = await fetch(`https://api.asaas.com/v3/financialTransactions?${params}`, {
+    const r = await fetch(`https://api.asaas.com/v3/transfers?${params}`, {
       headers: { access_token: chave, 'Content-Type': 'application/json' }
     });
     if (!r.ok) {
-      const txt = await r.text();
-      console.error('Asaas financialTransactions erro:', r.status, txt);
+      console.error('Asaas transfers erro:', r.status, await r.text());
       return [];
     }
     const data = await r.json();
-    const todas = data.data || [];
+    const items = data.data || [];
 
-    // ── FILTRO DUPLO: garante que só saídas passem ──────────────────
-    const saidas = todas.filter(t => {
-      const valor = Number(t.value || 0);
-      const tipo  = (t.type || t.transactionType || '').toUpperCase();
+    // Log para diagnóstico (remover após confirmar funcionamento)
+    console.log(`Asaas transfers [${conta}]: ${items.length} registros entre ${dataInicio} e ${dataFim}`);
+    if (items.length > 0) {
+      console.log('Exemplo:', JSON.stringify(items[0]).slice(0, 300));
+    }
 
-      // Regra 1: valor negativo = saída da conta (mais confiável)
-      if (valor < 0) return true;
-
-      // Regra 2: valor zero ou positivo com tipo de entrada = excluir
-      if (valor >= 0 && TIPOS_ENTRADA.some(te => tipo.includes(te))) return false;
-
-      // Regra 3: valor positivo sem tipo reconhecido = excluir (segurança)
-      if (valor > 0) return false;
-
-      return false;
-    });
-
-    return saidas.map(t => ({
+    return items.map(t => ({
       id: t.id,
-      data: t.date || t.effectiveDate || dataInicio,
-      descricao: t.description || t.type || 'Saída',
-      valor: Math.abs(Number(t.value || 0)),
+      data: t.transferDate || t.dateCreated || t.date || dataInicio,
+      descricao: t.description || t.operationType || 'Transferência',
+      valor: Math.abs(Number(t.value || t.netValue || 0)),
       conta,
-      categoria: classificarDespesa(t.description || t.type || '')
+      categoria: classificarDespesa(t.description || t.operationType || '')
     }));
 
   } catch (e) {
