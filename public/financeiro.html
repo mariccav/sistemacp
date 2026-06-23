@@ -241,13 +241,16 @@ footer strong{color:var(--br);}
 <!-- MODAL LANÇAMENTO MANUAL -->
 <div class="modal-overlay" id="modal-lancamento">
   <div class="modal">
-    <h2 id="modal-lanc-titulo">Lançamento Manual</h2>
+    <h2 id="modal-lanc-titulo">Receita Externa</h2>
     <input type="hidden" id="lanc-id">
-    <div class="form-row"><label>Data</label><input type="text" id="lanc-data" placeholder="14/05"></div>
-    <div class="form-row"><label>Cliente / Descrição</label><input type="text" id="lanc-cliente" placeholder="Nome do cliente"></div>
-    <div class="form-row"><label>Conta</label>
+    <div class="form-row"><label>Data</label><input type="text" id="lanc-data" placeholder="14/06"></div>
+    <div class="form-row"><label>Descrição / Origem</label><input type="text" id="lanc-cliente" placeholder="Ex: Reembolso TJ, Honorários Bradesco..."></div>
+    <div class="form-row"><label>Fonte</label>
       <select id="lanc-conta">
-        <option>Itaú</option><option>Banco do Brasil</option><option>Caixa</option><option>Outro</option>
+        <option>Itaú</option><option>Banco do Brasil</option><option>Caixa</option>
+        <option>Bradesco</option><option>Nubank</option>
+        <option>TJ / Tribunal</option><option>Cartório</option>
+        <option>Dinheiro</option><option>Outro</option>
       </select>
     </div>
     <div class="form-row"><label>Valor (R$)</label><input type="number" id="lanc-valor" placeholder="0,00" step="0.01" min="0"></div>
@@ -373,7 +376,7 @@ footer strong{color:var(--br);}
   <div class="tcard gap">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
       <h3 id="hon-table-title">Lançamentos do Mês</h3>
-      <button class="btn-add" onclick="abrirModalLancamento(null)">+ Lançamento Manual</button>
+      <button class="btn-add" onclick="abrirModalLancamento(null)">+ Receita Externa</button>
     </div>
     <table>
       <thead><tr><th>Data</th><th>Cliente</th><th>Conta</th><th>Valor</th><th style="text-align:right">Ações</th></tr></thead>
@@ -824,13 +827,16 @@ function render(tab) {
 
   let honHTML = '';
   d.lancamentos.forEach(l => {
+    const badgeExterno = l.manual
+      ? `<span style="font-size:10px;background:#e8f4e8;color:#2a6a2a;border-radius:3px;padding:1px 5px;margin-left:4px">Externo</span>`
+      : '';
     const acoes = l.manual
       ? `<td style="text-align:right">
-           <button onclick="abrirModalLancamento(${JSON.stringify(l).replace(/"/g,'&quot;')})" style="background:none;border:none;cursor:pointer;color:var(--bege);font-size:12px;margin-right:6px;">✏️</button>
-           <button onclick="excluirLancamentoManual('${l.id}')" style="background:none;border:none;cursor:pointer;color:#c25e5e;font-size:12px;">✕</button>
+           <button class="btn-edit" onclick="abrirModalLancamento(${JSON.stringify(l).replace(/"/g,'&quot;')})" style="margin-right:4px">Editar</button>
+           <button class="btn-del" onclick="excluirLancamentoManual('${l.id}')">Excluir</button>
          </td>`
       : `<td></td>`;
-    honHTML += `<tr><td>${l.data}</td><td>${l.cliente}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td>${acoes}</tr>`;
+    honHTML += `<tr><td>${l.data}</td><td>${l.cliente}${badgeExterno}</td><td>${CONTAS_BADGE[l.conta]||l.conta}</td><td>${fmt(l.valor)}</td>${acoes}</tr>`;
   });
   honHTML += `<tr class="tr-total"><td colspan="4">TOTAL</td><td>${fmt(d.honorarios)}</td></tr>`;
   tbHon.innerHTML = honHTML;
