@@ -168,6 +168,9 @@ footer strong{color:var(--br);}
 .btn-del:hover{background:#fdf0f0;}
 .col-acoes{text-align:right !important;white-space:nowrap;}
 .col-acoes button{margin-left:4px;}
+.cel-edit{cursor:pointer;display:inline-block;min-width:40px;border-bottom:1px dashed transparent;transition:.15s;}
+.cel-edit:hover{border-bottom-color:#1f3e3c;color:#1f3e3c;}
+.cel-select:hover{background:rgba(31,62,60,.06) !important;border-radius:4px;}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(31,62,60,.55);z-index:1000;align-items:center;justify-content:center;}
@@ -284,9 +287,14 @@ footer strong{color:var(--br);}
     <div class="form-row"><label>Data</label><input type="text" id="des-data" placeholder="14/04"></div>
     <div class="form-row"><label>Categoria</label>
       <select id="des-categoria">
-        <option>Pessoal e Prestadores</option><option>Contas e Utilidades</option>
-        <option>Impostos</option><option>Tecnologia e Software</option>
-        <option>Marketing</option><option>Outros</option>
+        <option>Pessoal e Prestadores</option>
+        <option>Tributário e Fiscal</option>
+        <option>Tecnologia e Sistemas</option>
+        <option>Marketing e Comunicação</option>
+        <option>Escritório e Estrutura</option>
+        <option>Jurídico e Cartorário</option>
+        <option>Repasses a Parceiros</option>
+        <option>Outros</option>
       </select>
     </div>
     <div class="form-row"><label>Descrição</label><input type="text" id="des-descricao" placeholder="Ex: Aurum Softmatic"></div>
@@ -1010,6 +1018,30 @@ async function excluirDespesa(id) {
   carregarMes(mesAtivo, anoAtivo);
 }
 
+// ── Edição inline de células ──────────────────────────────────────
+function editarCel(span, campo, id, valorAtual) {
+  const isValor = campo === 'valor';
+  const input = document.createElement(isValor ? 'input' : 'input');
+  input.type = isValor ? 'number' : 'text';
+  input.value = isValor ? valorAtual : (valorAtual === '—' ? '' : valorAtual);
+  input.style.cssText = 'width:100%;border:none;border-bottom:2px solid #1f3e3c;background:transparent;font-size:inherit;font-family:inherit;outline:none;padding:2px 0';
+  span.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const confirmar = async () => {
+    const novoValor = isValor ? parseFloat(input.value) || 0 : input.value.trim();
+    await salvarCampo(id, campo, novoValor);
+  };
+  input.addEventListener('blur', confirmar);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } if (e.key === 'Escape') carregarMes(mesAtivo, anoAtivo); });
+}
+
+async function salvarCampo(id, campo, valor) {
+  await sbUpdate('despesas', id, { [campo]: valor });
+  carregarMes(mesAtivo, anoAtivo);
+}
+
 // Render especial das seções editáveis da aba ao vivo
 function renderSecaoEditavel(repasses, despesas) {
   // Tabela repasses
@@ -1054,29 +1086,37 @@ function renderSecaoEditavel(repasses, despesas) {
     'Outros':                  '#95a5a6'
   };
 
+  const CATS_LIST = ['Pessoal e Prestadores','Tributário e Fiscal','Tecnologia e Sistemas','Marketing e Comunicação','Escritório e Estrutura','Jurídico e Cartorário','Repasses a Parceiros','Outros'];
+
   let desHTML = '';
   for (const [cat, grupo] of Object.entries(grupos).sort((a,b) => b[1].total - a[1].total)) {
     const cor = COR_CAT[cat] || '#95a5a6';
-    // Linha de cabeçalho da categoria
     desHTML += `<tr style="background:rgba(0,0,0,.04)">
-      <td colspan="3" style="font-weight:700;color:${cor};padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
-        ● ${cat}
-      </td>
+      <td colspan="3" style="font-weight:700;color:${cor};padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.5px">● ${cat}</td>
       <td style="font-weight:700;color:${cor}">${fmt(grupo.total)}</td>
       <td></td>
     </tr>`;
-    // Itens da categoria
-    desHTML += grupo.itens.map(d => `
-      <tr>
-        <td style="padding-left:20px">${d.data_pagamento||'—'}</td>
-        <td style="color:#888;font-size:12px">${d.categoria}</td>
-        <td>${d.descricao}</td>
-        <td>${fmt(Number(d.valor))}</td>
-        <td class="col-acoes">
-          <button class="btn-edit" onclick='abrirModalDespesa(${JSON.stringify(d)})'>Editar</button>
-          <button class="btn-del"  onclick="excluirDespesa('${d.id}')">Excluir</button>
+    desHTML += grupo.itens.map(d => {
+      const dj = JSON.stringify(d).replace(/'/g,"&#39;");
+      const optsCAT = CATS_LIST.map(c => `<option${c===d.categoria?' selected':''}>${c}</option>`).join('');
+      return `<tr data-id="${d.id}">
+        <td style="padding-left:20px">
+          <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'data_pagamento','${d.id}','${d.data_pagamento||''}')">${d.data_pagamento||'—'}</span>
         </td>
-      </tr>`).join('');
+        <td>
+          <select class="cel-select" onchange="salvarCampo('${d.id}','categoria',this.value)" style="border:none;background:transparent;font-size:inherit;color:#555;cursor:pointer;max-width:180px">${optsCAT}</select>
+        </td>
+        <td>
+          <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'descricao','${d.id}',${JSON.stringify(d.descricao||'')})">${d.descricao||'—'}</span>
+        </td>
+        <td>
+          <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'valor','${d.id}','${d.valor}')">${fmt(Number(d.valor))}</span>
+        </td>
+        <td class="col-acoes">
+          <button class="btn-del" onclick="excluirDespesa('${d.id}')">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
   }
   desHTML += `<tr class="tr-total"><td colspan="3">TOTAL DESPESAS</td><td>${fmt(totalDes)}</td><td></td></tr>`;
   document.getElementById('tbody-des-vivo').innerHTML = desHTML || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Nenhuma despesa lançada</td></tr>';
