@@ -927,6 +927,26 @@ function abrirModalRepasse(item) {
   document.getElementById('rep-valor').value   = item?.valor || '';
   document.getElementById('modal-repasse').classList.add('show');
 }
+// ── Classificação automática de despesas ─────────────────────────
+const KEYWORDS_CAT = {
+  'Pessoal e Prestadores': ['salário','salario','honorário','honorario','autônomo','autonomo','freelancer','prestador','funcionário','funcionario','adiantamento','férias','ferias','13','rescisão','rescisao','humberto','diana','jade','laila','barboza','estagiário','estagiario','pro labore'],
+  'Tributário e Fiscal':   ['inss','irrf','issqn','iss','irpj','csll','pis','cofins','fgts','guia','tributo','imposto','das','simples','gps','darf','pgfn','receita','sefaz','prefeitura','parcelamento'],
+  'Tecnologia e Sistemas': ['vercel','supabase','claude','anthropic','clicksign','escavador','astrea','software','sistema','assinatura','licença','licenca','hosting','domínio','dominio','api','jusbrasil','google workspace','microsoft','adobe','zoom','notion','aws','hostinger'],
+  'Marketing e Comunicação':['tráfego','trafego','anúncio','anuncio','publicidade','instagram','google ads','meta','facebook','linkedin','marketing','mídia','midia','campanha','conteúdo','conteudo'],
+  'Escritório e Estrutura': ['aluguel','condomínio','condominio','água','agua','energia','luz','internet','telefone','material','papelaria','limpeza','seguro','copa','café','cafe','manutenção','manutencao','mundo plaza','sala'],
+  'Jurídico e Cartorário':  ['oab','tribunal','protocolo','cartório','cartorio','certidão','certidao','alvará','alvara','diligência','diligencia','tj','trf','stj','stf','custas','emolumento','registro'],
+  'Repasses a Parceiros':   ['repasse','parceiro','comissão','comissao','contty','participação','participacao','divisão','divisao']
+};
+
+function autoClassificar(descricao) {
+  if (!descricao) return 'Outros';
+  const t = descricao.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  for (const [cat, palavras] of Object.entries(KEYWORDS_CAT)) {
+    if (palavras.some(p => t.includes(p.normalize('NFD').replace(/[̀-ͯ]/g,'')))) return cat;
+  }
+  return 'Outros';
+}
+
 function abrirModalDespesa(item) {
   document.getElementById('modal-des-titulo').textContent = item ? 'Editar Despesa' : 'Lançar Despesa';
   document.getElementById('des-id').value       = item?.id || '';
@@ -935,6 +955,13 @@ function abrirModalDespesa(item) {
   document.getElementById('des-descricao').value= item?.descricao || '';
   document.getElementById('des-valor').value    = item?.valor || '';
   document.getElementById('modal-despesa').classList.add('show');
+
+  // Auto-classificar enquanto digita
+  const descEl = document.getElementById('des-descricao');
+  const catEl  = document.getElementById('des-categoria');
+  descEl.oninput = () => {
+    if (!item) catEl.value = autoClassificar(descEl.value);
+  };
 }
 function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
 
@@ -956,12 +983,14 @@ async function salvarRepasse() {
 
 async function salvarDespesa() {
   const id    = document.getElementById('des-id').value;
+  const descricao = document.getElementById('des-descricao').value.trim();
+  const catManual = document.getElementById('des-categoria').value;
   const dados = {
-    mes: vivoMes, ano: vivoAno,
+    mes: mesAtivo, ano: anoAtivo,
     data_pagamento: document.getElementById('des-data').value.trim(),
-    categoria: document.getElementById('des-categoria').value,
-    descricao: document.getElementById('des-descricao').value.trim(),
-    valor:     parseFloat(document.getElementById('des-valor').value) || 0
+    categoria: catManual || autoClassificar(descricao),
+    descricao,
+    valor: parseFloat(document.getElementById('des-valor').value) || 0
   };
   if (!dados.descricao || !dados.valor) { alert('Preencha a descrição e o valor.'); return; }
   if (id) await sbUpdate('despesas', id, dados);
@@ -999,21 +1028,58 @@ function renderSecaoEditavel(repasses, despesas) {
   repHTML += `<tr class="tr-total"><td colspan="3">TOTAL REPASSES</td><td>${fmt(totalRep)}</td><td></td></tr>`;
   document.getElementById('tbody-rep-vivo').innerHTML = repHTML;
 
-  // Tabela despesas
+  // Tabela despesas — agrupada por categoria
   const totalDes = despesas.reduce((s,d) => s + Number(d.valor), 0);
-  let desHTML = despesas.map(d => `
-    <tr>
-      <td>${d.data_pagamento||'—'}</td>
-      <td><strong>${d.categoria}</strong></td>
-      <td>${d.descricao}</td>
-      <td>${fmt(Number(d.valor))}</td>
-      <td class="col-acoes">
-        <button class="btn-edit" onclick='abrirModalDespesa(${JSON.stringify(d)})'>Editar</button>
-        <button class="btn-del"  onclick="excluirDespesa('${d.id}')">Excluir</button>
+
+  // Garantir categoria preenchida por auto-classificação
+  despesas.forEach(d => { if (!d.categoria) d.categoria = autoClassificar(d.descricao); });
+
+  // Agrupar por categoria
+  const grupos = {};
+  despesas.forEach(d => {
+    const cat = d.categoria || 'Outros';
+    if (!grupos[cat]) grupos[cat] = { total: 0, itens: [] };
+    grupos[cat].total += Number(d.valor);
+    grupos[cat].itens.push(d);
+  });
+
+  const COR_CAT = {
+    'Pessoal e Prestadores':   '#4a90d9',
+    'Tributário e Fiscal':     '#e67e22',
+    'Tecnologia e Sistemas':   '#9b59b6',
+    'Marketing e Comunicação': '#e91e63',
+    'Escritório e Estrutura':  '#27ae60',
+    'Jurídico e Cartorário':   '#1f3e3c',
+    'Repasses a Parceiros':    '#a7a897',
+    'Outros':                  '#95a5a6'
+  };
+
+  let desHTML = '';
+  for (const [cat, grupo] of Object.entries(grupos).sort((a,b) => b[1].total - a[1].total)) {
+    const cor = COR_CAT[cat] || '#95a5a6';
+    // Linha de cabeçalho da categoria
+    desHTML += `<tr style="background:rgba(0,0,0,.04)">
+      <td colspan="3" style="font-weight:700;color:${cor};padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+        ● ${cat}
       </td>
-    </tr>`).join('');
+      <td style="font-weight:700;color:${cor}">${fmt(grupo.total)}</td>
+      <td></td>
+    </tr>`;
+    // Itens da categoria
+    desHTML += grupo.itens.map(d => `
+      <tr>
+        <td style="padding-left:20px">${d.data_pagamento||'—'}</td>
+        <td style="color:#888;font-size:12px">${d.categoria}</td>
+        <td>${d.descricao}</td>
+        <td>${fmt(Number(d.valor))}</td>
+        <td class="col-acoes">
+          <button class="btn-edit" onclick='abrirModalDespesa(${JSON.stringify(d)})'>Editar</button>
+          <button class="btn-del"  onclick="excluirDespesa('${d.id}')">Excluir</button>
+        </td>
+      </tr>`).join('');
+  }
   desHTML += `<tr class="tr-total"><td colspan="3">TOTAL DESPESAS</td><td>${fmt(totalDes)}</td><td></td></tr>`;
-  document.getElementById('tbody-des-vivo').innerHTML = desHTML;
+  document.getElementById('tbody-des-vivo').innerHTML = desHTML || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Nenhuma despesa lançada</td></tr>';
 
   // Atualizar KPIs com repasses e despesas reais
   const hon = dados['vivo'].honorarios;

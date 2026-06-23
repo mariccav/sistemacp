@@ -1,58 +1,156 @@
-module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Content-Type", "application/json");
+// ── Categorias de despesa por palavras-chave ──────────────────────
+const CATEGORIAS_KEYWORDS = {
+  'Pessoal e Prestadores': [
+    'salário','salario','honorário','honorario','autônomo','autonomo',
+    'freelancer','prestador','funcionário','funcionario','remuneração',
+    'remuneracao','pro labore','prolabore','adiantamento','férias','ferias',
+    '13','décimo','decimo','rescisão','rescisao','humberto','diana',
+    'jade','laila','barboza','estagiário','estagiario'
+  ],
+  'Tributário e Fiscal': [
+    'inss','irrf','issqn','iss','irpj','csll','pis','cofins','fgts',
+    'guia','tributo','imposto','das','simples','gps','darf','pgfn',
+    'receita federal','sefaz','prefeitura','parcelamento','tax'
+  ],
+  'Tecnologia e Sistemas': [
+    'vercel','supabase','claude','anthropic','clicksign','escavador',
+    'astrea','software','sistema','assinatura','licença','licenca',
+    'hosting','domínio','dominio','api','jusbrasil','google workspace',
+    'microsoft','adobe','zoom','notion','slack','aws','hostinger'
+  ],
+  'Marketing e Comunicação': [
+    'tráfego','trafego','anúncio','anuncio','publicidade','instagram',
+    'google ads','meta ads','facebook','linkedin','marketing','mídia',
+    'midia','impulsionar','campanha','conteúdo','conteudo','social media'
+  ],
+  'Escritório e Estrutura': [
+    'aluguel','condomínio','condominio','água','agua','energia','luz',
+    'internet','telefone','material','papelaria','limpeza','seguro',
+    'copa','café','cafe','manutenção','manutencao','mobiliário',
+    'mobiliario','mundo plaza','sala'
+  ],
+  'Jurídico e Cartorário': [
+    'oab','tribunal','protocolo','cartório','cartorio','certidão',
+    'certidao','alvará','alvara','diligência','diligencia','pericial',
+    'tj','trf','stj','stf','custas','emolumento','registro','notarial'
+  ],
+  'Repasses a Parceiros': [
+    'repasse','parceiro','comissão','comissao','contty','participação',
+    'participacao','divisão','divisao','acordo'
+  ]
+};
 
-  const { mes, ano } = req.query || {};
-
-  if (!mes || !ano) {
-    return res.status(400).json({ erro: "Informe mes e ano." });
+function classificarDespesa(descricao) {
+  if (!descricao) return 'Outros';
+  const texto = descricao.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  for (const [categoria, palavras] of Object.entries(CATEGORIAS_KEYWORDS)) {
+    if (palavras.some(p => texto.includes(
+      p.normalize('NFD').replace(/[̀-ͯ]/g,'')
+    ))) return categoria;
   }
+  return 'Outros';
+}
 
-  const m = String(mes).padStart(2, "0");
+// ─────────────────────────────────────────────────────────────────
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+
+  const { mes, ano, tipo } = req.query || {};
+  if (!mes || !ano) return res.status(400).json({ erro: 'Informe mes e ano.' });
+
+  const m = String(mes).padStart(2, '0');
   const a = String(ano);
   const dataInicio = `${a}-${m}-01`;
   const ultimoDia = new Date(Number(a), Number(mes), 0).getDate();
-  const dataFim = `${a}-${m}-${String(ultimoDia).padStart(2, "0")}`;
+  const dataFim = `${a}-${m}-${String(ultimoDia).padStart(2, '0')}`;
 
   try {
+    // ── Modo despesas: busca transferências/saídas do Asaas ──────
+    if (tipo === 'despesas') {
+      const [despPessoal, despEscritorio] = await Promise.all([
+        buscarDespesas(process.env.ASAAS_KEY_PESSOAL, dataInicio, dataFim, 'Asaas Pessoal'),
+        buscarDespesas(process.env.ASAAS_KEY_ESCRITORIO, dataInicio, dataFim, 'Asaas Empresa')
+      ]);
+
+      const todasDespesas = [...despPessoal, ...despEscritorio]
+        .sort((a, b) => a.data.localeCompare(b.data));
+
+      // Agrupar por categoria
+      const porCategoria = {};
+      todasDespesas.forEach(d => {
+        if (!porCategoria[d.categoria]) porCategoria[d.categoria] = { total: 0, itens: [] };
+        porCategoria[d.categoria].total += d.valor;
+        porCategoria[d.categoria].itens.push(d);
+      });
+
+      const totalDespesas = todasDespesas.reduce((s, d) => s + d.valor, 0);
+
+      return res.status(200).json({
+        mes: Number(mes), ano: Number(ano),
+        totalDespesas: Math.round(totalDespesas * 100) / 100,
+        porCategoria,
+        itens: todasDespesas
+      });
+    }
+
+    // ── Modo padrão: honorários recebidos ─────────────────────────
     const [pessoal, escritorio] = await Promise.all([
       buscarPagamentos(process.env.ASAAS_KEY_PESSOAL, dataInicio, dataFim),
       buscarPagamentos(process.env.ASAAS_KEY_ESCRITORIO, dataInicio, dataFim)
     ]);
 
-    const totalHonorarios = pessoal.total + escritorio.total;
-
     return res.status(200).json({
-      mes: Number(mes),
-      ano: Number(ano),
+      mes: Number(mes), ano: Number(ano),
       periodo: `${dataInicio} a ${dataFim}`,
-      pessoal,
-      escritorio,
-      totalHonorarios
+      pessoal, escritorio,
+      totalHonorarios: pessoal.total + escritorio.total
     });
+
   } catch (err) {
     return res.status(500).json({ erro: err.message });
   }
 };
 
+// ── Buscar despesas/saídas do Asaas ──────────────────────────────
+async function buscarDespesas(chave, dataInicio, dataFim, conta) {
+  if (!chave) return [];
+  try {
+    // Transferências realizadas
+    const params = new URLSearchParams({
+      'transferDate[ge]': dataInicio,
+      'transferDate[le]': dataFim,
+      limit: '100'
+    });
+    const r = await fetch(`https://api.asaas.com/v3/transfers?${params}`, {
+      headers: { access_token: chave, 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return (data.data || []).map(t => ({
+      id: t.id,
+      data: t.transferDate || dataInicio,
+      descricao: t.description || t.operationType || 'Transferência',
+      valor: Math.abs(t.value || t.netValue || 0),
+      conta,
+      categoria: classificarDespesa(t.description || t.operationType || '')
+    }));
+  } catch { return []; }
+}
+
+// ── Buscar honorários recebidos ───────────────────────────────────
 async function buscarPagamentos(chave, dataInicio, dataFim) {
-  if (!chave) throw new Error("Chave de API não configurada.");
+  if (!chave) throw new Error('Chave de API não configurada.');
 
   const params = new URLSearchParams({
-    status: "RECEIVED",
-    "paymentDate[ge]": dataInicio,
-    "paymentDate[le]": dataFim,
-    limit: "100"
+    status: 'RECEIVED',
+    'paymentDate[ge]': dataInicio,
+    'paymentDate[le]': dataFim,
+    limit: '100'
   });
-  const url = `https://api.asaas.com/v3/payments?${params}`;
-
-  const response = await fetch(url, {
-    headers: {
-      access_token: chave,
-      "Content-Type": "application/json"
-    }
+  const response = await fetch(`https://api.asaas.com/v3/payments?${params}`, {
+    headers: { access_token: chave, 'Content-Type': 'application/json' }
   });
-
   if (!response.ok) {
     const texto = await response.text();
     throw new Error(`Asaas retornou erro ${response.status}: ${texto}`);
@@ -62,7 +160,6 @@ async function buscarPagamentos(chave, dataInicio, dataFim) {
   const pagamentos = data.data || [];
   const total = pagamentos.reduce((soma, p) => soma + (p.value || 0), 0);
 
-  // Buscar nomes dos clientes que não vieram na listagem
   const idsUnicos = [...new Set(
     pagamentos.filter(p => !p.customerName && p.customer).map(p => p.customer)
   )];
@@ -72,10 +169,7 @@ async function buscarPagamentos(chave, dataInicio, dataFim) {
       const r = await fetch(`https://api.asaas.com/v3/customers/${id}`, {
         headers: { access_token: chave }
       });
-      if (r.ok) {
-        const c = await r.json();
-        nomeCliente[id] = c.name || null;
-      }
+      if (r.ok) { const c = await r.json(); nomeCliente[id] = c.name || null; }
     } catch {}
   }));
 
@@ -84,10 +178,10 @@ async function buscarPagamentos(chave, dataInicio, dataFim) {
     quantidade: pagamentos.length,
     pagamentos: pagamentos.map(p => ({
       id: p.id,
-      cliente: p.customerName || nomeCliente[p.customer] || p.description || "Cliente",
+      cliente: p.customerName || nomeCliente[p.customer] || p.description || 'Cliente',
       valor: p.value,
       dataPagamento: p.paymentDate,
-      descricao: p.description || ""
+      descricao: p.description || ''
     }))
   };
 }
