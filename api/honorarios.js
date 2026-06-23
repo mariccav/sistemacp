@@ -66,31 +66,55 @@ module.exports = async (req, res) => {
   const dataFim = `${a}-${m}-${String(ultimoDia).padStart(2, '0')}`;
 
   try {
-    // ── Modo despesas: busca transferências/saídas do Asaas ──────
+    // ── Modo despesas: sincroniza saídas do Asaas → Supabase ────────
     if (tipo === 'despesas') {
+      const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
+      const SB_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+      const SB_HEAD = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+      // 1. Buscar transações brutas do Asaas (ambas as contas)
       const [despPessoal, despEscritorio] = await Promise.all([
         buscarDespesas(process.env.ASAAS_KEY_PESSOAL, dataInicio, dataFim, 'Asaas Pessoal'),
         buscarDespesas(process.env.ASAAS_KEY_ESCRITORIO, dataInicio, dataFim, 'Asaas Empresa')
       ]);
+      const todasAsaas = [...despPessoal, ...despEscritorio];
 
-      const todasDespesas = [...despPessoal, ...despEscritorio]
-        .sort((a, b) => a.data.localeCompare(b.data));
+      // 2. Verificar quais já existem no Supabase (pelo asaas_id)
+      //    Se a coluna asaas_id ainda não existe, pula a sincronização
+      try {
+        const asaasIds = todasAsaas.map(d => d.id).join(',');
+        if (asaasIds) {
+          const rExist = await fetch(
+            `${SB_URL}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&asaas_id=in.(${asaasIds})&select=asaas_id`,
+            { headers: { ...SB_HEAD, 'Prefer': 'return=representation' } }
+          );
+          const jaExistem = rExist.ok ? (await rExist.json()).map(d => d.asaas_id) : [];
 
-      // Agrupar por categoria
-      const porCategoria = {};
-      todasDespesas.forEach(d => {
-        if (!porCategoria[d.categoria]) porCategoria[d.categoria] = { total: 0, itens: [] };
-        porCategoria[d.categoria].total += d.valor;
-        porCategoria[d.categoria].itens.push(d);
-      });
-
-      const totalDespesas = todasDespesas.reduce((s, d) => s + d.valor, 0);
+          // 3. Inserir apenas os novos (não duplicar)
+          const novos = todasAsaas.filter(d => !jaExistem.includes(d.id));
+          if (novos.length > 0) {
+            const payload = novos.map(d => ({
+              mes: Number(mes), ano: Number(ano),
+              data_pagamento: d.data,
+              descricao: d.descricao,
+              categoria: d.categoria,
+              valor: d.valor,
+              conta: d.conta,
+              asaas_id: d.id
+            }));
+            await fetch(`${SB_URL}/rest/v1/despesas`, {
+              method: 'POST', headers: SB_HEAD, body: JSON.stringify(payload)
+            });
+          }
+        }
+      } catch (e) {
+        // Coluna asaas_id ainda não existe — só retorna os dados sem salvar
+        console.warn('Sync Asaas→Supabase: coluna asaas_id não encontrada. Execute o SQL de migração.');
+      }
 
       return res.status(200).json({
         mes: Number(mes), ano: Number(ano),
-        totalDespesas: Math.round(totalDespesas * 100) / 100,
-        porCategoria,
-        itens: todasDespesas
+        sincronizados: todasAsaas.length
       });
     }
 

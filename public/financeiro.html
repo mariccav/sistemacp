@@ -1097,24 +1097,13 @@ function renderSecaoEditavel(repasses, despesas) {
       <td></td>
     </tr>`;
     desHTML += grupo.itens.map(d => {
-      const isAsaas = d.origem === 'asaas';
       const optsCAT = CATS_LIST.map(c => `<option${c===d.categoria?' selected':''}>${c}</option>`).join('');
-      const badgeOrigem = isAsaas
-        ? `<span style="font-size:10px;background:#e8f4f8;color:#2b7a9a;border-radius:3px;padding:1px 5px;margin-left:4px">Asaas</span>`
+      const badgeAsaas = d.asaas_id
+        ? `<span style="font-size:10px;background:#e8f4f8;color:#2b7a9a;border-radius:3px;padding:1px 5px;margin-left:4px" title="Importado do Asaas">Asaas</span>`
         : '';
-
-      if (isAsaas) {
-        // Despesa automática do Asaas — exibe mas não permite edição inline
-        return `<tr data-id="${d.id}" style="opacity:.88">
-          <td style="padding-left:20px;color:#888">${d.data_pagamento||'—'}</td>
-          <td><span style="color:#555;font-size:12px">${d.categoria}</span></td>
-          <td>${d.descricao||'—'}${badgeOrigem}</td>
-          <td>${fmt(Number(d.valor))}</td>
-          <td></td>
-        </tr>`;
-      }
-
-      // Despesa manual do Supabase — editável inline
+      const badgeConta = d.conta && d.conta !== 'Manual'
+        ? `<span style="font-size:10px;background:#f0f0f0;color:#666;border-radius:3px;padding:1px 5px;margin-left:2px">${d.conta}</span>`
+        : '';
       return `<tr data-id="${d.id}">
         <td style="padding-left:20px">
           <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'data_pagamento','${d.id}','${d.data_pagamento||''}')">${d.data_pagamento||'—'}</span>
@@ -1123,7 +1112,7 @@ function renderSecaoEditavel(repasses, despesas) {
           <select class="cel-select" onchange="salvarCampo('${d.id}','categoria',this.value)" style="border:none;background:transparent;font-size:inherit;color:#555;cursor:pointer;max-width:180px">${optsCAT}</select>
         </td>
         <td>
-          <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'descricao','${d.id}',${JSON.stringify(d.descricao||'')})">${d.descricao||'—'}</span>
+          <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'descricao','${d.id}',${JSON.stringify(d.descricao||'')})">${d.descricao||'—'}</span>${badgeAsaas}${badgeConta}
         </td>
         <td>
           <span class="cel-edit" title="Clique para editar" onclick="editarCel(this,'valor','${d.id}','${d.valor}')">${fmt(Number(d.valor))}</span>
@@ -1223,26 +1212,14 @@ async function carregarMes(mes, ano) {
       mesTitulo: nomeMes
     };
 
-    // Repasses, despesas manuais (Supabase) + despesas automáticas (Asaas)
-    const [repasses, despesasManuais, respostaAsaas] = await Promise.all([
+    // Sincronizar Asaas → Supabase (em background, não bloqueia a tela)
+    fetch(`/api/honorarios?mes=${mes}&ano=${ano}&tipo=despesas`).catch(() => {});
+
+    // Buscar tudo do Supabase — manuais + importadas do Asaas, todas editáveis
+    const [repasses, despesas] = await Promise.all([
       sbGet('repasses', mes, ano),
-      sbGet('despesas', mes, ano),
-      fetch(`/api/honorarios?mes=${mes}&ano=${ano}&tipo=despesas`).then(r => r.ok ? r.json() : { itens: [] })
+      sbGet('despesas', mes, ano)
     ]);
-
-    // Despesas do Asaas — marcadas como automáticas (não editáveis inline)
-    const despesasAsaas = (respostaAsaas.itens || []).map(d => ({
-      ...d,
-      id: `asaas_${d.id}`,  // prefixo para distinguir de manuais
-      data_pagamento: d.data,
-      origem: 'asaas'
-    }));
-
-    // Mesclar: manuais do Supabase + automáticas do Asaas
-    const despesas = [
-      ...(despesasManuais || []).map(d => ({ ...d, origem: 'manual' })),
-      ...despesasAsaas
-    ].sort((a, b) => (a.data_pagamento || '').localeCompare(b.data_pagamento || ''));
 
     const repTotal = (repasses||[]).reduce((s,r) => s + parseFloat(r.valor||0), 0);
     const desTotal = despesas.reduce((s,d) => s + parseFloat(d.valor||0), 0);
