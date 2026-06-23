@@ -56,28 +56,8 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
-  const { mes, ano, tipo, debug } = req.query || {};
+  const { mes, ano, tipo } = req.query || {};
   if (!mes || !ano) return res.status(400).json({ erro: 'Informe mes e ano.' });
-
-  // ── Modo debug: retorna resposta bruta do Asaas para diagnóstico ──
-  if (debug === 'asaas') {
-    const chave = process.env.ASAAS_KEY_PESSOAL;
-    const m2 = String(mes).padStart(2,'0');
-    const dataI = `${ano}-${m2}-01`;
-    const dataF = `${ano}-${m2}-${new Date(Number(ano),Number(mes),0).getDate()}`;
-    const heads = { access_token: chave, 'Content-Type': 'application/json' };
-
-    const [rT, rF] = await Promise.all([
-      fetch(`https://api.asaas.com/v3/transfers?startDate=${dataI}&finishDate=${dataF}&limit=5`, { headers: heads }),
-      fetch(`https://api.asaas.com/v3/financialTransactions?startDate=${dataI}&finishDate=${dataF}&limit=5`, { headers: heads })
-    ]);
-
-    return res.status(200).json({
-      periodo: `${dataI} a ${dataF}`,
-      transfers: { status: rT.status, data: rT.ok ? await rT.json() : await rT.text() },
-      financialTransactions: { status: rF.status, data: rF.ok ? await rF.json() : await rF.text() }
-    });
-  }
 
   const m = String(mes).padStart(2, '0');
   const a = String(ano);
@@ -156,95 +136,56 @@ module.exports = async (req, res) => {
   }
 };
 
-// ── Buscar saídas do Asaas: transferências + pagamentos ──────────
-// Combina dois endpoints para cobrir todos os tipos de saída:
-// 1. /v3/transfers   → PIX, TED enviados (transferências)
-// 2. /v3/payments    → boletos/cobranças que a conta PAGOU (status REFUNDED
-//    ou qualquer pagamento onde a conta é o pagador)
-//
-// Tipos de saída garantidos pelo endpoint usado — nunca mistura entradas.
+// ── Buscar saídas do Asaas via financialTransactions ─────────────
+// Confirmado pelo debug: value < 0 = saída, value > 0 = entrada.
+// /v3/transfers retorna 403 (sem permissão) — usar apenas financialTransactions.
+// Paginação automática para buscar todos os registros do mês.
 async function buscarDespesas(chave, dataInicio, dataFim, conta) {
   if (!chave) return [];
 
   const headers = { access_token: chave, 'Content-Type': 'application/json' };
   const resultados = [];
+  let offset = 0;
+  const limit = 100;
 
-  // ── 1. Transferências enviadas (PIX / TED / entre contas) ────────
   try {
-    // Asaas aceita startDate/finishDate OU dateCreated[ge/le]
-    const [r1, r2] = await Promise.all([
-      fetch(`https://api.asaas.com/v3/transfers?startDate=${dataInicio}&finishDate=${dataFim}&limit=100`, { headers }),
-      fetch(`https://api.asaas.com/v3/transfers?dateCreated[ge]=${dataInicio}&dateCreated[le]=${dataFim}&limit=100`, { headers })
-    ]);
-
-    for (const r of [r1, r2]) {
-      if (!r.ok) continue;
-      const data = await r.json();
-      for (const t of (data.data || [])) {
-        // Evitar duplicatas entre as duas chamadas (mesmo id)
-        if (resultados.find(x => x.id === t.id)) continue;
-        resultados.push({
-          id: t.id,
-          data: t.transferDate || t.dateCreated || t.date || dataInicio,
-          descricao: t.description || t.operationType || 'Transferência',
-          valor: Math.abs(Number(t.value || t.netValue || 0)),
-          conta,
-          categoria: classificarDespesa(t.description || t.operationType || '')
-        });
+    // Paginar até buscar todos os registros do período
+    while (true) {
+      const r = await fetch(
+        `https://api.asaas.com/v3/financialTransactions?startDate=${dataInicio}&finishDate=${dataFim}&limit=${limit}&offset=${offset}`,
+        { headers }
+      );
+      if (!r.ok) {
+        console.error('financialTransactions erro:', r.status);
+        break;
       }
-    }
-  } catch (e) {
-    console.error('transfers erro:', e.message);
-  }
+      const data = await r.json();
+      const items = data.data || [];
 
-  // ── 2. Cobranças pagas pela conta (boletos, pagamentos feitos) ───
-  // O Asaas chama de "bills" os pagamentos que você faz a terceiros
-  try {
-    const rb = await fetch(
-      `https://api.asaas.com/v3/financialTransactions?startDate=${dataInicio}&finishDate=${dataFim}&limit=100`,
-      { headers }
-    );
-    if (rb.ok) {
-      const db = await rb.json();
-
-      // Tipos que representam SAÍDAS confirmadas no Asaas
-      const TIPOS_SAIDA = [
-        'TRANSFER','PIX_DEBIT','BILL_PAYMENT','BANK_SLIP_PAYMENT',
-        'DEBIT','PAYMENT_SENT','TRANSFER_SENT','TEV','TED'
-      ];
-      // Tipos que são ENTRADAS — excluir sempre
-      const TIPOS_ENTRADA = [
-        'PAYMENT_RECEIVED','CREDIT','PIX_CREDIT','TRANSFER_RECEIVED',
-        'RECEIVED','CHARGEBACK','REFUND_RECEIVED','RECEIVABLE'
-      ];
-
-      for (const t of (db.data || [])) {
-        if (resultados.find(x => x.id === t.id)) continue; // já veio em transfers
-
-        const tipo = (t.type || t.transactionType || '').toUpperCase();
+      for (const t of items) {
         const valor = Number(t.value || 0);
-
-        // Excluir entradas conhecidas
-        if (TIPOS_ENTRADA.some(te => tipo.includes(te))) continue;
-        // Incluir apenas saídas reconhecidas OU valores negativos
-        const ehSaida = TIPOS_SAIDA.some(ts => tipo.includes(ts)) || valor < 0;
-        if (!ehSaida) continue;
+        // value < 0 = dinheiro saindo da conta (confirmado no debug)
+        if (valor >= 0) continue;
 
         resultados.push({
           id: t.id,
-          data: t.date || t.effectiveDate || dataInicio,
-          descricao: t.description || tipo || 'Pagamento',
+          data: t.date || dataInicio,
+          descricao: t.description || t.type || 'Saída',
           valor: Math.abs(valor),
           conta,
-          categoria: classificarDespesa(t.description || tipo || '')
+          categoria: classificarDespesa(t.description || t.type || '')
         });
       }
+
+      // Parar quando não há mais páginas
+      if (!data.hasMore) break;
+      offset += limit;
     }
   } catch (e) {
-    console.error('financialTransactions erro:', e.message);
+    console.error('buscarDespesas erro:', e.message);
   }
 
-  console.log(`Despesas [${conta}]: ${resultados.length} saídas encontradas`);
+  console.log(`Despesas [${conta}]: ${resultados.length} saídas de ${dataInicio} a ${dataFim}`);
   return resultados;
 }
 
