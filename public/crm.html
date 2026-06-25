@@ -1469,8 +1469,8 @@ async function nataliaBaixar() {
 }
 
 function buildNataliaDoc(conteudo) {
+  // Nota: <\/script> escapado para não quebrar o parser HTML do bloco <script>
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<script src="/auth.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
