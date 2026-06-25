@@ -564,7 +564,13 @@ async function sbGet(tabela, query='') {
 }
 async function sbPost(tabela, body) {
   const r = await fetch(`${SB}/rest/v1/${tabela}`, { method:'POST', headers:SH, body:JSON.stringify(body) });
-  if (!r.ok) { const t = await r.text(); throw new Error(t); }
+  if (!r.ok) {
+    const t = await r.text();
+    let msg = t;
+    try { const j = JSON.parse(t); msg = j.message || j.hint || j.details || t; } catch {}
+    console.error(`sbPost [${tabela}] HTTP ${r.status}:`, t);
+    throw new Error(`[${r.status}] ${msg}`);
+  }
   const d = await r.json();
   return Array.isArray(d) ? d[0] : d;
 }
