@@ -1160,17 +1160,31 @@ function lerArquivo(file) {
     const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
     if (!rows.length) { toast('Arquivo vazio', true); return; }
 
-    const MAP = {
-      'CNPJ':'cnpj', 'Nome / Razão Social':'razao_social','Razão Social':'razao_social',
-      'Nome Fantasia':'nome_fantasia', 'Valor da Dívida':'valor_divida',
-      'Score':'score', 'Setor':'setor', 'Porte':'porte',
-      'Modalidade Transação':'modalidade_transacao','Modalidade':'modalidade_transacao',
-      'Argumento de Anúncio':'argumento_anuncio','Argumento':'argumento_anuncio'
+    // MAP case-insensitive: aceita variações de nome de coluna
+    const MAP_RAW = {
+      'cnpj':'cnpj', 'cnpj_empresa':'cnpj',
+      'nome / razão social':'razao_social', 'razão social':'razao_social',
+      'razao_social':'razao_social', 'razao social':'razao_social', 'nome':'razao_social',
+      'nome_fantasia':'nome_fantasia', 'nome fantasia':'nome_fantasia',
+      'fantasia':'nome_fantasia', 'nome_fantasia':'nome_fantasia',
+      'valor da dívida':'valor_divida', 'valor_divida':'valor_divida',
+      'divida_pgfn':'valor_divida', 'valor divida':'valor_divida',
+      'valor_divida_num':'valor_divida',
+      'score':'score',
+      'setor':'setor',
+      'porte':'porte',
+      'modalidade transação':'modalidade_transacao', 'modalidade':'modalidade_transacao',
+      'modalidade_transacao':'modalidade_transacao',
+      'argumento de anúncio':'argumento_anuncio', 'argumento':'argumento_anuncio',
+      'argumento_anuncio':'argumento_anuncio',
     };
 
     importData = rows.map(r => {
       const obj = {};
-      Object.entries(r).forEach(([k,v]) => { if (MAP[k]) obj[MAP[k]] = v; });
+      Object.entries(r).forEach(([k,v]) => {
+        const campo = MAP_RAW[k.toLowerCase().trim()];
+        if (campo && !obj[campo]) obj[campo] = v; // primeiro valor encontrado vence
+      });
       return obj;
     }).filter(r => r.razao_social || r.cnpj);
 
