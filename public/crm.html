@@ -531,7 +531,13 @@ let viewAtual = 'kanban';
 const brl = v => v != null ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:0}).format(v) : '—';
 const fmtData = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR') : '—';
 const hoje = () => new Date().toISOString().split('T')[0];
-const cnpjLimpo = v => (v||'').replace(/\D/g,'');
+// cnpjLimpo: converte para string antes — XLSX pode retornar números
+const cnpjLimpo = v => {
+  if (!v && v !== 0) return '';
+  const s = String(v).replace(/\D/g,'');
+  // Restaurar zero à esquerda se XLSX removeu (13 dígitos → 14)
+  return s.length === 13 ? '0' + s : s;
+};
 
 function mascaraCNPJ(el) {
   let v = el.value.replace(/\D/g,'').slice(0,14);
