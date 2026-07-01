@@ -502,10 +502,6 @@ textarea.field-input{resize:vertical;min-height:80px;}
 
 <script>
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH  = { 'apikey':SK, 'Authorization':'Bearer '+SK, 'Content-Type':'application/json', 'Prefer':'return=representation' };
-const SHR = { 'apikey':SK, 'Authorization':'Bearer '+SK }; // só leitura
 
 const ETAPAS = [
   { key:'novo',              label:'Novo',              cor:'#4a7a70' },
@@ -557,27 +553,15 @@ function toast(msg, erro=false) {
 function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
 function abrirModal(id)  { document.getElementById(id).classList.add('show'); }
 
-// ── SUPABASE ──────────────────────────────────────────────────────────────────
+// ── PROXY DB ──────────────────────────────────────────────────────────────────
 async function sbGet(tabela, query='') {
-  const r = await fetch(`${SB}/rest/v1/${tabela}?${query}`, { headers: SHR });
-  return r.ok ? r.json() : [];
+  return DB.get(tabela, query).catch(() => []);
 }
 async function sbPost(tabela, body) {
-  const r = await fetch(`${SB}/rest/v1/${tabela}`, { method:'POST', headers:SH, body:JSON.stringify(body) });
-  if (!r.ok) {
-    const t = await r.text();
-    let msg = t;
-    try { const j = JSON.parse(t); msg = j.message || j.hint || j.details || t; } catch {}
-    console.error(`sbPost [${tabela}] HTTP ${r.status}:`, t);
-    throw new Error(`[${r.status}] ${msg}`);
-  }
-  const d = await r.json();
+  const d = await DB.insert(tabela, body);
   return Array.isArray(d) ? d[0] : d;
 }
-async function sbPatch(tabela, id, body) {
-  const r = await fetch(`${SB}/rest/v1/${tabela}?id=eq.${id}`, { method:'PATCH', headers:SH, body:JSON.stringify(body) });
-  return r.ok;
-}
+async function sbPatch(tabela, id, body) { return DB.update(tabela, `id=eq.${id}`, body); }
 
 // ── BRASIL API ────────────────────────────────────────────────────────────────
 async function buscarCNPJ(cnpj) {
@@ -1050,7 +1034,7 @@ async function agendarFollowup() {
     if (resp && data) {
       const dadosAg = { titulo:`📞 Follow-up: ${leadAtivo.nome_fantasia||leadAtivo.razao_social}`, tipo:'followup', cor:'#5c6bc0', data_inicio:data+'T09:00:00', dia_todo:true, cliente:leadAtivo.razao_social, para_usuario:resp, criado_por:'Sistema', origem:'followup', origem_id:leadAtivo.id };
       const ex = await sbGet(`agenda?origem=eq.followup&origem_id=eq.${leadAtivo.id}`);
-      if (ex.length) { await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dadosAg)}); }
+      if (ex.length) { await DB.update('agenda', `id=eq.${ex[0].id}`, dadosAg); }
       else { await sbPost('agenda', dadosAg); }
     }
   } catch {}
@@ -1303,11 +1287,8 @@ async function confirmarConverter() {
       // Verificar se já existe pelo CNPJ
       if (leadAtivo.cnpj) {
         const cnpjLimpo = leadAtivo.cnpj.replace(/\D/g,'');
-        const rBusca = await fetch(`${SB}/rest/v1/clientes?cpf_cnpj=ilike.*${cnpjLimpo}*&limit=1`, { headers: SHR });
-        if (rBusca.ok) {
-          const existentes = await rBusca.json();
-          if (existentes.length) { clienteId = existentes[0].id; }
-        }
+        const existentes = await DB.get('clientes', `cpf_cnpj=ilike.*${cnpjLimpo}*&limit=1`).catch(() => []);
+        if (existentes.length) { clienteId = existentes[0].id; }
       }
       // Se não existe, criar via API (sincroniza com Asaas)
       if (!clienteId) {
@@ -1508,5 +1489,6 @@ ${conteudo}
 // ── INIT ──────────────────────────────────────────────────────────────────────
 carregarLeads();
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

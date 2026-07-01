@@ -214,10 +214,6 @@ main{max-width:1200px;margin:0 auto;padding:28px 36px;}
 </div>
 
 <script>
-const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH  = {'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation'};
-const SHR = {'apikey':SK,'Authorization':'Bearer '+SK};
 const COLS=[
   {nome:'Mariana Pinheiro',cargo:'Sócia Fundadora',ini:'MP',cor:'#214949'},
   {nome:'Diana',cargo:'Coordenação Jurídica',ini:'DC',cor:'#1f3e3c'},
@@ -230,9 +226,9 @@ const hmin=m=>m<=0?'0min':m<60?`${m}min`:`${Math.floor(m/60)}h ${String(m%60).pa
 const hoje=()=>new Date().toISOString().split('T')[0];
 const fmt2=iso=>new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const fmtD=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-async function sbGet(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR});return r.ok?r.json():[];}
-async function sbPost(t,b){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)});return r.ok?await r.json():null;}
-async function sbPatch(t,id,b){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)});}
+async function sbGet(q){const sep=q.indexOf('?');const tab=sep>=0?q.slice(0,sep):q;const filt=sep>=0?q.slice(sep+1):'';return DB.get(tab,filt).catch(()=>[]);}
+async function sbPost(t,b){const r=await DB.insert(t,b);return r;}
+async function sbPatch(t,id,b){await DB.update(t,`id=eq.${id}`,b);}
 function fmod(id){document.getElementById(id).classList.remove('show');}
 
 const U = window.CP_USER;
@@ -383,7 +379,7 @@ async function carregarTarefas(){
 
 async function concluirTarefa(id,el){
   el.style.background='#27ae60';el.style.borderColor='#27ae60';
-  await fetch(`${SB}/rest/v1/tarefas_astrea?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify({status:'concluido'})});
+  await DB.update('tarefas_astrea',`id=eq.${id}`,{status:'concluido'});
   setTimeout(()=>carregarTarefas(),600);
 }
 
@@ -443,7 +439,7 @@ async function autoAgendarTarefa(tarefa){
     // Verificar se já existe
     if(tarefa.id){
       const ex=await sbGet(`agenda?origem=eq.tarefa&origem_id=eq.${tarefa.id}`);
-      if(ex.length){await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dados)});return;}
+      if(ex.length){await DB.update('agenda',`id=eq.${ex[0].id}`,dados);return;}
     }
     await sbPost('agenda',dados);
   } catch {}
@@ -459,5 +455,6 @@ setInterval(carregarOffice,30000);
 setInterval(carregarStats,60000);
 setInterval(carregarAgenda,5*60*1000);
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

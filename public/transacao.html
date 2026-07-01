@@ -491,10 +491,6 @@ textarea.field-input{resize:vertical;min-height:80px;}
 
 <script>
 // ── CONSTANTES ────────────────────────────────────────────────────────────────
-const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH  = { 'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation' };
-const SHR = { 'apikey':SK,'Authorization':'Bearer '+SK };
 
 const ETAPAS = [
   { key:'diagnostico',    label:'Diagnóstico',    cor:'#1f3e3c' },
@@ -538,15 +534,13 @@ function fecharModal(id){document.getElementById(id).classList.remove('show');}
 function abrirModal(id){document.getElementById(id).classList.add('show');}
 
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
-async function sbGet(tabela,q=''){const r=await fetch(`${SB}/rest/v1/${tabela}?${q}`,{headers:SHR});return r.ok?r.json():[];}
+async function sbGet(tabela,q=''){return DB.get(tabela,q).catch(()=>[]);}
 async function sbPost(tabela,body){
-  const r=await fetch(`${SB}/rest/v1/${tabela}`,{method:'POST',headers:SH,body:JSON.stringify(body)});
-  if(!r.ok){const t=await r.text();throw new Error(t);}
-  const d=await r.json();return Array.isArray(d)?d[0]:d;
+  const d=await DB.insert(tabela,body);
+  return Array.isArray(d)?d[0]:d;
 }
 async function sbPatch(tabela,id,body){
-  const r=await fetch(`${SB}/rest/v1/${tabela}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(body)});
-  return r.ok;
+  return DB.update(tabela,`id=eq.${id}`,body);
 }
 
 // ── CARREGAR ──────────────────────────────────────────────────────────────────
@@ -1254,5 +1248,6 @@ async function salvarNovoCaso(){
 const var_verde='#2a8f6e';
 carregar();
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

@@ -142,20 +142,13 @@ let leadAtivo = null;
 let docAtual = null;
 
 // ── CONTEXTO DO LEAD ────────────────────────────────────────────────────────
-const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH = { 'apikey': SK, 'Authorization': 'Bearer ' + SK };
-
 async function carregarContexto() {
   const q = document.getElementById('busca-lead').value.trim();
   if (!q) return;
   try {
     const cnpjLimpo = q.replace(/\D/g,'');
-    let url = `${SB}/rest/v1/leads?limit=1&`;
-    url += cnpjLimpo.length >= 11 ? `cnpj=ilike.*${cnpjLimpo}*` : `razao_social=ilike.*${encodeURIComponent(q)}*`;
-    const r = await fetch(url, { headers: SH });
-    if (!r.ok) throw new Error();
-    const leads = await r.json();
+    const filtro = cnpjLimpo.length >= 11 ? `cnpj=ilike.*${cnpjLimpo}*&limit=1` : `razao_social=ilike.*${encodeURIComponent(q)}*&limit=1`;
+    const leads = await DB.get('leads', filtro).catch(() => []);
     if (!leads.length) { addMsg('agent', 'Lead não encontrado no CRM. Mas pode me descrever a empresa e trabalho sem o contexto salvo.'); return; }
     leadAtivo = leads[0];
     mostrarBadgeLead();
@@ -316,5 +309,6 @@ function limparDoc() {
 // Enter no campo de busca
 document.getElementById('busca-lead').addEventListener('keydown', e => { if(e.key==='Enter') carregarContexto(); });
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

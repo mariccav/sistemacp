@@ -637,16 +637,10 @@ async function confirmarCS() {
 
     // Salvar na tabela contratos e vincular ao cliente
     try {
-      const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
-      const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-      const SH = { 'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation' };
       let clienteId = null;
-      const rCli = await fetch(`${SB}/rest/v1/clientes?nome=ilike.*${encodeURIComponent(nome)}*&limit=1`, { headers: SH });
-      if (rCli.ok) { const clis = await rCli.json(); clienteId = clis[0]?.id || null; }
-      await fetch(`${SB}/rest/v1/contratos`, {
-        method: 'POST', headers: SH,
-        body: JSON.stringify({ cliente_nome: nome, cliente_contato: email, cliente_id: clienteId, clicksign_envelope_key: d.envelope_key, status: 'aguardando' })
-      });
+      const clis = await DB.get('clientes', `nome=ilike.*${encodeURIComponent(nome)}*&limit=1`).catch(() => []);
+      clienteId = clis[0]?.id || null;
+      await DB.insert('contratos', { cliente_nome: nome, cliente_contato: email, cliente_id: clienteId, clicksign_envelope_key: d.envelope_key, status: 'aguardando' });
     } catch {}
 
     alert('Enviado! O signatário receberá o e-mail do ClickSign em instantes.');
@@ -673,5 +667,6 @@ function limparDoc() {
   ['btn-pdf','btn-word','btn-cs','btn-limpar'].forEach(id => document.getElementById(id).style.display = 'none');
 }
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

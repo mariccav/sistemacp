@@ -604,9 +604,6 @@ canvas{display:block;width:100%;height:100%;}
 ══════════════════════════════════════════ -->
 <script>
 // ── CONSTANTES ────────────────────────────────────────────────────
-const SB2 = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK2 = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH2 = { 'apikey':SK2, 'Authorization':'Bearer '+SK2, 'Content-Type':'application/json', 'Prefer':'return=representation' };
 const COLS2 = [
   { nome:'Mariana Pinheiro', cargo:'Sócia Fundadora',      ini:'MP', cor:'#214949' },
   { nome:'Diana',            cargo:'Coordenação Jurídica', ini:'DC', cor:'#1f3e3c' },
@@ -662,12 +659,10 @@ async function carregarGestao() {
   const dt=document.getElementById('g-data').value;
   const iniDia=new Date(dt+'T00:00:00').toISOString();
   const fimDia=new Date(dt+'T23:59:59').toISOString();
-  const [rDia,rAtivas]=await Promise.all([
-    fetch(`${SB2}/rest/v1/sessoes?inicio=gte.${iniDia}&inicio=lte.${fimDia}&order=inicio.desc`,{headers:SH2}),
-    fetch(`${SB2}/rest/v1/sessoes?fim=is.null&inicio=gte.${new Date(Date.now()-9*3600000).toISOString()}`,{headers:SH2})
+  const [rows,ativas]=await Promise.all([
+    DB.get('sessoes',`inicio=gte.${iniDia}&inicio=lte.${fimDia}&order=inicio.desc`).catch(()=>[]),
+    DB.get('sessoes',`fim=is.null&inicio=gte.${new Date(Date.now()-9*3600000).toISOString()}`).catch(()=>[])
   ]);
-  const rows=rDia.ok?await rDia.json():[];
-  const ativas=rAtivas.ok?await rAtivas.json():[];
   const totalMin=rows.filter(s=>s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0);
   const horasPor=COLS2.map(c=>({nome:c.nome.split(' ')[0],min:rows.filter(s=>s.colaboradora===c.nome&&s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0)}));
   const top=[...horasPor].sort((a,b)=>b.min-a.min)[0];
@@ -696,8 +691,7 @@ async function carregarGestao() {
 
 async function carregarAoVivo2() {
   const cutoff=new Date(Date.now()-9*3600000).toISOString();
-  const r=await fetch(`${SB2}/rest/v1/sessoes?fim=is.null&inicio=gte.${cutoff}&select=*`,{headers:SH2});
-  const ativas=r.ok?await r.json():[];
+  const ativas=await DB.get('sessoes',`fim=is.null&inicio=gte.${cutoff}&select=*`).catch(()=>[]);
   document.getElementById('eq-grid').innerHTML=COLS2.map(c=>{
     const s=ativas.find(x=>x.colaboradora===c.nome);
     const on=!!s;
@@ -714,11 +708,11 @@ async function carregarFinanceiro2() {
   let hon='—';
   try { const rh=await fetch(`/api/honorarios?mes=${mes}&ano=${ano}`); if(rh.ok){const d=await rh.json();hon=brl2(d.totalHonorarios||0);} } catch {}
   const [rRep,rDesp]=await Promise.all([
-    fetch(`${SB2}/rest/v1/repasses?mes=eq.${mes}&ano=eq.${ano}&select=valor`,{headers:SH2}),
-    fetch(`${SB2}/rest/v1/despesas?mes=eq.${mes}&ano=eq.${ano}&select=valor`,{headers:SH2})
+    DB.get('repasses',`mes=eq.${mes}&ano=eq.${ano}&select=valor`).catch(()=>[]),
+    DB.get('despesas',`mes=eq.${mes}&ano=eq.${ano}&select=valor`).catch(()=>[])
   ]);
-  const repVal=rRep.ok?brl2((await rRep.json()).reduce((a,x)=>a+(x.valor||0),0)):'—';
-  const despVal=rDesp.ok?brl2((await rDesp.json()).reduce((a,x)=>a+(x.valor||0),0)):'—';
+  const repVal=brl2((rRep||[]).reduce((a,x)=>a+(x.valor||0),0));
+  const despVal=brl2((rDesp||[]).reduce((a,x)=>a+(x.valor||0),0));
   document.getElementById('fin-cards').innerHTML=[['Honorários',hon,nomeMes],['Repasses',repVal,nomeMes],['Despesas',despVal,nomeMes]].map(([l,v,s])=>`<div class="gfinbox"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join('');
 }
 
@@ -733,8 +727,7 @@ function abrirContratos(){document.getElementById('mod-contratos').style.display
 function fecharModal(id){document.getElementById(id).style.display='none';}
 
 async function carregarClientes(){
-  const r=await fetch(`${SB2}/rest/v1/clientes?order=nome.asc`,{headers:SH2});
-  todosClientes=r.ok?await r.json():[];
+  todosClientes=await DB.get('clientes','order=nome.asc').catch(()=>[]);
   renderClientes(todosClientes);
 }
 function renderClientes(lista){
@@ -885,22 +878,20 @@ async function salvarContrato(){
   document.getElementById('ct-progresso').style.display='block';
   document.getElementById('ct-progresso').textContent='Salvando...';
   let clienteId=null;
-  const rBusca=await fetch(`${SB2}/rest/v1/clientes?nome=eq.${encodeURIComponent(nome)}&limit=1`,{headers:SH2});
-  const existentes=rBusca.ok?await rBusca.json():[];
+  const existentes=await DB.get('clientes',`nome=eq.${encodeURIComponent(nome)}&limit=1`).catch(()=>[]);
   if(existentes.length){clienteId=existentes[0].id;}
-  else{const rCli=await fetch(`${SB2}/rest/v1/clientes`,{method:'POST',headers:SH2,body:JSON.stringify({nome,contato})});if(rCli.ok){const d=await rCli.json();clienteId=(Array.isArray(d)?d[0]:d).id;}}
+  else{const d=await DB.insert('clientes',{nome,contato}).catch(()=>null);if(d){clienteId=(Array.isArray(d)?d[0]:d).id;}}
   let arquivoUrl=null,arquivoNome=null;
-  if(arquivo){const fname=`${Date.now()}_${nome.replace(/\s+/g,'_')}_${arquivo.name}`;const rUp=await fetch(`${SB2}/storage/v1/object/contratos/${fname}`,{method:'POST',headers:{'apikey':SK2,'Authorization':'Bearer '+SK2,'Content-Type':arquivo.type,'x-upsert':'false'},body:arquivo});if(rUp.ok){arquivoUrl=`${SB2}/storage/v1/object/public/contratos/${fname}`;arquivoNome=arquivo.name;}}
   const payload={cliente_id:clienteId,cliente_nome:nome,cliente_contato:contato,valor,parcelas,vencimento_primeira:venc,observacoes:obs,arquivo_url:arquivoUrl,arquivo_nome:arquivoNome};
-  const rCt=await fetch(`${SB2}/rest/v1/contratos`,{method:'POST',headers:SH2,body:JSON.stringify(payload)});
+  const rCtData=await DB.insert('contratos',payload).catch(()=>null);
+  const rCt={ok:!!rCtData};
   document.getElementById('ct-progresso').style.display='none';
   if(rCt.ok){alert(`Contrato de ${nome} registrado!`);['ct-nome','ct-contato','ct-valor','ct-obs'].forEach(id=>document.getElementById(id).value='');document.getElementById('ct-parcelas').value='1';document.getElementById('ct-venc').value='';document.getElementById('ct-arquivo').value='';fecharModal('mod-contratos');}
   else alert('Erro ao registrar contrato.');
 }
 
 async function carregarContratosGestao(){
-  const r=await fetch(`${SB2}/rest/v1/contratos?order=criado_em.desc`,{headers:SH2});
-  todosContratos=r.ok?await r.json():[];filtrarContratos();
+  todosContratos=await DB.get('contratos','order=criado_em.desc').catch(()=>[]);filtrarContratos();
 }
 function filtrarContratos(){
   const q=(document.getElementById('gc-busca')||{value:''}).value.toLowerCase();
@@ -921,7 +912,7 @@ function filtrarContratos(){
     return `<tr><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.9);font-weight:600;">${ct.cliente_nome}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.7);">${ct.cliente_contato||'—'}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.9);">${val}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.7);">${parc}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.7);">${venc}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);"><select onchange="atualizarStatus('${ct.id}',this.value)" style="background:rgba(255,255,255,.1);border:1px solid rgba(172,155,124,.3);border-radius:6px;padding:3px 8px;font-family:'Manrope',sans-serif;font-size:11px;color:${stCor};cursor:pointer;"><option value="aguardando" ${st==='aguardando'?'selected':''}>Aguardando</option><option value="assinado" ${st==='assinado'?'selected':''}>Assinado</option><option value="cancelado" ${st==='cancelado'?'selected':''}>Cancelado</option></select></td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);">${arq}</td><td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(245,245,240,.4);font-size:11px;">${new Date(ct.criado_em).toLocaleDateString('pt-BR')}</td></tr>`;
   }).join('');
 }
-async function atualizarStatus(id,novoStatus){await fetch(`${SB2}/rest/v1/contratos?id=eq.${id}`,{method:'PATCH',headers:SH2,body:JSON.stringify({status:novoStatus})});const ct=todosContratos.find(x=>x.id===id);if(ct)ct.status=novoStatus;}
+async function atualizarStatus(id,novoStatus){await DB.update('contratos',`id=eq.${id}`,{status:novoStatus});const ct=todosContratos.find(x=>x.id===id);if(ct)ct.status=novoStatus;}
 
 // ── COBRANÇA ─────────────────────────────────────────────────────
 function abrirCobrar(id,nome){
@@ -964,6 +955,9 @@ function moveCarousel(dir){
 }
 setInterval(()=>moveCarousel(1),6000);
 
+// ── PROXY: sbGet2 helper para uso interno ─────────────────────────
+async function sbGet2(tabela,filtro){return DB.get(tabela,filtro).catch(()=>[]);}
+
 // ── WEBGL BACKGROUND ──────────────────────────────────────────────
 const canvas=document.getElementById('gl-canvas');
 const gl=canvas.getContext('webgl');
@@ -987,5 +981,6 @@ if(gl){
   requestAnimationFrame(render);
 }
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

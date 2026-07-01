@@ -448,9 +448,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
 </div>
 
 <script>
-const SB='https://svwwmxapmppjkmbazhul.supabase.co',SK='sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH={'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation'};
-const SHR={'apikey':SK,'Authorization':'Bearer '+SK};
 const META=8*60;
 const COLS=[
   {nome:'Mariana Pinheiro',cargo:'Sócia Fundadora',ini:'MP',cor:'#214949'},
@@ -465,9 +462,9 @@ const fmt2=iso=>new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:
 const hoje=()=>new Date().toISOString().split('T')[0];
 const cor=n=>COLS.find(c=>c.nome===n)?.cor||'#1f3e3c';
 const ini=n=>COLS.find(c=>c.nome===n)?.ini||n.slice(0,2).toUpperCase();
-async function sbGet(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR});return r.ok?r.json():[];}
-async function sbPost(t,b){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)});return r.ok?await r.json():null;}
-async function sbPatch(t,id,b){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)});}
+async function sbGet(q){const sep=q.indexOf('?');const tab=sep>=0?q.slice(0,sep):q;const filt=sep>=0?q.slice(sep+1):'';return DB.get(tab,filt).catch(()=>[]);}
+async function sbPost(t,b){const r=await DB.insert(t,b);return r;}
+async function sbPatch(t,id,b){await DB.update(t,`id=eq.${id}`,b);}
 function fmod(id){document.getElementById(id).classList.remove('show');}
 
 let ativa=null,sessao=null,timerInt=null,pollInt=null,per='semana';
@@ -935,7 +932,7 @@ async function autoAgendarTarefa(tarefa){
     const dados={titulo:tarefa.titulo,tipo:'prazo',cor:'#d97706',data_inicio:tarefa.prazo+'T08:00:00',dia_todo:true,cliente:tarefa.cliente||null,descricao:`Prazo: ${tarefa.titulo}`,para_usuario:tarefa.responsavel,criado_por:'Sistema',origem:'tarefa',origem_id:tarefa.id||null};
     if(tarefa.id){
       const ex=await sbGet(`agenda?origem=eq.tarefa&origem_id=eq.${tarefa.id}`);
-      if(ex.length){await fetch(`${SB}/rest/v1/agenda?id=eq.${ex[0].id}`,{method:'PATCH',headers:SH,body:JSON.stringify(dados)});return;}
+      if(ex.length){await DB.update('agenda',`id=eq.${ex[0].id}`,dados);return;}
     }
     await sbPost('agenda',dados);
   }catch{}
@@ -943,12 +940,13 @@ async function autoAgendarTarefa(tarefa){
 async function excluirTarefaMod(){
   const id=document.getElementById('tf-m-id').value;
   if(!id||!confirm('Excluir esta tarefa?'))return;
-  await fetch(`${SB}/rest/v1/tarefas_astrea?id=eq.${id}`,{method:'DELETE',headers:SHR});
+  await DB.delete('tarefas_astrea',`id=eq.${id}`);
   todasTarefas=todasTarefas.filter(t=>t.id!==id);
   fmod('mod-tarefa');renderTarefas();
 }
 
 renderSelector();
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>

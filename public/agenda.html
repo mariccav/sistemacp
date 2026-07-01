@@ -161,10 +161,6 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
 </div>
 
 <script>
-const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
-const SH  = {'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':'application/json','Prefer':'return=representation'};
-const SHR = {'apikey':SK,'Authorization':'Bearer '+SK};
 const U   = window.CP_USER;
 
 const CORES = {
@@ -174,10 +170,10 @@ const CORES = {
 
 let calendar, tipoAtivo='outro', corAtiva='#a7a897', editando=null;
 
-async function sbGet(q){const r=await fetch(`${SB}/rest/v1/${q}`,{headers:SHR});return r.ok?r.json():[];}
-async function sbPost(t,b){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:SH,body:JSON.stringify(b)});return r.ok?await r.json():null;}
-async function sbPatch(t,id,b){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SH,body:JSON.stringify(b)});}
-async function sbDelete(t,id){await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SHR});}
+async function sbGet(q){const sep=q.indexOf('?');const tab=sep>=0?q.slice(0,sep):q;const filt=sep>=0?q.slice(sep+1):'';return DB.get(tab,filt).catch(()=>[]);}
+async function sbPost(t,b){const r=await DB.insert(t,b);return r;}
+async function sbPatch(t,id,b){await DB.update(t,`id=eq.${id}`,b);}
+async function sbDelete(t,id){await DB.delete(t,`id=eq.${id}`);}
 
 // ── CARREGAR EVENTOS ──────────────────────────────────────────────
 async function carregarEventos(info, successCallback) {
@@ -526,5 +522,6 @@ function toLocal(date) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 </script>
+<script src="/db-client.js"></script>
 </body>
 </html>
