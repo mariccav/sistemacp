@@ -8,7 +8,18 @@
   function getToken() {
     const raw = sessionStorage.getItem('cp_user');
     if (!raw) return null;
-    try { return JSON.parse(raw).session_token || null; }
+    try {
+      const user = JSON.parse(raw);
+      // Sessão antiga sem session_token → forçar novo login
+      if (!user.session_token) {
+        sessionStorage.removeItem('cp_user');
+        if (!window.location.pathname.endsWith('/login.html')) {
+          window.location.href = '/login.html';
+        }
+        return null;
+      }
+      return user.session_token;
+    }
     catch { return null; }
   }
 
