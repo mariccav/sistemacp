@@ -1216,6 +1216,16 @@ async function iniciarImport() {
   document.getElementById('import-step-3').style.display = 'block';
   ['ist-1','ist-2','ist-3'].forEach((id,i) =>
     document.getElementById(id).classList.toggle('active', i===2));
+  try {
+    await _iniciarImportCore();
+  } catch(e) {
+    console.error('Import falhou:', e);
+    document.getElementById('imp-status').textContent = `Erro: ${e.message}`;
+    toast('Erro na importação: ' + e.message, true);
+  }
+}
+
+async function _iniciarImportCore() {
 
   // Não-admins ficam sempre como responsável nos leads importados
   const U = window.CP_USER;
@@ -1353,7 +1363,7 @@ async function iniciarImport() {
   document.getElementById('imp-progress').style.width = '100%';
   setTimeout(() => fecharModal('mod-import'), 2500);
   toast(`${importados} leads importados ✓`);
-}
+} // fim _iniciarImportCore
 
 // ── CONVERTER ─────────────────────────────────────────────────────────────────
 function abrirConverter() {
