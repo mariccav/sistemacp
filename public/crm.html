@@ -1211,68 +1211,126 @@ async function iniciarImport() {
   const total  = importData.length;
   let importados = 0, duplicados = 0;
 
-  const yield_ = () => new Promise(r => setTimeout(r, 30)); // deixa browser respirar
+  const yield_ = () => new Promise(r => setTimeout(r, 30));
 
-  // CNPJs já existentes (para deduplicação)
+  // CNPJs já existentes
   const existentes = new Set(todosLeads.map(l => cnpjLimpo(l.cnpj||'')).filter(Boolean));
 
-  // Preparar payload — filtrar duplicatas
   document.getElementById('imp-status').textContent = 'Preparando registros...';
   await yield_();
 
-  const payload = [];
-  const cnpjsNovos = new Set();
+  // ── Detectar se o arquivo tem sócios (CP_Leads_Completo) ──────────
+  const primeiraRow = importData[0] || {};
+  const temSocios = 'NOME_SOCIO' in primeiraRow || 'SOCIO_NUM' in primeiraRow ||
+                    'CELULAR_SOCIO' in primeiraRow;
+
+  // ── Agrupar por empresa ───────────────────────────────────────────
+  const empresaMap = new Map(); // cnpj → { lead, socios[] }
 
   for (const row of importData) {
-    const c = cnpjLimpo(row.cnpj||'');
-    if (c && (existentes.has(c) || cnpjsNovos.has(c))) { duplicados++; continue; }
-    if (c) cnpjsNovos.add(c);
-    // Limpar colunas extras que não existem na tabela leads
-    const { CNPJ_EMPRESA, RAZAO_SOCIAL, NOME_FANTASIA, SETOR, PORTE, CNAE, CNAE_DESCRICAO,
-            CIDADE_EMPRESA, UF, TEL_EMPRESA_1, TEL_EMPRESA_2, EMAIL_EMPRESA,
-            DIVIDA_PGFN, DIVIDA_PGFN_NUM, SCORE, MODALIDADE, ARGUMENTO,
-            SOCIO_NUM, CPF_SOCIO, NOME_SOCIO, TEL_SOCIO, CELULAR_SOCIO, CELULAR_SOCIO_2,
-            EMAIL_SOCIO, CIDADE_SOCIO, UF_SOCIO, META_AUDIENCE, TEM_DIVIDA_PGFN,
-            ...restRow } = row;
-    payload.push({
-      ...restRow,
-      cnpj:                  c || null,
-      razao_social:          row.razao_social || RAZAO_SOCIAL || null,
-      nome_fantasia:         row.nome_fantasia || NOME_FANTASIA || null,
-      setor:                 row.setor || SETOR || null,
-      porte:                 row.porte || PORTE || null,
-      valor_divida:          (() => { const v = row.valor_divida || DIVIDA_PGFN_NUM || row['Valor da Divida'] || ''; const n = parseFloat(String(v).replace(/[^\d.,]/g,'').replace(',','.')); return isNaN(n) ? null : n; })(),
-      score:                 (() => { const s = row.score || SCORE || ''; const n = parseFloat(s); return isNaN(n) ? null : n; })(),
-      modalidade_transacao:  row.modalidade_transacao || MODALIDADE || null,
-      argumento_anuncio:     row.argumento_anuncio || ARGUMENTO || null,
-      responsavel:           resp,
-      origem:                origem,
-      etapa:                 'novo'
-    });
+    const c = cnpjLimpo(row.CNPJ_EMPRESA || row.cnpj || row.CNPJ || '');
+    if (!c) continue;
+
+    if (!empresaMap.has(c)) {
+      if (existentes.has(c)) { duplicados++; continue; }
+      const valStr = row.DIVIDA_PGFN_NUM || row.valor_divida || row['Valor da Divida'] || '';
+      const val    = parseFloat(String(valStr).replace(/[^\d.,]/g,'').replace(',','.')) || null;
+      const sc     = parseFloat(row.SCORE || row.score || '') || null;
+      empresaMap.set(c, {
+        lead: {
+          cnpj:               c,
+          razao_social:       row.RAZAO_SOCIAL || row['Razao Social'] || row.razao_social || '',
+          nome_fantasia:      row.NOME_FANTASIA || row['Nome Fantasia'] || row.nome_fantasia || null,
+          setor:              row.SETOR || row.setor || null,
+          porte:              row.PORTE || row.porte || null,
+          valor_divida:       val,
+          score:              sc,
+          modalidade_transacao: row.MODALIDADE || row.modalidade_transacao || null,
+          argumento_anuncio:  row.ARGUMENTO || row.argumento_anuncio || null,
+          responsavel:        resp,
+          origem:             origem,
+          etapa:              'novo'
+        },
+        socios: []
+      });
+    }
+
+    // Adicionar sócio se o arquivo tiver essa coluna
+    if (temSocios && row.NOME_SOCIO) {
+      empresaMap.get(c)?.socios.push({
+        nome:    row.NOME_SOCIO,
+        cargo:   'Sócio',
+        origem:  'planilha',
+        // Concatenar contatos disponíveis em um campo de observação
+        observacoes: [
+          row.CPF_SOCIO   ? `CPF: ${row.CPF_SOCIO}` : '',
+          row.TEL_SOCIO   ? `Tel: ${row.TEL_SOCIO}` : '',
+          row.CELULAR_SOCIO ? `Cel: ${row.CELULAR_SOCIO}` : '',
+          row.CELULAR_SOCIO_2 ? `Cel2: ${row.CELULAR_SOCIO_2}` : '',
+          row.EMAIL_SOCIO ? `Email: ${row.EMAIL_SOCIO}` : '',
+          row.META_AUDIENCE === 'SIM' ? '★ Meta Audience' : ''
+        ].filter(Boolean).join(' | ') || null
+      });
+    }
   }
 
-  document.getElementById('imp-status').textContent = `${payload.length} leads prontos. Enviando...`;
-  document.getElementById('imp-progress').style.width = '10%';
+  const todasEmpresas = [...empresaMap.values()];
+  document.getElementById('imp-status').textContent = `${todasEmpresas.length} empresas prontas. Inserindo leads...`;
+  document.getElementById('imp-progress').style.width = '5%';
   await yield_();
 
-  // INSERT em lotes de 50 (seguro para Vercel 10s timeout)
+  // ── Fase 1: inserir leads (lotes de 50) ───────────────────────────
+  const leadsInseridos = []; // { id, cnpj }
   const LOTE = 50;
-  for (let i = 0; i < payload.length; i += LOTE) {
-    const lote = payload.slice(i, i + LOTE);
+
+  for (let i = 0; i < todasEmpresas.length; i += LOTE) {
+    const lote = todasEmpresas.slice(i, i + LOTE).map(e => e.lead);
     try {
       const novos = await DB.insert('leads', lote);
       const lista = Array.isArray(novos) ? novos : (novos ? [novos] : []);
       importados += lista.length;
+      leadsInseridos.push(...lista);
       todosLeads.unshift(...lista);
     } catch(e) {
-      console.error(`Lote ${i} falhou:`, e.message);
-      toast(`Erro: ${e.message}`, true);
+      console.error(`Lote leads ${i}:`, e.message);
+      toast(`Erro no lote ${i+1}: ${e.message}`, true);
     }
-    const pct = 10 + Math.round(((i + LOTE) / payload.length) * 90);
-    document.getElementById('imp-progress').style.width = Math.min(pct, 100) + '%';
+    const pct = 5 + Math.round(((i + LOTE) / todasEmpresas.length) * 55);
+    document.getElementById('imp-progress').style.width = Math.min(pct, 60) + '%';
     document.getElementById('imp-status').textContent =
-      `Importando... ${Math.min(i + LOTE, payload.length)} de ${payload.length} — ${importados} salvos`;
+      `Leads: ${Math.min(i + LOTE, todasEmpresas.length)} de ${todasEmpresas.length} (${importados} salvos)`;
     await yield_();
+  }
+
+  // ── Fase 2: inserir contatos dos sócios ───────────────────────────
+  if (temSocios && leadsInseridos.length > 0) {
+    document.getElementById('imp-status').textContent = 'Vinculando contatos dos sócios...';
+    await yield_();
+
+    // Mapear cnpj → lead_id para os leads recém inseridos
+    const cnpjParaId = {};
+    leadsInseridos.forEach(l => { if (l.cnpj) cnpjParaId[cnpjLimpo(l.cnpj)] = l.id; });
+
+    const todosContatos = [];
+    for (const emp of todasEmpresas) {
+      const leadId = cnpjParaId[emp.lead.cnpj];
+      if (!leadId) continue;
+      for (const s of emp.socios) {
+        todosContatos.push({ lead_id: leadId, ...s });
+      }
+    }
+
+    // Inserir contatos em lotes de 100
+    for (let i = 0; i < todosContatos.length; i += 100) {
+      try {
+        await DB.insert('leads_contatos', todosContatos.slice(i, i + 100));
+      } catch(e) { console.error('Contatos:', e.message); }
+      const pct = 60 + Math.round(((i + 100) / todosContatos.length) * 40);
+      document.getElementById('imp-progress').style.width = Math.min(pct, 100) + '%';
+      document.getElementById('imp-status').textContent =
+        `Sócios: ${Math.min(i + 100, todosContatos.length)} de ${todosContatos.length} vinculados`;
+      await yield_();
+    }
   }
 
   leadsFiltrados = [...todosLeads];
