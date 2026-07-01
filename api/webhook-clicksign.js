@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
   if (!envelope?.key) return res.status(200).json({ ok: true, aviso: 'Sem envelope_key' });
 
   const SB  = 'https://svwwmxapmppjkmbazhul.supabase.co';
-  const SK  = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+  const SK  = process.env.SUPABASE_SERVICE_KEY;
   const SH  = { 'apikey': SK, 'Authorization': 'Bearer ' + SK, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
   const SHR = { 'apikey': SK, 'Authorization': 'Bearer ' + SK };
 

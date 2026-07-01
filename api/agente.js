@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
   if (!CLAUDE_KEY) return res.status(500).json({ erro: "CLAUDE_API_KEY não configurada." });
 
   const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
-  const SB_KEY = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+  const SB_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   // ─── Ferramentas disponíveis ─────────────────────────────────────────────────
 

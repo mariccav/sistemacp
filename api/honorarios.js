@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     // ── Modo despesas: sincroniza saídas do Asaas → Supabase ────────
     if (tipo === 'despesas') {
       const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
-      const SB_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+      const SB_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY;
       const SB_HEAD = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
 
       // 1. Buscar transações brutas do Asaas (ambas as contas)

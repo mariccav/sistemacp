@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
   if (!CHAVE) return res.status(500).json({ erro: 'CLAUDE_API_KEY não configurada' });
 
   const SB = 'https://svwwmxapmppjkmbazhul.supabase.co';
-  const SK = 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw';
+  const SK = process.env.SUPABASE_SERVICE_KEY;
   const SH = { 'apikey': SK, 'Authorization': 'Bearer ' + SK };
 
   // ── Buscar dados do lead ────────────────────────────────────────
