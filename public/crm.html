@@ -1172,12 +1172,12 @@ function lerArquivo(file) {
 
     importData = rows.map(r => {
       const obj = {};
+      // XLSX pode retornar números em células que deveriam ser strings
+      // Converter tudo para string na entrada para evitar erros de .replace()
+      const str = v => (v === null || v === undefined) ? '' : String(v);
       Object.entries(r).forEach(([k,v]) => {
-        // Mapear colunas conhecidas para o padrão do sistema
         const campo = MAP_RAW[k.toLowerCase().trim()];
-        if (campo && !obj[campo]) obj[campo] = v;
-        // Preservar colunas de sócio com o nome original (maiúsculas)
-        // para que a lógica de importação consiga detectá-las
+        if (campo && !obj[campo]) obj[campo] = str(v);
         const kUp = k.trim().toUpperCase();
         if (['CNPJ_EMPRESA','RAZAO_SOCIAL','NOME_FANTASIA','SETOR','PORTE',
              'DIVIDA_PGFN_NUM','SCORE','MODALIDADE','ARGUMENTO',
@@ -1186,7 +1186,7 @@ function lerArquivo(file) {
              'CNAE','CNAE_DESCRICAO','CIDADE_EMPRESA','UF',
              'TEL_EMPRESA_1','TEL_EMPRESA_2','EMAIL_EMPRESA',
              'TEM_DIVIDA_PGFN'].includes(kUp)) {
-          obj[kUp] = v;
+          obj[kUp] = str(v);  // sempre string
         }
       });
       return obj;
