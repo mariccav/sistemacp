@@ -1211,53 +1211,54 @@ async function iniciarImport() {
   const total  = importData.length;
   let importados = 0, duplicados = 0;
 
-  // CNPJs já existentes
+  // CNPJs já existentes (para deduplicação)
   const existentes = new Set(todosLeads.map(l => cnpjLimpo(l.cnpj||'')).filter(Boolean));
 
-  // Processar em lotes de 5
-  for (let i = 0; i < total; i += 5) {
-    const lote = importData.slice(i, i+5);
-    await Promise.all(lote.map(async row => {
-      const c = cnpjLimpo(row.cnpj||'');
-      if (c && existentes.has(c)) { duplicados++; return; }
-      if (c) existentes.add(c);
-      try {
-        const body = {
-          ...row,
-          cnpj:         c || null,
-          valor_divida: row.valor_divida ? parseFloat(String(row.valor_divida).replace(/[^\d.,]/g,'').replace(',','.')) || null : null,
-          score:        row.score ? parseFloat(row.score) || null : null,
-          responsavel:  resp,
-          origem:       origem,
-          etapa:        'novo'
-        };
-        const novo = await sbPost('leads', body);
-        todosLeads.unshift(novo);
-        importados++;
+  // Preparar payload completo — filtrar duplicatas antes de enviar
+  document.getElementById('imp-status').textContent = 'Preparando registros...';
+  const payload = [];
+  const cnpjsNovos = new Set();
 
-        // Enriquecer com BrasilAPI (sem bloquear)
-        if (c && c.length === 14) {
-          buscarCNPJ(c).then(async dados => {
-            if (!dados) return;
-            const upd = {};
-            if (!body.razao_social && dados.razao_social) upd.razao_social = dados.razao_social;
-            if (dados.descricao_situacao_cadastral) upd.situacao_cadastral = dados.descricao_situacao_cadastral;
-            if (dados.cnae_fiscal_descricao) upd.cnae_descricao = dados.cnae_fiscal_descricao;
-            if (dados.telefone) upd.telefone_receita = dados.telefone;
-            if (dados.email)    upd.email_receita    = dados.email;
-            if (Object.keys(upd).length) await sbPatch('leads', novo.id, upd);
-            if (dados.qsa) {
-              for (const s of dados.qsa) {
-                await sbPost('leads_contatos', { lead_id: novo.id, nome: s.nome_socio, cargo: s.qualificacao_socio, origem:'qsa' });
-              }
-            }
-          });
-        }
+  for (const row of importData) {
+    const c = cnpjLimpo(row.cnpj||'');
+    if (c && (existentes.has(c) || cnpjsNovos.has(c))) { duplicados++; continue; }
+    if (c) cnpjsNovos.add(c);
+    payload.push({
+      ...row,
+      cnpj:         c || null,
+      valor_divida: row.valor_divida ? parseFloat(String(row.valor_divida).replace(/[^\d.,]/g,'').replace(',','.')) || null : null,
+      score:        row.score ? parseFloat(row.score) || null : null,
+      responsavel:  resp,
+      origem:       origem,
+      etapa:        'novo'
+    });
+  }
+
+  document.getElementById('imp-status').textContent = `Enviando ${payload.length} leads...`;
+  document.getElementById('imp-progress').style.width = '40%';
+
+  // INSERT em massa — uma única chamada para todos os registros
+  try {
+    const novos = await DB.insert('leads', payload);
+    const lista = Array.isArray(novos) ? novos : [novos];
+    importados = lista.length;
+    todosLeads.unshift(...lista);
+    document.getElementById('imp-progress').style.width = '100%';
+  } catch(e) {
+    // Se bulk falhar (payload muito grande), cai em lotes de 100
+    document.getElementById('imp-status').textContent = 'Importando em lotes...';
+    for (let i = 0; i < payload.length; i += 100) {
+      const lote = payload.slice(i, i + 100);
+      try {
+        const novos = await DB.insert('leads', lote);
+        const lista = Array.isArray(novos) ? novos : [novos];
+        importados += lista.length;
+        todosLeads.unshift(...lista);
       } catch {}
-    }));
-    const pct = Math.round(((i+5)/total)*100);
-    document.getElementById('imp-progress').style.width = Math.min(pct,100)+'%';
-    document.getElementById('imp-status').textContent = `Importando... ${Math.min(i+5,total)} de ${total}`;
+      const pct = Math.round(((i + 100) / payload.length) * 100);
+      document.getElementById('imp-progress').style.width = Math.min(pct, 100) + '%';
+      document.getElementById('imp-status').textContent = `Importando... ${Math.min(i + 100, payload.length)} de ${payload.length}`;
+    }
   }
 
   leadsFiltrados = [...todosLeads];
