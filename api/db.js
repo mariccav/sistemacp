@@ -9,7 +9,9 @@ const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
 const TABELAS_PERMITIDAS = new Set([
   'usuarios', 'clientes', 'leads', 'leads_contatos', 'leads_interacoes',
   'contratos', 'despesas', 'repasses', 'lancamentos_manuais', 'agenda',
-  'tarefas', 'publicacoes', 'sessoes'
+  'tarefas', 'tarefas_astrea', 'publicacoes', 'sessoes',
+  'transacoes', 'transacoes_historico', 'transacoes_prazos',
+  'mural', 'elogios'
 ]);
 
 // Operações permitidas
