@@ -258,14 +258,21 @@ async function entrar() {
 
   try {
     const hash = await sha256(senha);
-    const r = await fetch(
-      `https://svwwmxapmppjkmbazhul.supabase.co/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${hash}&ativo=eq.true&select=*`,
-      { headers: { 'apikey': 'sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw', 'Authorization': 'Bearer sb_publishable_7Hk2szDWhQAB7X4cPK75ow_va8f5MJw' } }
-    );
-    const dados = r.ok ? await r.json() : [];
-    if (!dados.length) { mostrarErro('Usuário ou senha incorretos.'); return; }
-    const u = dados[0];
-    sessionStorage.setItem('cp_user', JSON.stringify({ id:u.id, username:u.username, nome:u.nome, cargo:u.cargo, ini:u.ini, cor:u.cor, is_admin:u.is_admin, logged_at:Date.now() }));
+    // Login via servidor seguro — não expõe credenciais no frontend
+    const r = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', username, senha_hash: hash })
+    });
+    const resp = await r.json();
+    if (!r.ok || resp.erro) { mostrarErro(resp.erro || 'Usuário ou senha incorretos.'); return; }
+    const { token, user: u } = resp;
+    // Armazenar sessão com token seguro
+    sessionStorage.setItem('cp_user', JSON.stringify({
+      id: u.id, username: u.username, nome: u.nome, cargo: u.cargo,
+      ini: u.ini, cor: u.cor, is_admin: u.is_admin,
+      logged_at: Date.now(), session_token: token
+    }));
     const params = new URLSearchParams(window.location.search);
     window.location.href = params.get('next') || '/dashboard.html';
   } catch { mostrarErro('Erro de conexão. Tente novamente.'); }
