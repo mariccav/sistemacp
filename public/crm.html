@@ -1211,11 +1211,15 @@ async function iniciarImport() {
   const total  = importData.length;
   let importados = 0, duplicados = 0;
 
+  const yield_ = () => new Promise(r => setTimeout(r, 30)); // deixa browser respirar
+
   // CNPJs já existentes (para deduplicação)
   const existentes = new Set(todosLeads.map(l => cnpjLimpo(l.cnpj||'')).filter(Boolean));
 
-  // Preparar payload completo — filtrar duplicatas antes de enviar
+  // Preparar payload — filtrar duplicatas
   document.getElementById('imp-status').textContent = 'Preparando registros...';
+  await yield_();
+
   const payload = [];
   const cnpjsNovos = new Set();
 
@@ -1223,36 +1227,52 @@ async function iniciarImport() {
     const c = cnpjLimpo(row.cnpj||'');
     if (c && (existentes.has(c) || cnpjsNovos.has(c))) { duplicados++; continue; }
     if (c) cnpjsNovos.add(c);
+    // Limpar colunas extras que não existem na tabela leads
+    const { CNPJ_EMPRESA, RAZAO_SOCIAL, NOME_FANTASIA, SETOR, PORTE, CNAE, CNAE_DESCRICAO,
+            CIDADE_EMPRESA, UF, TEL_EMPRESA_1, TEL_EMPRESA_2, EMAIL_EMPRESA,
+            DIVIDA_PGFN, DIVIDA_PGFN_NUM, SCORE, MODALIDADE, ARGUMENTO,
+            SOCIO_NUM, CPF_SOCIO, NOME_SOCIO, TEL_SOCIO, CELULAR_SOCIO, CELULAR_SOCIO_2,
+            EMAIL_SOCIO, CIDADE_SOCIO, UF_SOCIO, META_AUDIENCE, TEM_DIVIDA_PGFN,
+            ...restRow } = row;
     payload.push({
-      ...row,
-      cnpj:         c || null,
-      valor_divida: row.valor_divida ? parseFloat(String(row.valor_divida).replace(/[^\d.,]/g,'').replace(',','.')) || null : null,
-      score:        row.score ? parseFloat(row.score) || null : null,
-      responsavel:  resp,
-      origem:       origem,
-      etapa:        'novo'
+      ...restRow,
+      cnpj:                  c || null,
+      razao_social:          row.razao_social || RAZAO_SOCIAL || null,
+      nome_fantasia:         row.nome_fantasia || NOME_FANTASIA || null,
+      setor:                 row.setor || SETOR || null,
+      porte:                 row.porte || PORTE || null,
+      valor_divida:          (() => { const v = row.valor_divida || DIVIDA_PGFN_NUM || row['Valor da Divida'] || ''; const n = parseFloat(String(v).replace(/[^\d.,]/g,'').replace(',','.')); return isNaN(n) ? null : n; })(),
+      score:                 (() => { const s = row.score || SCORE || ''; const n = parseFloat(s); return isNaN(n) ? null : n; })(),
+      modalidade_transacao:  row.modalidade_transacao || MODALIDADE || null,
+      argumento_anuncio:     row.argumento_anuncio || ARGUMENTO || null,
+      responsavel:           resp,
+      origem:                origem,
+      etapa:                 'novo'
     });
   }
 
-  document.getElementById('imp-status').textContent = `Enviando ${payload.length} leads...`;
-  document.getElementById('imp-progress').style.width = '40%';
+  document.getElementById('imp-status').textContent = `${payload.length} leads prontos. Enviando...`;
+  document.getElementById('imp-progress').style.width = '10%';
+  await yield_();
 
-  // INSERT em lotes de 200 — seguro para qualquer tamanho
-  for (let i = 0; i < payload.length; i += 200) {
-    const lote = payload.slice(i, i + 200);
+  // INSERT em lotes de 50 (seguro para Vercel 10s timeout)
+  const LOTE = 50;
+  for (let i = 0; i < payload.length; i += LOTE) {
+    const lote = payload.slice(i, i + LOTE);
     try {
       const novos = await DB.insert('leads', lote);
       const lista = Array.isArray(novos) ? novos : (novos ? [novos] : []);
       importados += lista.length;
       todosLeads.unshift(...lista);
     } catch(e) {
-      console.error(`Lote ${i}-${i+200} falhou:`, e.message);
-      toast(`Erro no lote ${i+1}-${Math.min(i+200, payload.length)}: ${e.message}`, true);
+      console.error(`Lote ${i} falhou:`, e.message);
+      toast(`Erro: ${e.message}`, true);
     }
-    const pct = Math.round(((i + 200) / payload.length) * 100);
+    const pct = 10 + Math.round(((i + LOTE) / payload.length) * 90);
     document.getElementById('imp-progress').style.width = Math.min(pct, 100) + '%';
     document.getElementById('imp-status').textContent =
-      `Importando... ${Math.min(i + 200, payload.length)} de ${payload.length} (${importados} salvos)`;
+      `Importando... ${Math.min(i + LOTE, payload.length)} de ${payload.length} — ${importados} salvos`;
+    await yield_();
   }
 
   leadsFiltrados = [...todosLeads];
