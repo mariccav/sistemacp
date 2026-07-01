@@ -1167,11 +1167,24 @@ function lerArquivo(file) {
     importData = rows.map(r => {
       const obj = {};
       Object.entries(r).forEach(([k,v]) => {
+        // Mapear colunas conhecidas para o padrão do sistema
         const campo = MAP_RAW[k.toLowerCase().trim()];
-        if (campo && !obj[campo]) obj[campo] = v; // primeiro valor encontrado vence
+        if (campo && !obj[campo]) obj[campo] = v;
+        // Preservar colunas de sócio com o nome original (maiúsculas)
+        // para que a lógica de importação consiga detectá-las
+        const kUp = k.trim().toUpperCase();
+        if (['CNPJ_EMPRESA','RAZAO_SOCIAL','NOME_FANTASIA','SETOR','PORTE',
+             'DIVIDA_PGFN_NUM','SCORE','MODALIDADE','ARGUMENTO',
+             'NOME_SOCIO','CPF_SOCIO','TEL_SOCIO','CELULAR_SOCIO',
+             'CELULAR_SOCIO_2','EMAIL_SOCIO','META_AUDIENCE','SOCIO_NUM',
+             'CNAE','CNAE_DESCRICAO','CIDADE_EMPRESA','UF',
+             'TEL_EMPRESA_1','TEL_EMPRESA_2','EMAIL_EMPRESA',
+             'TEM_DIVIDA_PGFN'].includes(kUp)) {
+          obj[kUp] = v;
+        }
       });
       return obj;
-    }).filter(r => r.razao_social || r.cnpj);
+    }).filter(r => r.razao_social || r.cnpj || r.RAZAO_SOCIAL || r.CNPJ_EMPRESA);
 
     // Preview
     const cols = Object.keys(importData[0] || {});
