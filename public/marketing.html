@@ -1,806 +1,1671 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <script src="/auth.js"></script>
+<script src="/db-client.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Instagram & Marketing — Cavalcante Pinheiro</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<title>Cronograma de Redes Sociais | Cavalcante Pinheiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--br:#fff;--verde:#2a8f6e;--rosa:#c25e5e;--laranja:#d4841a;--lilas:#7b6fb0;--azul:#2980b9;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);font-size:14px;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.pg-header{background:var(--v1);padding:16px 32px;display:flex;align-items:center;gap:16px;}
-.pg-back{background:rgba(255,255,255,.1);border:1px solid rgba(167,168,151,.3);color:var(--bege);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
-.pg-back:hover{background:rgba(255,255,255,.18);}
-.pg-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;flex:1;}
-.pg-sub{font-size:11px;color:var(--bege);text-transform:uppercase;letter-spacing:1.5px;}
-.sync-status{font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600;}
-.sync-ok{background:rgba(42,143,110,.2);color:#6dffc4;}
-.sync-off{background:rgba(255,255,255,.08);color:var(--bege);}
-
-.tabs-bar{background:var(--v2);display:flex;padding:0 32px;gap:4px;overflow-x:auto;}
-.tab-btn{padding:12px 20px;font-size:13px;font-weight:600;color:var(--bege);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;font-family:'Nunito',sans-serif;}
-.tab-btn:hover{color:#fff;}
-.tab-btn.active{color:#fff;border-bottom-color:var(--bege);}
-
-.pg-content{padding:28px 32px;max-width:1080px;margin:0 auto;width:100%;}
-.panel{display:none;}
-.panel.active{display:block;}
-.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--v1);margin-bottom:20px;}
-.sec-sub{font-size:13px;color:var(--bege);margin-top:-14px;margin-bottom:20px;}
-.divider{height:1px;background:#eef3f3;margin:24px 0;}
-
-/* KPIs */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:24px;}
-.kpi{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:18px 14px;text-align:center;position:relative;}
-.kpi-icon{font-size:20px;color:var(--bege);margin-bottom:6px;}
-.kpi-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--v1);line-height:1;}
-.kpi-lbl{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
-.kpi-delta{font-size:11px;font-weight:600;margin-top:5px;}
-.kpi-delta.up{color:var(--verde);}
-.kpi-delta.dw{color:var(--rosa);}
-.kpi-edit{position:absolute;top:7px;right:9px;font-size:11px;color:#ccc;cursor:pointer;background:none;border:none;}
-.kpi-edit:hover{color:var(--v1);}
-.kpi input{width:100%;text-align:center;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--v1);border:none;border-bottom:1px solid var(--bege);outline:none;background:transparent;}
-.kpi-live-badge{position:absolute;top:7px;left:9px;width:8px;height:8px;border-radius:50%;background:var(--verde);box-shadow:0 0 0 3px rgba(42,143,110,.2);}
-
-/* Pauta automática */
-.pauta-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:24px;margin-bottom:20px;}
-.pauta-output{background:#f8fbfb;border-radius:10px;padding:20px;font-size:13px;line-height:1.9;color:var(--v1);white-space:pre-wrap;max-height:500px;overflow-y:auto;border-left:3px solid var(--verde);}
-.btn-primary{background:var(--v1);color:#fff;border:none;padding:10px 22px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:8px;}
-.btn-primary:hover{background:var(--v2);}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
-.btn-secondary{background:var(--bg);color:var(--v1);border:1px solid #dde8e8;padding:9px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Nunito',sans-serif;transition:.15s;}
-.btn-secondary:hover{background:#e8f3f3;}
-
-/* Equipe */
-.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:24px;}
-.team-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:18px;border-top:3px solid;}
-.tav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
-.t-nome{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;}
-.t-cargo{font-size:10px;color:var(--bege);text-transform:uppercase;letter-spacing:1px;}
-
-/* Calendário */
-.team-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
-.tl-item{display:flex;align-items:center;gap:7px;background:var(--br);border:1px solid #dde8e8;border-radius:20px;padding:4px 10px 4px 5px;}
-.tl-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;}
-.tl-name{font-size:11px;font-weight:600;}
-.week-nav{display:flex;align-items:center;justify-content:space-between;background:var(--br);border-radius:12px;border:1px solid #dde8e8;padding:14px 20px;margin-bottom:16px;}
-.week-label{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;}
-.week-btn{background:none;border:1px solid #dde8e8;color:var(--v1);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;}
-.week-btn:hover{background:var(--bg);}
-.cal-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
-.cal-day{background:var(--br);border-radius:12px;border:1px solid #dde8e8;overflow:hidden;}
-.cal-day-hd{padding:9px 12px;border-bottom:1px solid #f0f7f7;display:flex;justify-content:space-between;align-items:center;}
-.cal-day-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--bege);}
-.cal-day-date{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;}
-.cal-day-body{padding:8px 10px;display:flex;flex-direction:column;gap:7px;}
-.cal-item{border-radius:7px;padding:7px 9px;font-size:11px;line-height:1.4;cursor:pointer;transition:.15s;}
-.cal-item:hover{opacity:.85;}
-.ci-type{font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:2px;}
-.ci-tema{font-size:12px;font-weight:600;color:var(--v1);margin-bottom:1px;}
-.ci-who{font-size:10px;font-weight:700;}
-.ci-story{background:#f0f4ff;border-left:3px solid var(--lilas);}
-.ci-story .ci-type{color:var(--lilas);}
-.ci-reels{background:#fff3e0;border-left:3px solid var(--laranja);}
-.ci-reels .ci-type{color:var(--laranja);}
-.ci-carrossel{background:#e8f8f0;border-left:3px solid var(--verde);}
-.ci-carrossel .ci-type{color:var(--verde);}
-.cal-feriado{padding:12px;text-align:center;color:var(--bege);font-size:12px;font-style:italic;}
-
-/* Roteiros */
-.roteiro-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;overflow:hidden;margin-bottom:12px;}
-.roteiro-hd{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid transparent;transition:.1s;}
-.roteiro-hd:hover{background:#f8fbfb;}
-.roteiro-hd.open{border-bottom-color:#eef3f3;}
-.rot-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
-.rot-tema{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;}
-.rot-meta{font-size:11px;color:var(--bege);}
-.rot-body{display:none;padding:18px;}
-.rot-body.open{display:block;}
-.rot-script{background:#f8fbfb;border-radius:10px;padding:16px;font-size:13px;line-height:1.9;color:var(--v1);border-left:3px solid var(--verde);white-space:pre-line;}
-.rot-section h4{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-bottom:5px;font-weight:700;}
-.rot-section{margin-bottom:14px;}
-.rot-section p{font-size:13px;line-height:1.7;}
-.rot-tip{background:#fff3e0;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--laranja);margin-top:10px;}
-.rot-copy{background:var(--v1);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;margin-top:10px;transition:.15s;}
-.rot-copy:hover{background:var(--v2);}
-.badge{font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:10px;font-weight:700;}
-.badge-laranja{background:#fff3e0;color:var(--laranja);}
-.badge-verde{background:#e8f8f0;color:var(--verde);}
-.badge-lilas{background:#f0eef8;color:var(--lilas);}
-.badge-quente{background:#fce8e8;color:#b03030;}
-
-/* Stories */
-.stories-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
-.story-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:14px;}
-.story-type{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:7px;}
-.story-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;margin-bottom:5px;}
-.story-desc{font-size:12px;color:#5a7878;line-height:1.6;margin-bottom:8px;}
-.story-exemplo{background:#f8fbfb;border-radius:8px;padding:9px 11px;font-size:11px;font-style:italic;color:#5a7878;line-height:1.6;margin-bottom:9px;}
-.story-tags{display:flex;flex-wrap:wrap;gap:4px;}
-.stag{background:#f0f7f7;color:var(--v2);font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
-
-/* Artigos */
-.artigo-card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:16px 18px;display:flex;gap:14px;margin-bottom:10px;}
-.artigo-num{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#eef3f3;line-height:1;min-width:38px;}
-.artigo-titulo{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;margin-bottom:3px;}
-.artigo-meta{font-size:11px;color:var(--bege);margin-bottom:6px;}
-.artigo-desc{font-size:12px;color:#5a7878;line-height:1.6;}
-.artigo-sub{font-size:11px;color:var(--v2);margin-top:6px;}
-.artigo-badges{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
-
-/* Agente */
-#panel-agente{display:none;flex-direction:column;height:calc(100vh - 120px);}
-#panel-agente.active{display:flex;}
-.chat-wrap{flex:1;overflow-y:auto;padding:20px 0;display:flex;flex-direction:column;gap:12px;}
-.msg{max-width:82%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.75;}
-.msg-user{background:var(--v1);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
-.msg-agent{background:var(--br);border:1px solid #dde8e8;color:var(--v1);align-self:flex-start;border-bottom-left-radius:4px;white-space:pre-wrap;}
-.msg-agent strong{color:var(--v1);}
-.msg-agent em{color:var(--verde);}
-.chat-input-bar{background:var(--br);border:1px solid #dde8e8;border-radius:14px;padding:12px 16px;display:flex;gap:10px;align-items:flex-end;margin-top:12px;}
-.chat-input{flex:1;border:none;outline:none;font-family:'Nunito',sans-serif;font-size:13px;resize:none;min-height:20px;max-height:120px;background:transparent;color:var(--v1);}
-.chat-send{background:var(--v1);color:#fff;border:none;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.15s;flex-shrink:0;}
-.chat-send:hover{background:var(--v2);}
-.chat-send:disabled{opacity:.4;cursor:not-allowed;}
-.chat-sugestoes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.sug-btn{background:var(--br);border:1px solid #dde8e8;color:var(--v1);padding:7px 14px;border-radius:20px;font-size:12px;cursor:pointer;transition:.15s;font-family:'Nunito',sans-serif;}
-.sug-btn:hover{background:var(--bg);border-color:var(--bege);}
-.typing{display:flex;gap:5px;align-items:center;padding:12px 16px;}
-.typing span{width:8px;height:8px;border-radius:50%;background:var(--bege);animation:bounce .9s infinite;}
-.typing span:nth-child(2){animation-delay:.15s;}
-.typing span:nth-child(3){animation-delay:.3s;}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
-
-/* Checklist */
-.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;}
-.check-item{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:4px 0;}
-.check-item input{width:16px;height:16px;accent-color:var(--v1);cursor:pointer;}
-
-.card{background:var(--br);border-radius:14px;border:1px solid #dde8e8;padding:20px;}
-.empty{color:var(--bege);font-size:13px;font-style:italic;text-align:center;padding:20px;}
-
-@media(max-width:700px){
-  .cal-grid{grid-template-columns:1fr 1fr;}
-  .kpi-grid{grid-template-columns:repeat(2,1fr);}
-  .pg-content{padding:14px 16px;}
-  .tabs-bar{padding:0 16px;}
+:root {
+  --verde: #1f3e3c;
+  --verde-medio: #2e5552;
+  --verde-claro: #3d6b68;
+  --bege: #a7a897;
+  --bege-claro: #c8c8b8;
+  --fundo: #f2fdff;
+  --fundo-card: #ffffff;
+  --texto: #1a2e2d;
+  --texto-suave: #5a6e6d;
+  --borda: #d4e5e3;
+  --laranja: #f97316;
+  --laranja-bg: #fff7ed;
+  --verde-post: #22c55e;
+  --verde-post-bg: #f0fdf4;
+  --roxo: #8b5cf6;
+  --roxo-bg: #f5f3ff;
+  --vermelho: #ef4444;
+  --vermelho-bg: #fff5f5;
+  --amarelo: #f59e0b;
+  --amarelo-bg: #fffbeb;
 }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--verde);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(31,62,60,0.3);
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.header-logo {
+  height: 36px;
+  width: auto;
+}
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.03em;
+}
+.header-subtitle {
+  font-size: 10px;
+  color: var(--bege);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.btn-voltar {
+  font-size: 12px;
+  color: var(--bege-claro);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+  padding: 6px 12px;
+  border: 1px solid rgba(167,168,151,0.3);
+  border-radius: 6px;
+}
+.btn-voltar:hover { color: #fff; border-color: rgba(167,168,151,0.6); }
+.btn-novo {
+  background: var(--laranja);
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-novo:hover { background: #ea6c0a; transform: translateY(-1px); }
+
+/* ── NAVEGAÇÃO DE MÊS ── */
+.nav-mes {
+  background: var(--verde);
+  padding: 0 28px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.nav-mes-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.nav-mes-titulo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 200px;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.btn-nav {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(167,168,151,0.3);
+  color: var(--bege-claro);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.btn-nav:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.nav-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(167,168,151,0.2);
+}
+.btn-toggle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bege);
+  background: none;
+  border: none;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-toggle.active { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ── CONTAINER PRINCIPAL ── */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .container { grid-template-columns: 1fr; }
+  .sidebar { order: -1; }
+}
+@media (max-width: 600px) {
+  .container { padding: 16px; }
+  .header { padding: 12px 16px; }
+  .nav-mes { padding: 0 16px 12px; }
+}
+
+/* ── KPIs ── */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 800px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 500px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+.kpi-card {
+  background: var(--fundo-card);
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--borda);
+  text-align: center;
+}
+.kpi-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texto-suave);
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.kpi-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--verde);
+}
+.kpi-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* ── CALENDÁRIO ── */
+.calendario {
+  background: var(--fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  overflow: hidden;
+}
+.cal-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--verde);
+}
+.cal-dia-nome {
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bege);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.cal-cell {
+  min-height: 110px;
+  border-right: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+  padding: 6px;
+  vertical-align: top;
+  position: relative;
+}
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-cell.vazio { background: rgba(242,253,255,0.4); }
+.cal-cell.hoje { background: #e8f7f5; }
+.cal-cell.feriado-cel { background: var(--vermelho-bg); }
+.cal-dia-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.cal-dia-num .dia-n { color: var(--verde); font-size: 13px; }
+.tag-feriado-cal {
+  font-size: 8px;
+  background: var(--vermelho);
+  color: white;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.cal-post {
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  padding: 3px 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Nunito', sans-serif;
+}
+.cal-post:hover { opacity: 0.8; transform: scale(1.02); }
+.cal-post.reels     { background: var(--laranja-bg); color: var(--laranja); border-left: 3px solid var(--laranja); }
+.cal-post.carrossel { background: var(--verde-post-bg); color: #16a34a; border-left: 3px solid var(--verde-post); }
+.cal-post.story     { background: var(--roxo-bg); color: #7c3aed; border-left: 3px solid var(--roxo); }
+.cal-mais {
+  font-size: 9px;
+  color: var(--texto-suave);
+  font-weight: 600;
+  cursor: default;
+}
+
+/* ── LISTA DE POSTS ── */
+.lista-wrap {
+  background: var(--fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  overflow: hidden;
+  overflow-x: auto;
+}
+.lista-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 800px;
+}
+.lista-table th {
+  background: var(--verde);
+  color: var(--bege);
+  padding: 11px 12px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.lista-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--borda);
+  vertical-align: middle;
+  color: var(--texto);
+}
+.lista-table tr:last-child td { border-bottom: none; }
+.lista-table tr:hover td { background: rgba(31,62,60,0.03); }
+.lista-table tr.feriado-row td { background: var(--vermelho-bg) !important; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-reels     { background: var(--laranja-bg); color: var(--laranja); }
+.badge-carrossel { background: var(--verde-post-bg); color: #16a34a; }
+.badge-story     { background: var(--roxo-bg); color: #7c3aed; }
+.badge-planejado { background: #f1f5f9; color: #64748b; }
+.badge-producao  { background: var(--amarelo-bg); color: #b45309; }
+.badge-aprovado  { background: #ecfdf5; color: #059669; }
+.badge-publicado { background: #e0f2fe; color: #0369a1; }
+
+.check-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, transform 0.1s;
+  user-select: none;
+}
+.check-icon:hover { transform: scale(1.15); }
+.check-icon.done { background: #dcfce7; border-color: #86efac; }
+.check-icon.todo { background: #f8fafc; border-color: #cbd5e1; opacity: 0.6; }
+
+.btn-acao {
+  background: none;
+  border: 1px solid var(--borda);
+  color: var(--texto-suave);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-acao:hover { background: var(--verde); color: white; border-color: var(--verde); }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card-regras {
+  background: var(--fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  overflow: hidden;
+}
+.card-regras-header {
+  background: var(--verde);
+  padding: 11px 16px;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.card-regras-body { padding: 14px 16px; }
+.regra-item {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 12px;
+  color: var(--texto-suave);
+  line-height: 1.5;
+}
+.regra-item:last-child { border-bottom: none; }
+.regra-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: var(--verde);
+  margin-bottom: 2px;
+}
+.gravacao-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--borda);
+}
+.gravacao-item:last-child { border-bottom: none; }
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.av-mp { background: #1f3e3c; }
+.av-di { background: #7c3aed; }
+.av-ja { background: #0369a1; }
+.av-la { background: #b45309; }
+.av-mb { background: #be185d; }
+
+.legenda-cores { display: flex; flex-direction: column; gap: 8px; }
+.legenda-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+.legenda-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.aberto { display: flex; }
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+}
+.modal-header {
+  background: var(--verde);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px 16px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.modal-titulo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+}
+.btn-fechar {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.btn-fechar:hover { background: rgba(255,255,255,0.22); }
+.modal-body { padding: 24px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--verde);
+}
+.form-input, .form-select, .form-textarea {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--borda);
+  border-radius: 8px;
+  color: var(--texto);
+  background: var(--fundo);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--verde);
+  box-shadow: 0 0 0 3px rgba(31,62,60,0.1);
+}
+.form-textarea { resize: vertical; min-height: 70px; }
+
+.check-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.check-wrap input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--vermelho);
+  cursor: pointer;
+}
+
+.checklist-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--borda);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-size: 12px;
+  color: var(--texto-suave);
+  font-weight: 600;
+  user-select: none;
+}
+.check-item input[type="checkbox"] { display: none; }
+.check-item.marcado { border-color: #86efac; background: #f0fdf4; color: #15803d; }
+.check-item-icon { font-size: 14px; }
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 0 0 16px 16px;
+  position: sticky;
+  bottom: 0;
+}
+.btn-salvar {
+  background: var(--verde);
+  color: white;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-salvar:hover { background: var(--verde-medio); }
+.btn-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-cancelar {
+  background: white;
+  color: var(--texto-suave);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--borda);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.btn-cancelar:hover { border-color: var(--texto-suave); color: var(--texto); }
+.btn-excluir-modal {
+  background: white;
+  color: var(--vermelho);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #fecaca;
+  cursor: pointer;
+  margin-right: auto;
+  transition: background 0.2s;
+}
+.btn-excluir-modal:hover { background: #fff5f5; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 52px 24px;
+  color: var(--texto-suave);
+}
+.empty-icon { font-size: 44px; margin-bottom: 14px; }
+.empty-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--verde); margin-bottom: 6px; }
+.empty-desc { font-size: 13px; }
+
+/* ── LOADING ── */
+.spinner {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--borda);
+  border-top-color: var(--verde);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-wrap { text-align: center; padding: 44px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--verde);
+  color: white;
+  padding: 13px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 9999;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+  max-width: 320px;
+}
+.toast.visivel { transform: translateY(0); opacity: 1; }
+.toast.erro { background: var(--vermelho); }
+
+/* ── UTILITÁRIOS ── */
+.hidden { display: none !important; }
+.secao-main { min-width: 0; }
 </style>
 </head>
 <body>
 
-<div class="pg-header">
-  <a href="/" class="pg-back"><i class="ti ti-arrow-left"></i> Início</a>
-  <div style="flex:1;">
-    <div class="pg-title">Instagram & Marketing</div>
-    <div class="pg-sub">Cavalcante Pinheiro Advocacia</div>
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <img src="/logo-cp.png" alt="Cavalcante Pinheiro" class="header-logo">
+    <div>
+      <div class="header-title">Cronograma de Redes Sociais</div>
+      <div class="header-subtitle">Cavalcante Pinheiro Advocacia</div>
+    </div>
   </div>
-  <div class="sync-status sync-off" id="sync-badge">⏳ Verificando Instagram...</div>
+  <div class="header-right">
+    <a href="/" class="btn-voltar">&#8592; Voltar</a>
+    <button class="btn-novo" onclick="abrirModalNovo()">+ Novo Post</button>
+  </div>
+</header>
+
+<!-- NAVEGAÇÃO DE MÊS -->
+<div class="nav-mes">
+  <div class="nav-mes-center">
+    <button class="btn-nav" onclick="navegarMes(-1)" title="Mês anterior">&#8592;</button>
+    <div class="nav-mes-titulo" id="titulo-mes">Carregando...</div>
+    <button class="btn-nav" onclick="navegarMes(1)" title="Próximo mês">&#8594;</button>
+  </div>
+  <div class="nav-toggle">
+    <button class="btn-toggle active" id="btn-cal" onclick="setView('calendario')">Calendário</button>
+    <button class="btn-toggle" id="btn-lista" onclick="setView('lista')">Lista</button>
+  </div>
 </div>
 
-<div class="tabs-bar">
-  <button class="tab-btn active" onclick="showTab('dashboard',this)">Dashboard</button>
-  <button class="tab-btn" onclick="showTab('calendario',this)">Calendário</button>
-  <button class="tab-btn" onclick="showTab('roteiros',this)">Roteiros</button>
-  <button class="tab-btn" onclick="showTab('stories',this)">Banco de Stories</button>
-  <button class="tab-btn" onclick="showTab('artigos',this)">Artigos & Posts</button>
-  <button class="tab-btn" onclick="showTab('agente',this)">✦ Agente CP</button>
-</div>
+<!-- CONTAINER -->
+<div class="container">
 
-<div class="pg-content">
+  <!-- COLUNA PRINCIPAL -->
+  <div class="secao-main">
 
-<!-- ══════════════════════ DASHBOARD ══════════════════════ -->
-<div id="panel-dashboard" class="panel active">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-    <h2 class="sec-title" style="margin:0;">Instagram @cavalcantepinheiroadvogados</h2>
-    <button class="btn-secondary" onclick="carregarMetrics()"><i class="ti ti-refresh" style="margin-right:6px;"></i>Sincronizar</button>
-  </div>
-  <div id="ig-config-aviso" style="display:none;background:#fff8e8;border:1px solid #f0d080;border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#7a5c00;"></div>
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Posts</div>
+        <div class="kpi-value" id="kpi-total">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--laranja)"></span> Reels</div>
+        <div class="kpi-value" id="kpi-reels">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--verde-post)"></span> Carrosséis</div>
+        <div class="kpi-value" id="kpi-carrossel">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="kpi-dot" style="background:var(--roxo)"></span> Stories</div>
+        <div class="kpi-value" id="kpi-story">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">% Publicados</div>
+        <div class="kpi-value" id="kpi-pct">—</div>
+      </div>
+    </div>
 
-  <div class="kpi-grid" id="kpi-grid">
-    <div class="kpi"><div id="kpi-live-seg" class="kpi-live-badge" style="display:none;"></div><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-users"></i></div><div class="kpi-val" id="kpi-seguidores">—</div><div class="kpi-lbl">Seguidores</div></div>
-    <div class="kpi"><div id="kpi-live-eng" class="kpi-live-badge" style="display:none;"></div><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-heart"></i></div><div class="kpi-val" id="kpi-engajamento">—</div><div class="kpi-lbl">Taxa de Engajamento</div></div>
-    <div class="kpi"><div id="kpi-live-ree" class="kpi-live-badge" style="display:none;"></div><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-video"></i></div><div class="kpi-val" id="kpi-reels">—</div><div class="kpi-lbl">Reels no Mês</div></div>
-    <div class="kpi"><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-layout-cards"></i></div><div class="kpi-val" id="kpi-carrosseis">—</div><div class="kpi-lbl">Carrosséis no Mês</div></div>
-    <div class="kpi"><div id="kpi-live-alc" class="kpi-live-badge" style="display:none;"></div><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-eye"></i></div><div class="kpi-val" id="kpi-alcance">—</div><div class="kpi-lbl">Alcance (semana)</div></div>
-    <div class="kpi"><button class="kpi-edit" onclick="editKpi(this)"><i class="ti ti-pencil"></i></button><div class="kpi-icon"><i class="ti ti-mail"></i></div><div class="kpi-val" id="kpi-leads">—</div><div class="kpi-lbl">Leads via Instagram</div></div>
-  </div>
+    <!-- CALENDÁRIO -->
+    <div id="view-calendario">
+      <div class="calendario">
+        <div class="cal-header">
+          <div class="cal-dia-nome">Dom</div>
+          <div class="cal-dia-nome">Seg</div>
+          <div class="cal-dia-nome">Ter</div>
+          <div class="cal-dia-nome">Qua</div>
+          <div class="cal-dia-nome">Qui</div>
+          <div class="cal-dia-nome">Sex</div>
+          <div class="cal-dia-nome">Sáb</div>
+        </div>
+        <div class="cal-grid" id="cal-grid">
+          <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
 
-  <div class="divider"></div>
+    <!-- LISTA -->
+    <div id="view-lista" class="hidden">
+      <div class="lista-wrap">
+        <table class="lista-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Dia da Semana</th>
+              <th>Formato</th>
+              <th>Responsável</th>
+              <th>Tema</th>
+              <th>Prazo Grav.</th>
+              <th>Status</th>
+              <th>Checklist</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="lista-body">
+            <tr><td colspan="9" class="loading-wrap"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;">Pauta da Semana</h3>
-    <button class="btn-primary" id="btn-pauta" onclick="gerarPauta()"><i class="ti ti-robot"></i>Gerar com IA</button>
-  </div>
-  <div class="pauta-card" id="pauta-container">
-    <p class="empty">Clique em "Gerar com IA" para criar a pauta completa desta semana automaticamente.</p>
-  </div>
+  </div><!-- /secao-main -->
 
-  <div class="divider"></div>
-  <h3 style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:16px;">Equipe de Conteúdo</h3>
-  <div class="team-grid" id="team-grid"></div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
 
-  <div class="divider"></div>
-  <h3 style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:14px;">Checklist Semanal</h3>
-  <div class="card">
-    <div class="check-grid">
-      <label class="check-item"><input type="checkbox"> Roteiro gravado com antecedência</label>
-      <label class="check-item"><input type="checkbox"> Foto para capa do Reels tirada</label>
-      <label class="check-item"><input type="checkbox"> Legenda completa redigida</label>
-      <label class="check-item"><input type="checkbox"> Conteúdo enviado para Jade via AirDrop</label>
-      <label class="check-item"><input type="checkbox"> Mariana aprovou todos os posts</label>
-      <label class="check-item"><input type="checkbox"> Diana fez revisão jurídica</label>
-      <label class="check-item"><input type="checkbox"> Horários de publicação programados</label>
-      <label class="check-item"><input type="checkbox"> Stories da semana planejados</label>
-      <label class="check-item"><input type="checkbox"> Hashtags revisadas</label>
-      <label class="check-item"><input type="checkbox"> CTA de sexta agendado</label>
+    <!-- Legenda -->
+    <div class="card-regras">
+      <div class="card-regras-header">Legenda</div>
+      <div class="card-regras-body">
+        <div class="legenda-cores">
+          <div class="legenda-item"><div class="legenda-dot" style="background:var(--laranja)"></div>Reels — Mariana Pinheiro</div>
+          <div class="legenda-item"><div class="legenda-dot" style="background:var(--verde-post)"></div>Carrossel — Diana</div>
+          <div class="legenda-item"><div class="legenda-dot" style="background:var(--roxo)"></div>Story — responsável rotativo</div>
+          <div class="legenda-item"><div class="legenda-dot" style="background:var(--vermelho)"></div>Feriado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regras do Mês -->
+    <div class="card-regras">
+      <div class="card-regras-header">Regras do Mês</div>
+      <div class="card-regras-body">
+        <div class="regra-item">
+          <div class="regra-label">Reels — Toda Segunda</div>
+          Mariana Pinheiro grava e publica toda segunda-feira.
+        </div>
+        <div class="regra-item">
+          <div class="regra-label">Carrossel — Toda Quarta</div>
+          Diana elabora e faz o design. Se houver feriado na quarta, pode ser transferido para a sexta.
+        </div>
+        <div class="regra-item">
+          <div class="regra-label">Stories — Seg, Ter e Qui</div>
+          Responsabilidade rotaciona semanalmente entre Laila, Diana, M. Barboza e Jade.
+        </div>
+        <div class="regra-item">
+          <div class="regra-label">Regra do Feed</div>
+          Nunca três vídeos seguidos sem carrossel ou conteúdo visual diferente entre eles.
+        </div>
+        <div class="regra-item">
+          <div class="regra-label">Feriados</div>
+          Conteúdo é reorganizado, nunca cancelado.
+        </div>
+      </div>
+    </div>
+
+    <!-- Gravações do Mês (Quartas) -->
+    <div class="card-regras">
+      <div class="card-regras-header">Gravações das Quartas</div>
+      <div class="card-regras-body" id="sidebar-gravacoes">
+        <div style="font-size:12px;color:var(--texto-suave)">Carregando...</div>
+      </div>
+    </div>
+
+    <!-- Stories por Semana -->
+    <div class="card-regras">
+      <div class="card-regras-header">Rodízio de Stories — Semanas</div>
+      <div class="card-regras-body" id="sidebar-stories">
+        <div style="font-size:12px;color:var(--texto-suave)">Carregando...</div>
+      </div>
+    </div>
+
+  </aside>
+
+</div><!-- /container -->
+
+<!-- MODAL DE CRIAÇÃO / EDIÇÃO -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-titulo">Novo Post</div>
+      <button class="btn-fechar" onclick="fecharModal()" aria-label="Fechar">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <input type="hidden" id="f-id">
+
+        <div class="form-group">
+          <label class="form-label" for="f-data">Data de Publicação</label>
+          <input type="date" class="form-input" id="f-data" onchange="onDataChange()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-formato">Formato</label>
+          <select class="form-select" id="f-formato" onchange="onFormatoChange()">
+            <option value="">Selecione...</option>
+            <option value="reels">Reels</option>
+            <option value="carrossel">Carrossel</option>
+            <option value="story">Story</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-responsavel">Responsável</label>
+          <select class="form-select" id="f-responsavel">
+            <option value="">Selecione...</option>
+            <option value="Mariana Pinheiro">Mariana Pinheiro</option>
+            <option value="Diana">Diana</option>
+            <option value="Jade">Jade</option>
+            <option value="Laila">Laila</option>
+            <option value="Mariana Barboza">Mariana Barboza</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-prazo">Prazo de Gravação</label>
+          <input type="date" class="form-input" id="f-prazo">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="f-tema-select">Tema</label>
+          <select class="form-select" id="f-tema-select" onchange="onTemaSelect()">
+            <option value="">Selecione um tema...</option>
+            <option value="Transação tributária">Transação tributária</option>
+            <option value="Holding">Holding</option>
+            <option value="Equiparação hospitalar">Equiparação hospitalar</option>
+            <option value="Isenção IR">Isenção IR</option>
+            <option value="ITIV">ITIV</option>
+            <option value="Recuperação de créditos">Recuperação de créditos</option>
+            <option value="Devedor contumaz">Devedor contumaz</option>
+            <option value="Simples nacional">Simples nacional</option>
+            <option value="Planejamento tributário">Planejamento tributário</option>
+            <option value="TFF">TFF</option>
+            <option value="Gorjetas">Gorjetas</option>
+            <option value="__livre">Tema livre (digitar abaixo)...</option>
+          </select>
+          <input type="text" class="form-input hidden" id="f-tema-livre" placeholder="Digite o tema personalizado...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-status">Status</label>
+          <select class="form-select" id="f-status">
+            <option value="planejado">Planejado</option>
+            <option value="em produção">Em Produção</option>
+            <option value="aprovado">Aprovado</option>
+            <option value="publicado">Publicado</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="justify-content:flex-end;padding-top:8px">
+          <label class="check-wrap" style="cursor:pointer;font-size:12px;color:var(--texto-suave);font-weight:600">
+            <input type="checkbox" id="f-feriado">
+            Marcar como feriado
+          </label>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Checklist de Produção</label>
+          <div class="checklist-grid">
+            <label class="check-item" id="cl-roteiro">
+              <input type="checkbox" id="f-roteiro" onchange="toggleCheck(this,'cl-roteiro')">
+              <span class="check-item-icon">📝</span> Roteiro elaborado
+            </label>
+            <label class="check-item" id="cl-capa">
+              <input type="checkbox" id="f-capa" onchange="toggleCheck(this,'cl-capa')">
+              <span class="check-item-icon">📸</span> Foto de capa
+            </label>
+            <label class="check-item" id="cl-legenda">
+              <input type="checkbox" id="f-legenda" onchange="toggleCheck(this,'cl-legenda')">
+              <span class="check-item-icon">&#x270D;</span> Legenda completa
+            </label>
+            <label class="check-item" id="cl-airdrop">
+              <input type="checkbox" id="f-airdrop" onchange="toggleCheck(this,'cl-airdrop')">
+              <span class="check-item-icon">📱</span> Enviado p/ Jade (AirDrop)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="f-obs">Observações</label>
+          <textarea class="form-textarea" id="f-obs" placeholder="Anotações sobre este post..."></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-excluir-modal hidden" id="btn-excluir" onclick="excluirPost()">Excluir post</button>
+      <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-salvar" id="btn-salvar" onclick="salvarPost()">Salvar Post</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════ CALENDÁRIO ══════════════════════ -->
-<div id="panel-calendario" class="panel">
-  <h2 class="sec-title">Calendário Semanal</h2>
-  <div class="team-legend">
-    <div class="tl-item"><div class="tl-av" style="background:#1f3e3c;">MP</div><span class="tl-name">Mariana P.</span></div>
-    <div class="tl-item"><div class="tl-av" style="background:#2a8f6e;">DJ</div><span class="tl-name">Diana</span></div>
-    <div class="tl-item"><div class="tl-av" style="background:#7b6fb0;">JL</div><span class="tl-name">Jade</span></div>
-    <div class="tl-item"><div class="tl-av" style="background:#d4841a;">LC</div><span class="tl-name">Laila</span></div>
-    <div class="tl-item"><div class="tl-av" style="background:#c25e5e;">MB</div><span class="tl-name">M. Barboza</span></div>
-  </div>
-  <div class="week-nav">
-    <button class="week-btn" onclick="semana(-1)"><i class="ti ti-chevron-left"></i></button>
-    <div class="week-label" id="week-label"></div>
-    <button class="week-btn" onclick="semana(1)"><i class="ti ti-chevron-right"></i></button>
-  </div>
-  <div class="cal-grid" id="cal-grid"></div>
-</div>
-
-<!-- ══════════════════════ ROTEIROS ══════════════════════ -->
-<div id="panel-roteiros" class="panel">
-  <h2 class="sec-title">Roteiros de Vídeo</h2>
-  <p class="sec-sub">Scripts completos prontos para gravar. Clique para expandir.</p>
-  <div id="roteiros-list"></div>
-</div>
-
-<!-- ══════════════════════ STORIES ══════════════════════ -->
-<div id="panel-stories" class="panel">
-  <h2 class="sec-title">Banco de Stories</h2>
-  <p class="sec-sub">25 templates de stories para usar e adaptar toda semana.</p>
-  <div class="stories-grid" id="stories-grid"></div>
-</div>
-
-<!-- ══════════════════════ ARTIGOS ══════════════════════ -->
-<div id="panel-artigos" class="panel">
-  <h2 class="sec-title">Artigos, Carrosséis & Posts</h2>
-  <p class="sec-sub">22 pautas desenvolvidas — cada uma vira Reels, carrossel e/ou artigo no blog.</p>
-  <div id="artigos-list"></div>
-</div>
-
-<!-- ══════════════════════ AGENTE ══════════════════════ -->
-<div id="panel-agente" class="panel">
-  <h2 class="sec-title" style="margin-bottom:4px;">Agente de Marketing CP</h2>
-  <p style="font-size:13px;color:var(--bege);margin-bottom:16px;">Gero roteiros, pautas, legendas e analiso concorrentes. Pergunte qualquer coisa sobre o Instagram do escritório.</p>
-  <div class="chat-sugestoes" id="chat-sugs"></div>
-  <div class="chat-wrap" id="chat-wrap"></div>
-  <div class="chat-input-bar">
-    <textarea class="chat-input" id="chat-input" placeholder="Ex: Gera o roteiro completo do Reels sobre transação tributária para a Mariana..." rows="1" onkeydown="chatKeydown(event)" oninput="autoResize(this)"></textarea>
-    <button class="chat-send" id="chat-send" onclick="enviarChat()"><i class="ti ti-send"></i></button>
-  </div>
-</div>
-
-</div><!-- /pg-content -->
-
-<!-- MODAL DIA -->
-<div id="modal-dia" style="display:none;position:fixed;inset:0;background:rgba(31,62,60,.8);z-index:9000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
-  <div style="background:#fff;border-radius:16px;max-width:540px;width:100%;padding:26px;position:relative;max-height:85vh;overflow-y:auto;">
-    <button onclick="document.getElementById('modal-dia').style.display='none'" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;">✕</button>
-    <div id="modal-dia-content"></div>
-  </div>
-</div>
+<!-- TOAST -->
+<div class="toast" id="toast" role="alert"></div>
 
 <script>
-// ══════════════════ TABS ══════════════════
-function showTab(name, btn) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
+// ══════════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════════════════
+const HOJE = new Date();
+let mesAtual  = HOJE.getMonth() + 1;   // 1–12
+let anoAtual  = HOJE.getFullYear();
+let postsCache = [];
+let viewAtual  = 'calendario';
+
+const MESES = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'
+];
+const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+// Rodízio de gravações das quartas: M.Barboza → Laila → Jade → Diana
+const RODIZIO_GRAVACAO = ['Mariana Barboza','Laila','Jade','Diana'];
+
+// Rodízio semanal de stories: Laila → Diana → M.Barboza → Jade
+const RODIZIO_STORIES = ['Laila','Diana','Mariana Barboza','Jade'];
+
+// Temas fixos (para distinguir tema livre)
+const TEMAS_FIXOS = [
+  'Transação tributária','Holding','Equiparação hospitalar','Isenção IR','ITIV',
+  'Recuperação de créditos','Devedor contumaz','Simples nacional',
+  'Planejamento tributário','TFF','Gorjetas'
+];
+
+// ══════════════════════════════════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  carregarMes();
+});
+
+// ══════════════════════════════════════════════════════════════════
+// NAVEGAÇÃO DE MÊS
+// ══════════════════════════════════════════════════════════════════
+function navegarMes(delta) {
+  mesAtual += delta;
+  if (mesAtual > 12) { mesAtual = 1; anoAtual++; }
+  if (mesAtual < 1)  { mesAtual = 12; anoAtual--; }
+  carregarMes();
 }
 
-// ══════════════════ KPI EDIT ══════════════════
-function editKpi(btn) {
-  const kpi = btn.closest('.kpi');
-  const valEl = kpi.querySelector('.kpi-val');
-  const curr = valEl.textContent;
-  const input = document.createElement('input');
-  input.value = curr === '—' ? '' : curr;
-  valEl.replaceWith(input);
-  input.focus();
-  const save = () => { const s = document.createElement('div'); s.className='kpi-val'; s.id=valEl.id; s.textContent=input.value||'—'; input.replaceWith(s); };
-  input.addEventListener('blur', save);
-  input.addEventListener('keydown', e => { if(e.key==='Enter') input.blur(); });
+// ══════════════════════════════════════════════════════════════════
+// ALTERNÂNCIA DE VISUALIZAÇÃO
+// ══════════════════════════════════════════════════════════════════
+function setView(v) {
+  viewAtual = v;
+  document.getElementById('view-calendario').classList.toggle('hidden', v !== 'calendario');
+  document.getElementById('view-lista').classList.toggle('hidden', v !== 'lista');
+  document.getElementById('btn-cal').classList.toggle('active', v === 'calendario');
+  document.getElementById('btn-lista').classList.toggle('active', v === 'lista');
 }
 
-// ══════════════════ INSTAGRAM METRICS ══════════════════
-async function carregarMetrics() {
-  document.getElementById('sync-badge').textContent = '⏳ Sincronizando...';
-  document.getElementById('sync-badge').className = 'sync-status sync-off';
+// ══════════════════════════════════════════════════════════════════
+// CARREGAMENTO DE DADOS
+// ══════════════════════════════════════════════════════════════════
+async function carregarMes() {
+  document.getElementById('titulo-mes').textContent = `${MESES[mesAtual - 1]} ${anoAtual}`;
+  renderCarregando();
+  renderSidebar();
+
   try {
-    const r = await fetch('/api/instagram-metrics');
-    const d = await r.json();
-    if (!d.configurado) {
-      const aviso = document.getElementById('ig-config-aviso');
-      aviso.style.display = 'block';
-      aviso.innerHTML = `<strong>Instagram não sincronizado.</strong> Para ativar os dados ao vivo, configure as variáveis de ambiente no Vercel.<br><a href="#" onclick="this.nextSibling.style.display=this.nextSibling.style.display==='none'?'block':'none';return false;"> Ver instruções ▼</a><ol style="margin-top:8px;line-height:2;">${(d.instrucoes||[]).map(i=>`<li>${i}</li>`).join('')}</ol>`;
-      document.getElementById('sync-badge').textContent = '○ Manual';
-      return;
+    const dados = await DB.get(
+      'redes_posts',
+      `mes=eq.${mesAtual}&ano=eq.${anoAtual}&order=data_publicacao.asc`
+    );
+    postsCache = dados || [];
+  } catch (e) {
+    postsCache = [];
+    showToast('Erro ao carregar posts: ' + e.message, true);
+  }
+
+  atualizarKPIs();
+  renderCalendario();
+  renderLista();
+}
+
+function renderCarregando() {
+  document.getElementById('cal-grid').innerHTML =
+    '<div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>';
+  document.getElementById('lista-body').innerHTML =
+    '<tr><td colspan="9" class="loading-wrap"><div class="spinner"></div></td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// KPIs
+// ══════════════════════════════════════════════════════════════════
+function atualizarKPIs() {
+  const total   = postsCache.length;
+  const reels   = postsCache.filter(p => p.formato === 'reels').length;
+  const carr    = postsCache.filter(p => p.formato === 'carrossel').length;
+  const stories = postsCache.filter(p => p.formato === 'story').length;
+  const pub     = postsCache.filter(p => p.status === 'publicado').length;
+  const pct     = total ? Math.round(pub / total * 100) : 0;
+
+  document.getElementById('kpi-total').textContent     = total     || '—';
+  document.getElementById('kpi-reels').textContent     = reels     || '—';
+  document.getElementById('kpi-carrossel').textContent = carr      || '—';
+  document.getElementById('kpi-story').textContent     = stories   || '—';
+  document.getElementById('kpi-pct').textContent       = total ? pct + '%' : '—';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CALENDÁRIO
+// ══════════════════════════════════════════════════════════════════
+function renderCalendario() {
+  const grid = document.getElementById('cal-grid');
+  const primeiroDia = new Date(anoAtual, mesAtual - 1, 1).getDay(); // 0=Dom
+  const diasNoMes   = new Date(anoAtual, mesAtual, 0).getDate();
+  const hojeStr = dataParaStr(HOJE);
+
+  let html = '';
+
+  // Células vazias antes do 1º dia
+  for (let i = 0; i < primeiroDia; i++) {
+    html += '<div class="cal-cell vazio"></div>';
+  }
+
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const dateStr = `${anoAtual}-${pad(mesAtual)}-${pad(dia)}`;
+    const diaSemana = new Date(anoAtual, mesAtual - 1, dia).getDay();
+    const postsDia  = postsCache.filter(p => p.data_publicacao === dateStr);
+    const temFeriado = postsDia.some(p => p.feriado);
+    const isHoje = dateStr === hojeStr;
+
+    let cls = 'cal-cell';
+    if (isHoje)     cls += ' hoje';
+    if (temFeriado) cls += ' feriado-cel';
+
+    html += `<div class="${cls}">`;
+    html += `<div class="cal-dia-num">
+      <span class="${isHoje ? 'dia-n' : ''}">${dia}</span>
+      <span style="font-size:9px;color:var(--texto-suave);font-weight:400">${DIAS_SEMANA[diaSemana].substring(0,3)}</span>
+      ${temFeriado ? '<span class="tag-feriado-cal">Fer.</span>' : ''}
+    </div>`;
+
+    const MAX = 3;
+    postsDia.slice(0, MAX).forEach(p => {
+      const fmt  = p.formato || 'story';
+      const resp = abreviarNome(p.responsavel || '');
+      const tema = (p.tema || '(sem tema)').substring(0, 16) + ((p.tema || '').length > 16 ? '…' : '');
+      html += `<button class="cal-post ${fmt}"
+                 onclick="editarPost('${p.id}')"
+                 title="${escHtml(p.responsavel || '')} — ${escHtml(p.tema || '')}"
+               >${escHtml(resp)}: ${escHtml(tema)}</button>`;
+    });
+    if (postsDia.length > MAX) {
+      html += `<div class="cal-mais">+ ${postsDia.length - MAX} mais</div>`;
     }
-    // Preencher KPIs com dados reais
-    const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
-    set('kpi-seguidores', d.seguidores?.toLocaleString('pt-BR') || '—');
-    set('kpi-engajamento', d.taxaEngajamento || '—');
-    set('kpi-reels', d.reels ?? '—');
-    set('kpi-carrosseis', d.carrosseis ?? '—');
-    set('kpi-alcance', d.insights?.alcance?.toLocaleString('pt-BR') || '—');
-    // Mostrar badges de live
-    ['seg','eng','ree','alc'].forEach(k => {
-      const b = document.getElementById('kpi-live-'+k);
-      if(b) b.style.display = 'block';
-    });
-    document.getElementById('sync-badge').textContent = '● Ao vivo';
-    document.getElementById('sync-badge').className = 'sync-status sync-ok';
-    document.getElementById('ig-config-aviso').style.display = 'none';
-  } catch(e) {
-    document.getElementById('sync-badge').textContent = '○ Offline';
+
+    html += '</div>';
   }
-}
 
-// ══════════════════ PAUTA SEMANAL ══════════════════
-async function gerarPauta() {
-  const btn = document.getElementById('btn-pauta');
-  const container = document.getElementById('pauta-container');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="ti ti-loader" style="animation:spin 1s linear infinite;"></i> Gerando...';
-  container.innerHTML = '<div class="pauta-output">⏳ O agente está pesquisando temas quentes e montando a pauta desta semana...</div>';
-  try {
-    const r = await fetch('/api/pauta-semanal');
-    const d = await r.json();
-    if(d.erro) throw new Error(d.erro);
-    container.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;"><span style="font-size:12px;color:var(--bege);">Semana: <strong style="color:var(--v1);">${d.semana}</strong></span><button class="btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('pauta-texto').textContent);this.textContent='Copiado ✓';setTimeout(()=>this.textContent='Copiar tudo',2000)">Copiar tudo</button></div><div class="pauta-output" id="pauta-texto">${d.pauta}</div>`;
-  } catch(e) {
-    container.innerHTML = `<div class="pauta-output" style="color:var(--rosa);">Erro: ${e.message}. Verifique se CLAUDE_API_KEY está configurada no Vercel.</div>`;
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-robot"></i>Gerar com IA';
+  // Completar última linha para múltiplos de 7
+  const totalCelulas = primeiroDia + diasNoMes;
+  const resto = totalCelulas % 7;
+  if (resto > 0) {
+    for (let i = 0; i < 7 - resto; i++) {
+      html += '<div class="cal-cell vazio"></div>';
+    }
   }
+
+  grid.innerHTML = html;
 }
 
-// ══════════════════ EQUIPE ══════════════════
-const EQUIPE = [
-  { initials:'MP', cor:'#1f3e3c', nome:'Mariana Pinheiro', cargo:'CEO · Voz Principal', items:['Grava Reels toda segunda-feira','Aprova todos os posts antes da publicação','Temas: Transação tributária, ITIV, SISBAJUD, Devedor contumaz','Aparece em vídeo toda semana'] },
-  { initials:'DJ', cor:'#2a8f6e', nome:'Diana Jordan',     cargo:'Coord. Jurídica · Carrosséis', items:['Revisão jurídica de todos os conteúdos','Elabora e finaliza os carrosséis','Grava vídeo uma quarta por mês','Temas: Recuperação de créditos, TFF, Isenção IR, ITIV'] },
-  { initials:'JL', cor:'#7b6fb0', nome:'Jade Lima',        cargo:'Jurídico · Gestão de Mídia', items:['Publica e edita todo o conteúdo','Recebe material via AirDrop','Grava vídeo uma quarta por mês','Stories de abertura de semana e enquetes'] },
-  { initials:'LC', cor:'#d4841a', nome:'Laila Costa',      cargo:'Jurídico · Pesquisa', items:['Pesquisa temas e novidades tributárias','Grava vídeo uma quarta por mês','Stories: café + agenda, pesquisa de conteúdo, timelapse','Temas: Isenção IR, Simples Nacional'] },
-  { initials:'MB', cor:'#c25e5e', nome:'Mariana Barboza',  cargo:'Comercial · Conversão', items:['Stories de abertura de semana (segundas)','Grava vídeo uma quarta por mês','Foco em linguagem comercial e CTA','Temas: Equiparação hospitalar, Holding, Planejamento'] }
-];
-function renderEquipe() {
-  document.getElementById('team-grid').innerHTML = EQUIPE.map(m=>`
-    <div class="team-card" style="border-top-color:${m.cor};">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div class="tav" style="background:${m.cor};">${m.initials}</div>
-        <div><div class="t-nome">${m.nome}</div><div class="t-cargo">${m.cargo}</div></div>
+// ══════════════════════════════════════════════════════════════════
+// LISTA
+// ══════════════════════════════════════════════════════════════════
+function renderLista() {
+  const tbody = document.getElementById('lista-body');
+
+  if (!postsCache.length) {
+    tbody.innerHTML = `<tr><td colspan="9">
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-title">Nenhum post planejado</div>
+        <div class="empty-desc">Clique em "+ Novo Post" para começar a organizar o mês.</div>
       </div>
-      <ul style="font-size:12px;color:#5a7878;line-height:2;padding-left:16px;">${m.items.map(i=>`<li>${i}</li>`).join('')}</ul>
-    </div>`).join('');
-}
+    </td></tr>`;
+    return;
+  }
 
-// ══════════════════ CALENDÁRIO ══════════════════
-const COR = { 'Mariana P.':'#1f3e3c','Diana':'#2a8f6e','Jade':'#7b6fb0','Laila':'#d4841a','M. Barboza':'#c25e5e' };
-const SEMANAS = [
-  { label:'16 a 20 de junho de 2026', dias:[
-    { d:16, n:'Segunda', items:[{t:'story',tema:'Abertura da semana',who:'Laila',s:'Apareça no escritório: "Semana nova, conteúdo novo. Esta semana vamos falar sobre SISBAJUD e Transação Tributária. Fica de olho!"'},{t:'reels',tema:'SISBAJUD',who:'Mariana P.',s:'Roteiro completo na aba Roteiros.'}]},
-    { d:17, n:'Terça',   items:[{t:'story',tema:'Café + agenda',who:'Laila',s:'Foto da mesa de trabalho. Legenda: "Pesquisando para o próximo conteúdo. Tem dúvida sobre [tema]? Manda aqui 👇"'}]},
-    { d:18, n:'Quarta',  items:[{t:'carrossel',tema:'Isenção de IR',who:'Diana',s:'Finalizar até 17/06. 8 slides: quem tem direito, doenças incluídas, como pedir, prazo de 5 anos.'},{t:'story',tema:'Pesquisa de conteúdo',who:'Laila',s:'Vídeo rápido: "Pesquisando para o próximo carrossel sobre isenção de IR. Você sabia que portadores de doenças graves têm esse direito?"'}]},
-    { d:19, n:'Quinta',  items:[{t:'reels',tema:'Devedor Contumaz',who:'Mariana P.',s:'Gravar até 15/06. Roteiro completo na aba Roteiros.'},{t:'story',tema:'Enquete jurídica',who:'Jade',s:'"Você já ouviu falar na lei do Devedor Contumaz? A: Sim | B: Nunca ouvi falar" — Use resultado na legenda do Reels de sexta.'}]},
-    { d:20, n:'Sexta',   items:[{t:'story',tema:'CTA de fechamento',who:'M. Barboza',s:'"Esta semana: SISBAJUD e Devedor Contumaz. Se algum desses assuntos é a realidade da sua empresa, o próximo passo é uma conversa. Link na bio." 👆'}]}
-  ]},
-  { label:'23 a 27 de junho de 2026', dias:[
-    { d:23, n:'Segunda', feriado:true },
-    { d:24, n:'Terça',   feriado:true },
-    { d:25, n:'Quarta',  items:[{t:'story',tema:'Timelapse do escritório',who:'Diana',s:'Timelapse de 5-10s do dia no escritório. Música suave. "Mais um dia intenso no CP. ⚖️"'}]},
-    { d:26, n:'Quinta',  items:[{t:'carrossel',tema:'ITIV',who:'Diana',s:'Finalizar até 26/06. Tema: quando o ITIV não incide. 6 slides educativos sobre integralização ao capital social.'}]},
-    { d:27, n:'Sexta',   items:[{t:'story',tema:'Retrospectiva de junho',who:'Jade',s:'Compilação dos melhores momentos. Enquete: "Qual tema de junho te ajudou mais? A: Isenção IR | B: ITIV | C: Devedor Contumaz"'}]}
-  ]},
-  { label:'30 de junho a 4 de julho de 2026', dias:[
-    { d:30, n:'Segunda', items:[{t:'story',tema:'Abertura — julho',who:'M. Barboza',s:'"Novo mês, novas oportunidades tributárias. Esta semana: Reforma tributária e o que muda para VOCÊ empresário."'},{t:'reels',tema:'Reforma Tributária — IBS/CBS',who:'Mariana P.',s:'Roteiro na aba Roteiros.'}]},
-    { d:1,  n:'Terça',   items:[{t:'story',tema:'Bastidores de reunião',who:'M. Barboza',s:'"Aqui no CP, cada reunião começa com diagnóstico real. Nada de resposta pronta. Sua empresa merece isso." (sem identificar cliente)'}]},
-    { d:2,  n:'Quarta',  items:[{t:'carrossel',tema:'Holding Patrimonial',who:'Diana',s:'5 razões para criar uma holding antes de precisar. Visual limpo, linguagem de empresário.'},{t:'story',tema:'Café + agenda',who:'Laila',s:'"Estudando holding patrimonial para o próximo carrossel. Você já pensou em proteger seu patrimônio com uma estrutura jurídica?"'}]},
-    { d:3,  n:'Quinta',  items:[{t:'reels',tema:'Transação Tributária',who:'Mariana P.',s:'Roteiro completo na aba Roteiros.'},{t:'story',tema:'Enquete — Holding',who:'Jade',s:'"Você sabe o que é uma Holding Patrimonial? A: Sei sim | B: Nunca ouvi falar". Use resultado para adaptar a legenda do carrossel.'}]},
-    { d:4,  n:'Sexta',   items:[{t:'story',tema:'CTA — Diagnóstico gratuito',who:'M. Barboza',s:'"Esta semana: Reforma tributária + Holding. Se você tem imóveis ou dívidas tributárias, a gente pode te ajudar. Link na bio para diagnóstico gratuito." 🔗'}]}
-  ]}
-];
-let semIdx = 0;
-function semana(d) { semIdx = Math.max(0, Math.min(SEMANAS.length-1, semIdx+d)); renderCal(); }
-function renderCal() {
-  const s = SEMANAS[semIdx];
-  document.getElementById('week-label').textContent = s.label;
-  document.getElementById('cal-grid').innerHTML = s.dias.map(dia => {
-    if(dia.feriado) return `<div class="cal-day"><div class="cal-day-hd"><span class="cal-day-name">${dia.n}</span><span class="cal-day-date">${dia.d}</span></div><div class="cal-feriado">🚫 Feriado</div></div>`;
-    const itens = (dia.items||[]).map(i => {
-      const cls = i.t==='story'?'ci-story':i.t==='reels'?'ci-reels':'ci-carrossel';
-      const lbl = i.t==='story'?'📱 Story':i.t==='reels'?'🎥 Reels':'🎨 Carrossel';
-      const cor = COR[i.who]||'#999';
-      return `<div class="cal-item ${cls}" onclick="abrirDia('${esc(i.tema)}','${esc(i.who)}','${esc(i.s)}','${cor}')"><div class="ci-type">${lbl}</div><div class="ci-tema">${i.tema}</div><div class="ci-who" style="color:${cor};">${i.who}</div></div>`;
-    }).join('') || '<div style="padding:6px;font-size:11px;color:#ccc;">Sem publicação</div>';
-    return `<div class="cal-day"><div class="cal-day-hd"><span class="cal-day-name">${dia.n}</span><span class="cal-day-date">${dia.d}</span></div><div class="cal-day-body">${itens}</div></div>`;
-  }).join('');
-}
-function esc(s){return(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
-function abrirDia(tema,who,script,cor){
-  document.getElementById('modal-dia-content').innerHTML=`<div style="font-size:10px;color:${cor};text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:5px;">${who}</div><div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;margin-bottom:14px;">${tema}</div><div style="background:#f8fbfb;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;border-left:3px solid ${cor};">${script}</div><button onclick="navigator.clipboard.writeText('${esc(script)}');this.textContent='Copiado ✓';setTimeout(()=>this.textContent='Copiar',2000)" style="margin-top:12px;background:#1f3e3c;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;">Copiar</button>`;
-  document.getElementById('modal-dia').style.display='flex';
-}
-document.getElementById('modal-dia').addEventListener('click',e=>{if(e.target===document.getElementById('modal-dia'))document.getElementById('modal-dia').style.display='none';});
+  tbody.innerHTML = postsCache.map(p => {
+    const dow    = p.data_publicacao ? new Date(p.data_publicacao + 'T12:00:00').getDay() : null;
+    const diaStr = dow !== null ? DIAS_SEMANA[dow] : '—';
+    const rowCls = p.feriado ? 'feriado-row' : '';
 
-// ══════════════════ ROTEIROS ══════════════════
-const ROTEIROS = [
-  { tema:'Transação Tributária', who:'Mariana Pinheiro', ini:'MP', cor:'#1f3e3c', fmt:'Reels 60s', obj:'Apresentar transação tributária como solução para dívidas fiscais.',
-    gancho:'"Sua empresa deve para a Receita Federal — e você não sabe que pode negociar isso com desconto?"',
-    script:`[GANCHO — 0 a 5s]
-"Se a sua empresa tem dívidas tributárias, eu preciso te contar algo que a maioria dos empresários não sabe."
+    const checks = `
+      <span class="check-icon ${p.roteiro ? 'done':'todo'}" title="Roteiro"
+        onclick="toggleCheckInline('${p.id}','roteiro',${!p.roteiro})">📝</span>
+      <span class="check-icon ${p.capa    ? 'done':'todo'}" title="Capa"
+        onclick="toggleCheckInline('${p.id}','capa',${!p.capa})">📸</span>
+      <span class="check-icon ${p.legenda ? 'done':'todo'}" title="Legenda"
+        onclick="toggleCheckInline('${p.id}','legenda',${!p.legenda})">&#x270D;</span>
+      <span class="check-icon ${p.airdrop ? 'done':'todo'}" title="AirDrop"
+        onclick="toggleCheckInline('${p.id}','airdrop',${!p.airdrop})">📱</span>
+    `;
 
-[DESENVOLVIMENTO — 5 a 40s]
-"Existe um instrumento chamado transação tributária. Ele permite negociar diretamente com o Fisco — com descontos que podem chegar a 65% do total.
-
-Isso não é parcelamento comum. É uma negociação jurídica estratégica. Analisamos o perfil devedor e identificamos qual modalidade dá mais vantagem para o seu caso.
-
-A Receita Federal e a PGFN abrem editais com condições específicas. Sem um tributarista acompanhando, você perde as janelas de oportunidade."
-
-[CTA — 40 a 60s]
-"No CP, fazemos esse diagnóstico com você. Link na bio para agendar."`,
-    tip:'Grave de frente, no escritório. Tom consultivo, não alarmista. Capa: "Dívida com o Fisco? Tem saída."'},
-  { tema:'Devedor Contumaz', who:'Mariana Pinheiro', ini:'MP', cor:'#1f3e3c', fmt:'Reels 60s', obj:'Alertar sobre os riscos da lei e como se proteger.',
-    gancho:'"A lei que pode fechar o CNPJ de empresas que não pagam impostos já está valendo."',
-    script:`[GANCHO — 0 a 5s]
-"A lei do Devedor Contumaz entrou em vigor — e ela veio para mudar o jogo."
-
-[DESENVOLVIMENTO — 5 a 45s]
-"Devedor contumaz é a empresa que sistematicamente deixa de pagar tributos, não por dificuldade, mas como prática.
-
-Com a nova lei, essas empresas podem ter:
-— Inscrição em cadastro especial da Receita
-— Suspensão de benefícios fiscais
-— Restrição para emitir notas fiscais
-— Em casos extremos, encerramento de atividade
-
-O problema? Algumas empresas se enquadram sem perceber, por acúmulo de débitos em discussão judicial.
-
-A defesa começa com diagnóstico tributário completo — antes de qualquer autuação."
-
-[CTA — 45 a 60s]
-"Tem débitos em aberto? Me chama. O risco de não agir é maior que o custo de agir. Link na bio."`,
-    tip:'Tom sério e direto. Fundo neutro, boa iluminação. Capa: "Lei do Devedor Contumaz: sua empresa está em risco?"'},
-  { tema:'ITIV — Quando Você Pode Pagar Menos', who:'Mariana Pinheiro', ini:'MP', cor:'#1f3e3c', fmt:'Reels 60s', obj:'Mostrar que o ITIV pode ser reduzido com planejamento.',
-    gancho:'"Você pagou ITIV na última transação imobiliária — mas precisava pagar o valor cheio?"',
-    script:`[GANCHO — 0 a 5s]
-"Muita gente paga ITIV sem saber que podia ter pago bem menos — ou nada."
-
-[DESENVOLVIMENTO — 5 a 40s]
-"O ITIV incide sobre a transmissão de imóveis. Mas existem hipóteses legais de não-incidência.
-
-Por exemplo: quando um imóvel é integralizado ao capital social de uma empresa — em alguns casos, não há incidência de ITIV. Em fusões e incorporações — também pode não incidir.
-
-Isso significa que o momento e a forma como você estrutura a operação fazem toda a diferença.
-
-Sem planejamento: você paga o tributo cheio. Com planejamento: você usa o que a lei já permite."
-
-[CTA — 40 a 60s]
-"Se você tem imóveis no patrimônio pessoal ou empresarial, vale fazer essa análise. Chama no link da bio."`,
-    tip:'Bom para carrossel complementar. Capa: "ITIV: você pode pagar menos do que está pagando."'},
-  { tema:'Isenção de IR — Doenças Graves', who:'Laila Costa', ini:'LC', cor:'#d4841a', fmt:'Reels 55s', obj:'Informar sobre direito à isenção e alcançar quem não conhece.',
-    gancho:'"Se você ou alguém da família tem uma doença grave — existe um benefício tributário que pode fazer diferença."',
-    script:`[GANCHO — 0 a 5s]
-"Você sabia que portadores de certas doenças graves têm direito a isenção total de Imposto de Renda?"
-
-[DESENVOLVIMENTO — 5 a 40s]
-"A lei prevê que pessoas com câncer, cardiopatia grave, nefropatia, hepatopatia, esclerose múltipla, entre outras, são isentas de IR sobre aposentadoria, pensão ou reforma.
-
-Isso vale para o IR retido na fonte e para a declaração anual.
-
-Muitas pessoas continuam pagando por desconhecimento — e têm direito a receber de volta o que foi pago nos últimos cinco anos.
-
-O processo envolve laudo médico, reconhecimento pela Receita e, em alguns casos, ação judicial."
-
-[CTA — 40 a 55s]
-"Conhece alguém nessa situação? Compartilha. Para análise do caso, link na bio."`,
-    tip:'Tom acolhedor e empático. Alto potencial de compartilhamento orgânico. Capa: "Doença grave + aposentadoria = isenção de IR?"'},
-  { tema:'Equiparação Hospitalar', who:'Mariana Barboza', ini:'MB', cor:'#c25e5e', fmt:'Reels 60s', obj:'Apresentar para clínicas e serviços de saúde a redução tributária.',
-    gancho:'"Sua clínica pode estar pagando muito mais imposto do que deveria — por falta de uma estrutura jurídica específica."',
-    script:`[GANCHO — 0 a 5s]
-"Se você atua na área de saúde, precisa conhecer a equiparação hospitalar."
-
-[DESENVOLVIMENTO — 5 a 45s]
-"Serviços de saúde que se equiparam a hospitais têm direito a alíquota reduzida de IRPJ e CSLL — de 32% para 8% na base de cálculo pelo Lucro Presumido.
-
-Vale para clínicas, laboratórios, serviços de diagnóstico por imagem, quimioterapia, radioterapia e outros — desde que atendam requisitos estruturais.
-
-A diferença tributária pode ser expressiva. Já calculamos casos em que a empresa economizou centenas de milhares por ano.
-
-A equiparação não é automática — exige análise jurídica, adequação estrutural e, em alguns casos, tese judicial."
-
-[CTA — 45 a 60s]
-"Atua em saúde e nunca ouviu falar nisso? Vale uma conversa. Diagnóstico gratuito no link da bio."`,
-    tip:'Foco no impacto financeiro (números concretos). Mariana Barboza transmite segurança e perfil comercial. Capa: "Clínicas pagam imposto demais. Sabia disso?"'},
-  { tema:'SISBAJUD — Bloqueio de Conta', who:'Mariana Pinheiro', ini:'MP', cor:'#1f3e3c', fmt:'Reels 60s', obj:'Educar sobre o risco do SISBAJUD e como agir.',
-    gancho:'"Você chegou de manhã no trabalho e sua conta estava bloqueada. Isso é o SISBAJUD."',
-    script:`[GANCHO — 0 a 5s]
-"O SISBAJUD permite que juízes bloqueiem sua conta bancária em segundos — sem aviso prévio."
-
-[DESENVOLVIMENTO — 5 a 45s]
-"O Sistema de Busca de Ativos do Poder Judiciário é uma ferramenta que permite penhora online em contas bancárias de devedores.
-
-Usado em execuções fiscais, trabalhistas e cíveis. Atinge conta corrente, poupança e aplicações — de pessoa física e jurídica.
-
-Existem valores impenhoráveis por lei. E é possível questionar a penhora e buscar liberação dos valores em prazo relativamente curto — quando o advogado age rápido.
-
-Se você tem dívidas fiscais ou trabalhistas em aberto, o risco é real e iminente."
-
-[CTA — 45 a 60s]
-"Não espere ser bloqueado para agir. No CP, trabalhamos tanto na defesa quanto na prevenção. Link na bio."`,
-    tip:'Alto potencial de engajamento. Capa: "Conta bloqueada sem aviso: o que é o SISBAJUD?"'},
-  { tema:'Holding Patrimonial', who:'Diana Jordan', ini:'DJ', cor:'#2a8f6e', fmt:'Reels 60s', obj:'Apresentar holding como proteção e planejamento para qualquer empresário.',
-    gancho:'"Holding não é só para milionário. É para qualquer empresário que quer proteger o que construiu."',
-    script:`[GANCHO — 0 a 5s]
-"Se você tem empresa e imóveis — ou quer deixar patrimônio para os filhos — precisa conhecer a holding."
-
-[DESENVOLVIMENTO — 5 a 45s]
-"Uma holding patrimonial é uma empresa criada para administrar os bens de uma família ou empresário.
-
-Com ela, você consegue:
-Primeiro — proteção patrimonial: bens na pessoa jurídica, fora do alcance de credores pessoais.
-Segundo — planejamento sucessório: a partilha acontece em vida, com regras definidas por você, sem inventário.
-Terceiro — eficiência tributária: tributação sobre aluguéis dentro da holding pode ser menor que pelo CPF.
-
-O custo de criação e manutenção é menor do que as pessoas imaginam — e se paga com a economia tributária do primeiro ano."
-
-[CTA — 45 a 60s]
-"No CP, fazemos a análise de viabilidade de holding sem custo. Fala com a gente. Link na bio."`,
-    tip:'Diana transmite credibilidade técnica e segurança jurídica. Capa: "Holding: o que é e por que você provavelmente precisa de uma."'},
-  { tema:'Reforma Tributária — O Que Muda Para Você', who:'Mariana Pinheiro', ini:'MP', cor:'#1f3e3c', fmt:'Reels 60s', obj:'Posicionar o escritório como referência em reforma tributária.',
-    gancho:'"A maior reforma tributária em décadas começou a entrar em vigor. Você está preparado?"',
-    script:`[GANCHO — 0 a 5s]
-"2026 é o ano da Reforma Tributária na prática. E a maioria dos empresários ainda não sabe o que muda no bolso."
-
-[DESENVOLVIMENTO — 5 a 45s]
-"Cinco tributos vão ser substituídos por três novas figuras: IBS, CBS e Imposto Seletivo.
-
-Em 2026, começa a fase de testes com alíquota de 1%. Mas a transição se estende até 2032 — e cada ano tem impacto diferente.
-
-Para empresas de serviços — que representam 67% do PIB —, a mudança pode ser expressiva. A alíquota cheia pode chegar a quase 29%.
-
-Quem não planejar agora vai sentir o impacto depois, sem tempo de reagir."
-
-[CTA — 45 a 60s]
-"No CP, fazemos análise de impacto da reforma para o seu negócio. Agende uma conversa — link na bio."`,
-    tip:'Tema de alto alcance orgânico. Capa: "Reforma tributária 2026: sua empresa está preparada?"'},
-  { tema:'Recuperação de Créditos', who:'Jade Lima', ini:'JL', cor:'#7b6fb0', fmt:'Reels 55s', obj:'Mostrar que empresas têm crédito parado sem saber.',
-    gancho:'"Sua empresa pode ter dinheiro parado na Receita Federal e você não sabe disso."',
-    script:`[GANCHO — 0 a 5s]
-"Recuperação tributária é encontrar dinheiro que a sua empresa tem direito — e que está retido no sistema."
-
-[DESENVOLVIMENTO — 5 a 40s]
-"Tributos pagos a mais, tributos calculados com alíquota errada, bases de cálculo incorretas — tudo isso gera crédito.
-
-Você pode pedir esse dinheiro de volta referente aos últimos cinco anos.
-
-Os tributos mais comuns: PIS e COFINS calculados sobre receitas que não deveriam ser base, INSS sobre verbas indenizatórias, IPI sobre produtos isentos.
-
-O processo é administrativo — sem necessidade de ação judicial na maioria dos casos."
-
-[CTA — 40 a 55s]
-"Se a sua empresa fatura mais de R$500 mil por ano, vale muito fazer esse levantamento. Link na bio."`,
-    tip:'Apelo direto ao bolso do empresário. Jade tem perfil didático. Capa: "Sua empresa tem crédito tributário que não sabe que existe."'}
-];
-
-function renderRoteiros() {
-  document.getElementById('roteiros-list').innerHTML = ROTEIROS.map((r,i)=>`
-    <div class="roteiro-card">
-      <div class="roteiro-hd" onclick="toggleRot(${i},this)">
-        <div class="rot-av" style="background:${r.cor};">${r.ini}</div>
-        <div style="flex:1;"><div class="rot-tema">${r.tema}</div><div class="rot-meta">${r.who} · ${r.fmt}</div></div>
-        <span class="badge badge-laranja">${r.fmt}</span>
-        <i class="ti ti-chevron-down" style="color:var(--bege);margin-left:8px;transition:.2s;" id="chev-${i}"></i>
-      </div>
-      <div class="rot-body" id="rot-${i}">
-        <div class="rot-section"><h4>Objetivo</h4><p>${r.obj}</p></div>
-        <div class="rot-section"><h4>Gancho de abertura</h4><p style="font-style:italic;color:var(--v2);">${r.gancho}</p></div>
-        <div class="rot-section"><h4>Roteiro completo</h4><div class="rot-script" id="rs-${i}">${r.script}</div><button class="rot-copy" onclick="copyRot(${i},this)">Copiar Roteiro</button></div>
-        <div class="rot-tip"><strong>Produção:</strong> ${r.tip}</div>
-      </div>
-    </div>`).join('');
-}
-function toggleRot(i,hd){
-  const b=document.getElementById('rot-'+i),ch=document.getElementById('chev-'+i),open=b.classList.toggle('open');
-  hd.classList.toggle('open',open);ch.style.transform=open?'rotate(180deg)':'';
-}
-function copyRot(i,btn){navigator.clipboard.writeText(ROTEIROS[i].script);btn.textContent='Copiado ✓';setTimeout(()=>btn.textContent='Copiar Roteiro',2000);}
-
-// ══════════════════ STORIES BANCO ══════════════════
-const STORIES = [
-  {tipo:'Segunda — Abertura',cor:'#7b6fb0',titulo:'Abertura da Semana',desc:'Boas-vindas ao conteúdo da semana. Vídeo rápido de 15s ou foto com texto sobreposto. Gera expectativa para os posts que vêm.',exemplo:'"Segunda-feira é dia de começar. Esta semana: [tema]. Fica de olho 👀"',tags:['Segunda','Engajamento','Vídeo']},
-  {tipo:'Recorrente',cor:'#d4841a',titulo:'Café + Agenda',desc:'Foto ou vídeo curto da mesa de trabalho, notebook aberto, caderno. Autentico e humanizador. Muito engajador por ser real.',exemplo:'"Mais uma manhã no CP. Hoje na pauta: [tema]. E na sua empresa?" ☕',tags:['Humanização','Bastidores','Foto']},
-  {tipo:'Quinta — Engajamento',cor:'#2a8f6e',titulo:'Enquete Jurídica',desc:'Enquete com duas opções sobre tema tributário. Mede o conhecimento da audiência e gera material para próximos posts.',exemplo:'"Você sabe o que é transação tributária? A: Sei sim | B: Nunca ouvi falar"',tags:['Quinta','Interativo','Dados']},
-  {tipo:'Qualquer dia',cor:'#2a8f6e',titulo:'Caixinha de Perguntas',desc:'Abra espaço para perguntas sobre tributário. As melhores viram pauta de carrossel ou próximo Reels.',exemplo:'"Pode me perguntar: o que você ainda não entende sobre a reforma tributária? 📩"',tags:['Interativo','Pauta','Autoridade']},
-  {tipo:'Sexta — Conversão',cor:'#c25e5e',titulo:'CTA de Fechamento',desc:'Resume o conteúdo da semana e convida para ação. Tom consultivo — não venda, ofereça solução.',exemplo:'"Esta semana: [temas]. Se ressoa com a sua empresa, o próximo passo é uma conversa. Link na bio 👆"',tags:['Sexta','Conversão','Lead']},
-  {tipo:'Mensal — Prova Social',cor:'#1f3e3c',titulo:'Resultado de Cliente',desc:'Conta resultado de um cliente sem identificar. Foca no número ou transformação. Alto impacto em autoridade.',exemplo:'"Esta semana um cliente da área de saúde recuperou R$[X] em créditos que ele não sabia que tinha. 💰"',tags:['Prova Social','Autoridade','Conversão']},
-  {tipo:'Urgente',cor:'#2980b9',titulo:'Novidade Tributária do Dia',desc:'Decisão STF/STJ, atualização Receita, mudança na reforma — story IMEDIATO no mesmo dia. Posiciona como atualizado.',exemplo:'"🔴 Saiu agora: [decisão]. O que isso muda para empresas? Em resumo: [explicação]. DM para saber o impacto no seu negócio."',tags:['Urgente','STF','Reforma','Autoridade']},
-  {tipo:'Mensal',cor:'#7b6fb0',titulo:'Timelapse do Escritório',desc:'5-10 segundos acelerados do dia no escritório. Câmera fixa, música suave. Profissional sem revelar dados.',exemplo:'Legenda: "Mais um dia intenso no CP. Cada hora representa resultado para um cliente. ⚖️"',tags:['Bastidores','Institucional','Vídeo']},
-  {tipo:'Quarta — Humanização',cor:'#d4841a',titulo:'Bastidores de Pesquisa',desc:'Laila ou quem estiver pesquisando aparece no stories mostrando o processo. Humaniza o lado técnico.',exemplo:'"Pesquisando para o próximo carrossel sobre [tema]. Tem dúvida sobre isso? Manda aqui 👇"',tags:['Bastidores','Laila','Didático']},
-  {tipo:'Mensal',cor:'#2a8f6e',titulo:'Apresentação de Membro da Equipe',desc:'Um story por membro com foto, cargo e frase de impacto. Humaniza a equipe e gera conexão.',exemplo:'"Conheça [nome]. Ela é responsável por [função]. Curiosidade: [frase autêntica]."',tags:['Equipe','Humanização','Conexão']},
-  {tipo:'Qualquer dia',cor:'#c25e5e',titulo:'Dado Chocante Tributário',desc:'Um número ou fato que surpreende o empresário. Abre com o dado, finaliza com o produto do escritório.',exemplo:'"Sabia que empresas de serviços vão pagar até 29% de imposto com a reforma? Você sabe como se preparar?"',tags:['Dados','Reforma','Curiosidade','Autoridade']},
-  {tipo:'Qualquer dia',cor:'#1f3e3c',titulo:'Por Que Você Deve Contratar um Tributarista',desc:'Desmonta objeção "não preciso de advogado tributário". Tom direto e educativo.',exemplo:'"Três coisas que seu contador não te conta sobre tributos — e que podem estar custando caro. 👇"',tags:['Autoridade','Objeção','Educativo']},
-  {tipo:'Mensal',cor:'#2980b9',titulo:'Clipping de Notícia com Comentário',desc:'Print de notícia tributária + comentário curto da Mariana. Posiciona como especialista atualizada.',exemplo:'Print de notícia + "Isso muda TUDO para o setor de [X]. Vou explicar o impacto esta semana."',tags:['Notícia','Comentário','Autoridade']},
-  {tipo:'Sexta — Humanização',cor:'#d4841a',titulo:'Foto da Equipe no Escritório',desc:'Foto espontânea da equipe trabalhando ou em reunião. Sem encenação. Mostra o escritório vivo.',exemplo:'Legenda: "Finalizando mais uma semana de muito trabalho. Gratidão pela equipe incrível. ✨"',tags:['Equipe','Humanização','Autêntico']},
-  {tipo:'Quinzenal',cor:'#7b6fb0',titulo:'Mito vs Realidade Tributária',desc:'Two frames: "MITO" + "REALIDADE". Desmonta uma crença errada. Alto potencial de salvamento/compartilhamento.',exemplo:'"MITO: Se eu não tenho dívida, não preciso de planejamento tributário. REALIDADE: Planejamento é para quem está crescendo, não só para quem está em dívida."',tags:['Educativo','Viral','Salvo']},
-  {tipo:'Segunda/Terça',cor:'#1f3e3c',titulo:'O Que a Equipe Está Estudando',desc:'Alguém da equipe mostra o material que está lendo/estudando. Posiciona o escritório como atualizado e dedicado.',exemplo:'"Hoje: novo edital da PGFN para transação tributária. O que muda? Vou postar carrossel até quarta." 📚',tags:['Autoridade','Equipe','Atualização']},
-  {tipo:'Qualquer dia',cor:'#2a8f6e',titulo:'Antes e Depois — Resultado Tributário',desc:'Dois frames sem identificar cliente: "Antes do planejamento" vs "Depois do planejamento" com valores genéricos.',exemplo:'"Antes: R$180k em impostos/ano. Depois do reestruturamento: R$95k. Mesmo faturamento. Estrutura diferente. 📊"',tags:['Prova Social','Resultado','Dados']},
-  {tipo:'Mensal',cor:'#c25e5e',titulo:'Pergunta e Resposta — Live',desc:'Anuncia uma sessão de perguntas ao vivo sobre tributário. Alta interação e geração de novos seguidores.',exemplo:'"Quinta às 19h: live de perguntas sobre reforma tributária. Manda sua dúvida aqui 👇 — as melhores respondo ao vivo."',tags:['Live','Engajamento','Autoridade']},
-  {tipo:'Sexta',cor:'#7b6fb0',titulo:'Frase de Fechamento de Semana',desc:'Frase de impacto sobre tributário ou sobre o escritório. Simples, visual, compartilhável.',exemplo:'"Planejamento tributário não é gasto. É o único investimento que garante que os outros investimentos valham a pena." — CP',tags:['Frase','Branding','Simples']},
-  {tipo:'Qualquer dia',cor:'#d4841a',titulo:'Processo na Prática',desc:'Mostra em 3 stories o passo a passo de como funciona um serviço do escritório (sem revelar dados de clientes).',exemplo:'Story 1: "Como funciona a transação tributária?" → Story 2: "Passo 1: Diagnóstico" → Story 3: "Passo 2: Modalidade ideal → Resultado"',tags:['Educativo','Processo','Produto']},
-  {tipo:'Mensal',cor:'#2980b9',titulo:'Retrospectiva do Mês',desc:'No último dia do mês, compilação dos melhores conteúdos. Enquete: qual tema ajudou mais. Gera dados para o próximo mês.',exemplo:'"Junho no CP: [X] posts, [Y] reels, [Z] carrosséis. Qual tema te ajudou mais? A: Transação | B: Isenção IR | C: Reforma"',tags:['Mensal','Retrospectiva','Dados']},
-  {tipo:'Qualquer dia',cor:'#1f3e3c',titulo:'Estatística Impactante',desc:'Um número que o empresário não esperava. Formata como dado + pergunta retórica. Alto compartilhamento.',exemplo:'"Empresas brasileiras pagam em média 33% do faturamento em impostos. Você sabe exatamente quanto a sua paga?"',tags:['Dados','Impacto','Viral']},
-  {tipo:'Quinzenal',cor:'#c25e5e',titulo:'Indicação de Conteúdo Externo',desc:'Link ou referência a uma notícia/publicação importante + comentário crítico da Mariana. Posiciona como curadora.',exemplo:'"Esta reportagem da Folha sobre a reforma tributária vale a leitura — mas tem um ponto que ela errou. 👇 [comentário]"',tags:['Curadoria','Autoridade','Notícia']},
-  {tipo:'Segunda',cor:'#2a8f6e',titulo:'Desafio da Semana Para O Empresário',desc:'Propõe uma ação simples que o empresário pode fazer esta semana relacionada à gestão tributária.',exemplo:'"Desafio desta semana: pergunte ao seu contador qual é a sua alíquota efetiva total. Se ele não souber — a gente conversa."',tags:['Desafio','Engajamento','Segunda']},
-  {tipo:'Qualquer dia',cor:'#d4841a',titulo:'Glossário Tributário (1 termo por vez)',desc:'Explica um termo tributário em linguagem de leigo. Formato simples: termo + definição visual + exemplo prático.',exemplo:'"Hoje: o que é CSLL? Contribuição Social sobre Lucro Líquido — é um imposto federal que incide sobre o lucro da sua empresa. [...]"',tags:['Educativo','Glossário','Didático']}
-];
-
-function renderStories(){
-  document.getElementById('stories-grid').innerHTML=STORIES.map(s=>`
-    <div class="story-card">
-      <div class="story-type" style="color:${s.cor};">${s.tipo}</div>
-      <div class="story-title">${s.titulo}</div>
-      <div class="story-desc">${s.desc}</div>
-      <div class="story-exemplo">${s.exemplo}</div>
-      <div class="story-tags">${s.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div>
-    </div>`).join('');
-}
-
-// ══════════════════ ARTIGOS ══════════════════
-const ARTIGOS = [
-  {titulo:'Transação Tributária: o que é, quem pode usar e como funciona',autor:'Mariana Pinheiro',fmts:['reels','carrossel','artigo'],quente:true,desc:'Conteúdo âncora do escritório. Explica do zero com linguagem de empresário.',subs:['Modalidades (PGFN, Receita, contencioso)','Descontos possíveis (até 65%)','Quem não pode transacionar','Passo a passo do processo']},
-  {titulo:'Reforma Tributária 2026: o que muda para a sua empresa',autor:'Diana Jordan',fmts:['carrossel','artigo'],quente:true,desc:'IBS e CBS em linguagem empresarial — impacto concreto por setor.',subs:['O que é IBS e CBS','Quem sai perdendo com alíquota cheia','Setor de serviços (impacto maior)','O que fazer agora']},
-  {titulo:'Equiparação Hospitalar: clínicas pagam imposto demais',autor:'Mariana Barboza',fmts:['reels','carrossel'],quente:false,desc:'Alto valor para nicho de saúde. Alta taxa de conversão quando ressona.',subs:['Quem se enquadra','Requisitos estruturais','Diferença tributária na prática','Como iniciar o processo']},
-  {titulo:'ITIV: como estruturar a transferência de imóveis pagando menos',autor:'Mariana Pinheiro',fmts:['reels','carrossel'],quente:false,desc:'Apelo para empresários com patrimônio imobiliário. Abre porta para holding.',subs:['O que é ITIV','Hipóteses de não-incidência','Integralização ao capital social','Fusões e incorporações']},
-  {titulo:'Holding Patrimonial: proteja o que você construiu',autor:'Diana Jordan',fmts:['carrossel','artigo'],quente:false,desc:'Funciona para atração e cross-sell. Conecta com planejamento sucessório.',subs:['Por que criar','Proteção contra credores','Planejamento sucessório sem inventário','Tributação de aluguéis PJ vs CPF']},
-  {titulo:'Devedor Contumaz: a lei que pode fechar seu CNPJ',autor:'Mariana Pinheiro',fmts:['reels','artigo'],quente:true,desc:'Tema urgente com alto potencial viral. Abre para transação tributária como solução.',subs:['Definição legal','Consequências práticas','Quem corre risco sem saber','Como se proteger']},
-  {titulo:'Recuperação de Créditos: dinheiro que sua empresa tem direito',autor:'Jade Lima',fmts:['carrossel','artigo'],quente:false,desc:'Apelo financeiro direto. Alto engajamento por ser sobre dinheiro concreto.',subs:['O que são créditos recuperáveis','Principais tributos passíveis','Prazo de 5 anos','Como funciona o processo']},
-  {titulo:'Simples Nacional: quando ele deixa de ser simples',autor:'Laila Costa',fmts:['carrossel','reels'],quente:false,desc:'Amplo alcance — MEIs, MEs e EPPs são maioria do mercado.',subs:['Limites do Simples','Quando Lucro Presumido é melhor','Simulação comparativa','Como fazer a migração']},
-  {titulo:'SISBAJUD: o que é e como evitar o bloqueio da sua conta',autor:'Mariana Pinheiro',fmts:['reels','carrossel'],quente:true,desc:'Gera medo e curiosidade. Alto potencial de compartilhamento.',subs:['O que é o SISBAJUD','Como funciona o bloqueio','Valores impenhoráveis','Como contestar']},
-  {titulo:'Gorjetas: como tributar corretamente e evitar autuação',autor:'Diana Jordan',fmts:['carrossel'],quente:false,desc:'Nicho específico (restaurantes, hotéis) com muita dúvida e risco fiscal.',subs:['Natureza jurídica da gorjeta','Como calcular o IR e INSS','Decisões recentes do STJ','Regularização retroativa']},
-  {titulo:'TFF: a taxa que afeta todo estabelecimento comercial',autor:'Diana Jordan',fmts:['carrossel'],quente:false,desc:'Tema pouco conhecido mas que afeta praticamente todo comerciante.',subs:['O que é TFF','Quem paga','Base de cálculo','Como contestar cobranças indevidas']},
-  {titulo:'5 Erros Tributários que Empresários Cometem Sem Saber',autor:'Mariana Pinheiro',fmts:['reels','carrossel'],quente:false,desc:'Formato de lista — alto potencial viral. Cada erro abre um produto do escritório.',subs:['Escolha errada de regime tributário','Não aproveitar créditos tributários','Ignorar prazo de prescrição','Não separar patrimônio pessoal do empresarial','Não acompanhar mudanças na legislação']},
-  {titulo:'Como Funciona a Execução Fiscal: guia para o empresário',autor:'Diana Jordan',fmts:['carrossel','artigo'],quente:false,desc:'Explica o processo de cobrança judicial da Receita — gera muita busca orgânica.',subs:['O que é execução fiscal','Etapas do processo','Estratégias de defesa','Parcelamento vs transação']},
-  {titulo:'Imposto de Renda da Empresa: planejamento legal antes do encerramento do ano',autor:'Mariana Barboza',fmts:['reels','carrossel'],quente:false,desc:'Sazonal — muito relevante no 2º semestre. Atrai empresários que querem pagar menos.',subs:['Antecipação de despesas','Distribuição de lucros isenta','JCP — Juros sobre Capital Próprio','Regime de competência vs caixa']},
-  {titulo:'Parcelamento Tributário vs Transação: qual escolher?',autor:'Mariana Pinheiro',fmts:['reels','carrossel'],quente:true,desc:'Comparativo direto — ajuda o empresário a entender as diferenças e escolher melhor.',subs:['Parcelamento convencional REFIS','Transação tributária — diferenciais','Tabela comparativa de descontos','Quando cada um faz sentido']},
-  {titulo:'Como Abrir uma Empresa com a Estrutura Tributária Certa',autor:'Laila Costa',fmts:['carrossel'],quente:false,desc:'Conteúdo de topo de funil — alcança empreendedores que estão começando.',subs:['Escolha do regime tributário inicial','CNAE e impacto tributário','MEI vs ME vs EPP','Quando já considerar planejamento']},
-  {titulo:'Planejamento Tributário: o que é e por que todo empresário precisa',autor:'Mariana Pinheiro',fmts:['reels','carrossel','artigo'],quente:false,desc:'Conteúdo evergreen. Alto volume de busca. Porta de entrada para todos os outros serviços.',subs:['Definição e objetivo','Planejamento preventivo vs corretivo','Quem deve fazer','Como contratar']},
-  {titulo:'Isenção de IR: guia completo para portadores de doenças graves',autor:'Laila Costa',fmts:['carrossel','artigo'],quente:false,desc:'Alto compartilhamento — as pessoas compartilham para familiares. Muito salvo.',subs:['Lista de doenças incluídas','Tipos de renda isentas','Como solicitar à Receita','Restituição dos últimos 5 anos','Quando precisar de ação judicial']},
-  {titulo:'Reforma Tributária e o Setor de Saúde: impactos e oportunidades',autor:'Mariana Barboza',fmts:['reels','carrossel'],quente:true,desc:'Combo de dois produtos (reforma + equiparação). Nicho de saúde com alto ticket.',subs:['O que muda com IBS/CBS para clínicas','Equiparação como estratégia de compensação','Janela de oportunidade 2026-2027','Ação recomendada agora']},
-  {titulo:'Como Proteger Seu Patrimônio em Caso de Dívidas Empresariais',autor:'Diana Jordan',fmts:['carrossel','artigo'],quente:false,desc:'Conecta holding com proteção patrimonial. Alto apelo emocional (perder o que construiu).',subs:['Desconsideração da personalidade jurídica','O que o credor pode atingir','Instrumentos de proteção','Holding patrimonial como blindagem']},
-  {titulo:'STF e os Empresários: as 5 Decisões Mais Importantes de 2025/2026',autor:'Mariana Pinheiro',fmts:['carrossel','artigo'],quente:true,desc:'Evergreen anual. Alto alcance orgânico. Cada decisão abre um tema do escritório.',subs:['Exclusão do ICMS do PIS/COFINS','Modulação dos efeitos tributários','Tese do Século e desdobramentos','Novas pautas 2026 no STF']},
-  {titulo:'Como Calcular a Carga Tributária Real da Sua Empresa',autor:'Laila Costa',fmts:['carrossel'],quente:false,desc:'Conteúdo prático de alta utilidade. Gera muito salvamento e leva à consulta.',subs:['O que compõe a carga tributária real','Alíquota nominal vs alíquota efetiva','Simulação por regime','Quando buscar otimização']}
-];
-
-function renderArtigos(){
-  document.getElementById('artigos-list').innerHTML=ARTIGOS.map((a,i)=>{
-    const fmts=a.fmts.map(f=>{const cls=f==='reels'?'badge-laranja':f==='carrossel'?'badge-verde':'badge-lilas';const lbl=f==='reels'?'🎥 Reels':f==='carrossel'?'🎨 Carrossel':'📝 Artigo';return`<span class="badge ${cls}">${lbl}</span>`;}).join('');
-    return`<div class="artigo-card"><div class="artigo-num">0${i+1>9?i+1:'0'+(i+1)}</div><div style="flex:1;"><div class="artigo-titulo">${a.titulo}</div><div class="artigo-meta">Responsável: <strong>${a.autor}</strong></div><div class="artigo-desc">${a.desc}</div><div class="artigo-sub">Subtemas: ${a.subs.map(s=>`<span style="color:var(--v1);">${s}</span>`).join(' · ')}</div><div class="artigo-badges">${fmts}${a.quente?'<span class="badge badge-quente">🔥 Quente 2026</span>':''}</div></div></div>`;
+    return `<tr class="${rowCls}">
+      <td><strong>${formatarData(p.data_publicacao)}</strong>${p.feriado ? ' <span style="color:var(--vermelho);font-size:9px;font-weight:700">FER.</span>' : ''}</td>
+      <td style="color:var(--texto-suave)">${diaStr}</td>
+      <td>${badgeFormato(p.formato)}</td>
+      <td>${escHtml(p.responsavel || '—')}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(p.tema||'')}">${escHtml(p.tema || '—')}</td>
+      <td style="color:var(--texto-suave)">${formatarData(p.prazo_gravacao) || '—'}</td>
+      <td>${badgeStatus(p.status)}</td>
+      <td><div style="display:flex;gap:3px;align-items:center">${checks}</div></td>
+      <td><button class="btn-acao" onclick="editarPost('${p.id}')">Editar</button></td>
+    </tr>`;
   }).join('');
 }
 
-// ══════════════════ AGENTE CHAT ══════════════════
-const SUGESTOES = [
-  'Gera a pauta completa desta semana',
-  'Roteiro de Reels sobre transação tributária para a Mariana',
-  'Analise o que a @talitaritz faz e como o CP pode se inspirar',
-  'Cria 5 ideias de stories para esta semana',
-  'Legenda completa para um post sobre holding',
-  'O que está quente em tributário esta semana?',
-  'Roteiro de Reels sobre reforma tributária para a Mariana',
-  'Sugere temas para o carrossel da Diana esta quarta'
-];
-let chatHistorico = [];
-
-function renderSugestoes() {
-  document.getElementById('chat-sugs').innerHTML = SUGESTOES.map(s=>`<button class="sug-btn" onclick="usarSugestao('${s.replace(/'/g,"\\'")}')">⚡ ${s}</button>`).join('');
+// ══════════════════════════════════════════════════════════════════
+// SIDEBAR — REGRAS DO MÊS
+// ══════════════════════════════════════════════════════════════════
+function renderSidebar() {
+  renderGravacoes();
+  renderStoriesSemanas();
 }
 
-function usarSugestao(s) {
-  document.getElementById('chat-input').value = s;
-  document.getElementById('chat-input').focus();
+function renderGravacoes() {
+  const quartas = getQuartasDoMes(mesAtual, anoAtual);
+  const el = document.getElementById('sidebar-gravacoes');
+
+  if (!quartas.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--texto-suave)">Nenhuma quarta neste mês.</div>';
+    return;
+  }
+
+  // Offset global: conta quantas quartas ocorreram antes deste mês desde Jan/2025
+  const offset = contarQuartasAnteriores(mesAtual, anoAtual, 2025, 1);
+
+  el.innerHTML = quartas.map((dt, idx) => {
+    const globalIdx = (offset + idx) % 4;
+    const resp = RODIZIO_GRAVACAO[globalIdx];
+    return `<div class="gravacao-item">
+      <div class="avatar ${avatarCls(resp)}">${iniciais(resp)}</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--texto)">${resp}</div>
+        <div style="font-size:10px;color:var(--texto-suave)">${formatarDataObj(dt)}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+function renderStoriesSemanas() {
+  const semanas = getSemanas(mesAtual, anoAtual);
+  const el = document.getElementById('sidebar-stories');
+
+  // Semana de referência: semana de 06/01/2025 (segunda) → índice 0 = Laila
+  const refDate = new Date(2025, 0, 6);
+  const primeiraSeg = getPrimeiraSegundaDoMes(mesAtual, anoAtual);
+  const diffSem = Math.round((primeiraSeg - refDate) / (7 * 24 * 3600 * 1000));
+
+  el.innerHTML = semanas.map((seg, idx) => {
+    const globalIdx = ((diffSem + idx) % 4 + 4) % 4;
+    const resp = RODIZIO_STORIES[globalIdx];
+    return `<div class="gravacao-item">
+      <div class="avatar ${avatarCls(resp)}">${iniciais(resp)}</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--texto)">Sem. ${idx+1}: ${resp}</div>
+        <div style="font-size:10px;color:var(--texto-suave)">Stories: Seg, Ter e Qui</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-function chatKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarChat(); }
+// ══════════════════════════════════════════════════════════════════
+// MODAL — ABRIR / FECHAR
+// ══════════════════════════════════════════════════════════════════
+function abrirModalNovo() {
+  document.getElementById('modal-titulo').textContent = 'Novo Post';
+  document.getElementById('btn-excluir').classList.add('hidden');
+  limparModal();
+
+  // Pré-preencher data se estiver no mês corrente
+  if (mesAtual === HOJE.getMonth() + 1 && anoAtual === HOJE.getFullYear()) {
+    const ds = dataParaStr(HOJE);
+    document.getElementById('f-data').value = ds;
+    sugerirCampos(ds, '');
+  }
+
+  document.getElementById('modal-overlay').classList.add('aberto');
+  document.getElementById('f-data').focus();
 }
 
-async function enviarChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-  input.style.height = 'auto';
+function editarPost(id) {
+  const p = postsCache.find(x => String(x.id) === String(id));
+  if (!p) return;
 
-  const wrap = document.getElementById('chat-wrap');
-  wrap.innerHTML += `<div class="msg msg-user">${esc2(msg)}</div>`;
+  document.getElementById('modal-titulo').textContent = 'Editar Post';
+  document.getElementById('btn-excluir').classList.remove('hidden');
 
-  const typing = document.createElement('div');
-  typing.className = 'msg msg-agent typing';
-  typing.innerHTML = '<span></span><span></span><span></span>';
-  wrap.appendChild(typing);
-  wrap.scrollTop = wrap.scrollHeight;
+  document.getElementById('f-id').value          = p.id;
+  document.getElementById('f-data').value        = p.data_publicacao || '';
+  document.getElementById('f-formato').value     = p.formato || '';
+  document.getElementById('f-responsavel').value = p.responsavel || '';
+  document.getElementById('f-prazo').value       = p.prazo_gravacao || '';
+  document.getElementById('f-status').value      = p.status || 'planejado';
+  document.getElementById('f-obs').value         = p.observacoes || '';
+  document.getElementById('f-feriado').checked   = !!p.feriado;
 
-  document.getElementById('chat-send').disabled = true;
-  document.getElementById('chat-sugs').style.display = 'none';
+  // Tema
+  if (p.tema && !TEMAS_FIXOS.includes(p.tema)) {
+    document.getElementById('f-tema-select').value = '__livre';
+    document.getElementById('f-tema-livre').value = p.tema;
+    document.getElementById('f-tema-livre').classList.remove('hidden');
+  } else {
+    document.getElementById('f-tema-select').value = p.tema || '';
+    document.getElementById('f-tema-livre').classList.add('hidden');
+    document.getElementById('f-tema-livre').value = '';
+  }
 
-  try {
-    const r = await fetch('/api/agente-marketing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mensagem: msg, historico: chatHistorico })
-    });
-    const d = await r.json();
-    typing.remove();
-    const resposta = d.resposta || d.erro || 'Sem resposta.';
-    const div = document.createElement('div');
-    div.className = 'msg msg-agent';
-    div.innerHTML = formatarMarkdown(resposta);
-    wrap.appendChild(div);
-    chatHistorico.push({ role: 'user', content: msg });
-    chatHistorico.push({ role: 'assistant', content: resposta });
-    if (chatHistorico.length > 20) chatHistorico = chatHistorico.slice(-20);
-  } catch(e) {
-    typing.remove();
-    wrap.innerHTML += `<div class="msg msg-agent" style="color:var(--rosa);">Erro de conexão. Verifique se a CLAUDE_API_KEY está configurada.</div>`;
-  } finally {
-    document.getElementById('chat-send').disabled = false;
-    wrap.scrollTop = wrap.scrollHeight;
+  // Checklist
+  setCheck('f-roteiro', 'cl-roteiro', !!p.roteiro);
+  setCheck('f-capa',    'cl-capa',    !!p.capa);
+  setCheck('f-legenda', 'cl-legenda', !!p.legenda);
+  setCheck('f-airdrop', 'cl-airdrop', !!p.airdrop);
+
+  document.getElementById('modal-overlay').classList.add('aberto');
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('aberto');
+}
+
+function limparModal() {
+  ['f-id','f-data','f-prazo','f-obs'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['f-formato','f-responsavel','f-tema-select'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-status').value = 'planejado';
+  document.getElementById('f-tema-livre').classList.add('hidden');
+  document.getElementById('f-tema-livre').value = '';
+  document.getElementById('f-feriado').checked = false;
+  setCheck('f-roteiro','cl-roteiro',false);
+  setCheck('f-capa',   'cl-capa',   false);
+  setCheck('f-legenda','cl-legenda',false);
+  setCheck('f-airdrop','cl-airdrop',false);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MODAL — LÓGICA DE PREENCHIMENTO
+// ══════════════════════════════════════════════════════════════════
+function onDataChange() {
+  const dateStr = document.getElementById('f-data').value;
+  const fmt = document.getElementById('f-formato').value;
+  sugerirCampos(dateStr, fmt);
+}
+
+function onFormatoChange() {
+  const dateStr = document.getElementById('f-data').value;
+  const fmt = document.getElementById('f-formato').value;
+  sugerirCampos(dateStr, fmt);
+}
+
+/**
+ * Sugere automaticamente responsável conforme data e formato,
+ * respeitando as regras fixas do escritório.
+ */
+function sugerirCampos(dateStr, fmt) {
+  if (!dateStr) return;
+  const dt  = new Date(dateStr + 'T12:00:00');
+  const dow = dt.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
+  const responsavelEl = document.getElementById('f-responsavel');
+
+  // Sugere apenas se o campo estiver vazio
+  if (responsavelEl.value) return;
+
+  if (dow === 1 && (!fmt || fmt === 'reels')) {
+    // Segunda → Reels → Mariana Pinheiro
+    document.getElementById('f-formato').value     = 'reels';
+    responsavelEl.value = 'Mariana Pinheiro';
+  } else if (dow === 3 && (!fmt || fmt === 'carrossel')) {
+    // Quarta → Carrossel → Diana
+    document.getElementById('f-formato').value     = 'carrossel';
+    responsavelEl.value = 'Diana';
+  } else if ((dow === 1 || dow === 2 || dow === 4) && (!fmt || fmt === 'story')) {
+    // Seg, Ter, Qui → Story → sugerir responsável do rodízio
+    document.getElementById('f-formato').value = 'story';
+    const semIdx = getSemanaIndex(dt, mesAtual, anoAtual);
+    if (semIdx !== null) {
+      const refDate = new Date(2025, 0, 6);
+      const primeiraSeg = getPrimeiraSegundaDoMes(mesAtual, anoAtual);
+      const diffSem = Math.round((primeiraSeg - refDate) / (7 * 24 * 3600 * 1000));
+      const globalIdx = ((diffSem + semIdx) % 4 + 4) % 4;
+      responsavelEl.value = RODIZIO_STORIES[globalIdx];
+    }
   }
 }
 
-function esc2(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function formatarMarkdown(text) {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code style="background:#f0f7f7;padding:1px 5px;border-radius:4px;font-size:12px;">$1</code>')
-    .replace(/^### (.*)/gm, '<h4 style="font-family:Cormorant Garamond,serif;font-size:15px;margin:10px 0 4px;">$1</h4>')
-    .replace(/^## (.*)/gm, '<h3 style="font-family:Cormorant Garamond,serif;font-size:17px;margin:12px 0 5px;">$1</h3>')
-    .replace(/^# (.*)/gm, '<h2 style="font-family:Cormorant Garamond,serif;font-size:19px;margin:14px 0 6px;">$1</h2>')
-    .replace(/\n/g, '<br>');
+function getSemanaIndex(dt, mes, ano) {
+  // Retorna qual é o índice da semana (0, 1, 2...) dentro do mês
+  const semanas = getSemanas(mes, ano);
+  for (let i = 0; i < semanas.length; i++) {
+    const seg = semanas[i];
+    const fim = new Date(seg); fim.setDate(seg.getDate() + 6);
+    if (dt >= seg && dt <= fim) return i;
+  }
+  return null;
 }
 
-// ══════════════════ INIT ══════════════════
-renderEquipe();
-renderCal();
-renderRoteiros();
-renderStories();
-renderArtigos();
-renderSugestoes();
-carregarMetrics();
+function onTemaSelect() {
+  const sel   = document.getElementById('f-tema-select').value;
+  const livre = document.getElementById('f-tema-livre');
+  if (sel === '__livre') {
+    livre.classList.remove('hidden');
+    livre.focus();
+  } else {
+    livre.classList.add('hidden');
+    livre.value = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MODAL — CHECKLIST
+// ══════════════════════════════════════════════════════════════════
+function setCheck(inputId, labelId, val) {
+  document.getElementById(inputId).checked = val;
+  document.getElementById(labelId).classList.toggle('marcado', val);
+}
+
+function toggleCheck(input, labelId) {
+  document.getElementById(labelId).classList.toggle('marcado', input.checked);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SALVAR POST
+// ══════════════════════════════════════════════════════════════════
+async function salvarPost() {
+  const id      = document.getElementById('f-id').value;
+  const dataStr = document.getElementById('f-data').value;
+  const fmt     = document.getElementById('f-formato').value;
+
+  if (!dataStr) { showToast('Informe a data de publicação.', true); return; }
+  if (!fmt)     { showToast('Selecione o formato do post.', true); return; }
+
+  const dt = new Date(dataStr + 'T12:00:00');
+  const temaSelect = document.getElementById('f-tema-select').value;
+  const tema = temaSelect === '__livre'
+    ? document.getElementById('f-tema-livre').value.trim()
+    : temaSelect;
+
+  const payload = {
+    mes:             dt.getMonth() + 1,
+    ano:             dt.getFullYear(),
+    data_publicacao: dataStr,
+    formato:         fmt,
+    responsavel:     document.getElementById('f-responsavel').value || null,
+    tema:            tema || null,
+    prazo_gravacao:  document.getElementById('f-prazo').value || null,
+    status:          document.getElementById('f-status').value,
+    roteiro:         document.getElementById('f-roteiro').checked,
+    capa:            document.getElementById('f-capa').checked,
+    legenda:         document.getElementById('f-legenda').checked,
+    airdrop:         document.getElementById('f-airdrop').checked,
+    observacoes:     document.getElementById('f-obs').value.trim() || null,
+    feriado:         document.getElementById('f-feriado').checked,
+  };
+
+  const btnSalvar = document.getElementById('btn-salvar');
+  btnSalvar.disabled = true;
+  btnSalvar.textContent = 'Salvando...';
+
+  try {
+    if (id) {
+      await DB.update('redes_posts', `id=eq.${id}`, payload);
+      showToast('Post atualizado com sucesso.');
+    } else {
+      payload.criado_em = new Date().toISOString();
+      await DB.insert('redes_posts', payload);
+      showToast('Post criado com sucesso.');
+    }
+    fecharModal();
+    await carregarMes();
+  } catch (e) {
+    showToast('Erro ao salvar: ' + e.message, true);
+  } finally {
+    btnSalvar.disabled = false;
+    btnSalvar.textContent = 'Salvar Post';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXCLUIR POST
+// ══════════════════════════════════════════════════════════════════
+async function excluirPost() {
+  const id = document.getElementById('f-id').value;
+  if (!id) return;
+  if (!confirm('Excluir este post permanentemente? Esta ação não pode ser desfeita.')) return;
+  try {
+    await DB.delete('redes_posts', `id=eq.${id}`);
+    showToast('Post excluído.');
+    fecharModal();
+    await carregarMes();
+  } catch (e) {
+    showToast('Erro ao excluir: ' + e.message, true);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHECKLIST INLINE (na lista, sem abrir modal)
+// ══════════════════════════════════════════════════════════════════
+async function toggleCheckInline(id, campo, valor) {
+  try {
+    await DB.update('redes_posts', `id=eq.${id}`, { [campo]: valor });
+    const post = postsCache.find(p => String(p.id) === String(id));
+    if (post) post[campo] = valor;
+    renderLista();
+  } catch (e) {
+    showToast('Erro ao atualizar: ' + e.message, true);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, erro = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (erro ? ' erro' : '');
+  requestAnimationFrame(() => t.classList.add('visivel'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visivel'), 3200);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HELPERS — BADGES
+// ══════════════════════════════════════════════════════════════════
+function badgeFormato(fmt) {
+  const map = {
+    reels:     '<span class="badge badge-reels">&#9679; Reels</span>',
+    carrossel: '<span class="badge badge-carrossel">&#9679; Carrossel</span>',
+    story:     '<span class="badge badge-story">&#9679; Story</span>',
+  };
+  return map[fmt] || `<span class="badge badge-planejado">${escHtml(fmt||'—')}</span>`;
+}
+
+function badgeStatus(sts) {
+  const map = {
+    'planejado':   '<span class="badge badge-planejado">Planejado</span>',
+    'em produção': '<span class="badge badge-producao">Em Produção</span>',
+    'aprovado':    '<span class="badge badge-aprovado">Aprovado</span>',
+    'publicado':   '<span class="badge badge-publicado">Publicado</span>',
+  };
+  return map[sts] || `<span class="badge badge-planejado">${escHtml(sts||'planejado')}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HELPERS — DATAS
+// ══════════════════════════════════════════════════════════════════
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function dataParaStr(dt) {
+  return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+}
+
+function formatarData(str) {
+  if (!str) return '';
+  const [a, m, d] = str.split('-');
+  if (!a || !m || !d) return str;
+  return `${d}/${m}/${a}`;
+}
+
+function formatarDataObj(dt) {
+  return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+}
+
+/** Retorna array de objetos Date correspondentes às quartas de um mês */
+function getQuartasDoMes(mes, ano) {
+  const result = [];
+  const total  = new Date(ano, mes, 0).getDate();
+  for (let d = 1; d <= total; d++) {
+    const dt = new Date(ano, mes - 1, d);
+    if (dt.getDay() === 3) result.push(dt);
+  }
+  return result;
+}
+
+/**
+ * Conta quantas quartas ocorreram ANTES de (mesAlvo, anoAlvo),
+ * a partir do mês de referência (mesRef, anoRef).
+ */
+function contarQuartasAnteriores(mesAlvo, anoAlvo, anoRef, mesRef) {
+  let total = 0;
+  for (let a = anoRef; a <= anoAlvo; a++) {
+    const mInicio = (a === anoRef)  ? mesRef : 1;
+    const mFim    = (a === anoAlvo) ? mesAlvo - 1 : 12;
+    for (let m = mInicio; m <= mFim; m++) {
+      total += getQuartasDoMes(m, a).length;
+    }
+  }
+  return total;
+}
+
+/**
+ * Retorna as segundas-feiras de cada semana que "toca" o mês dado.
+ * Inclui a semana que começa no mês anterior se tiver dias neste mês.
+ */
+function getSemanas(mes, ano) {
+  const result = [];
+  const seen   = new Set();
+  const total  = new Date(ano, mes, 0).getDate();
+  for (let d = 1; d <= total; d++) {
+    const dt  = new Date(ano, mes - 1, d);
+    const dow = dt.getDay(); // 0=Dom
+    // Calcula a segunda da semana desta data
+    const diff  = dow === 0 ? -6 : 1 - dow;
+    const seg   = new Date(ano, mes - 1, d + diff);
+    const key   = dataParaStr(seg);
+    if (!seen.has(key)) { seen.add(key); result.push(seg); }
+  }
+  return result;
+}
+
+/** Retorna a primeira segunda-feira do mês */
+function getPrimeiraSegundaDoMes(mes, ano) {
+  const dt  = new Date(ano, mes - 1, 1);
+  const dow = dt.getDay();
+  const diff = dow === 0 ? 1 : (dow === 1 ? 0 : 8 - dow);
+  return new Date(ano, mes - 1, 1 + diff);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HELPERS — TEXTO
+// ══════════════════════════════════════════════════════════════════
+function abreviarNome(nome) {
+  if (!nome) return '—';
+  const p = nome.trim().split(/\s+/);
+  if (p.length === 1) return nome;
+  return p[0][0].toUpperCase() + '. ' + p[p.length - 1];
+}
+
+function iniciais(nome) {
+  if (!nome) return '?';
+  const p = nome.trim().split(/\s+/);
+  if (p.length === 1) return p[0][0].toUpperCase();
+  return (p[0][0] + p[p.length-1][0]).toUpperCase();
+}
+
+function avatarCls(nome) {
+  if (!nome) return 'av-mp';
+  const n = nome.toLowerCase();
+  if (n.includes('pinheiro'))  return 'av-mp';
+  if (n.includes('diana'))     return 'av-di';
+  if (n.includes('jade'))      return 'av-ja';
+  if (n.includes('laila'))     return 'av-la';
+  if (n.includes('barboza'))   return 'av-mb';
+  return 'av-mp';
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TECLAS DE ATALHO
+// ══════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharModal();
+});
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) fecharModal();
+});
 </script>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </body>
 </html>

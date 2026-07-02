@@ -11,7 +11,7 @@ const TABELAS_PERMITIDAS = new Set([
   'contratos', 'despesas', 'repasses', 'lancamentos_manuais', 'agenda',
   'tarefas_astrea', 'publicacoes', 'sessoes',
   'transacoes', 'transacoes_historico', 'transacoes_prazos',
-  'mural', 'elogios'
+  'mural', 'elogios', 'redes_posts'
 ]);
 
 // Operações permitidas
