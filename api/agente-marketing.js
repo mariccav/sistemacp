@@ -109,6 +109,32 @@ module.exports = async (req, res) => {
         },
         required: ["tema_semana"]
       }
+    },
+    {
+      name: "salvar_posts_calendario",
+      description: "Registra posts sugeridos no calendário de redes sociais. Use SEMPRE que sugerir uma pauta ou posts específicos com datas definidas. Cada post deve ter data, formato, responsável e tema. Permite que a usuária salve as sugestões com um clique.",
+      input_schema: {
+        type: "object",
+        properties: {
+          posts: {
+            type: "array",
+            description: "Lista de posts a salvar no calendário",
+            items: {
+              type: "object",
+              properties: {
+                data_publicacao: { type: "string", description: "Data no formato YYYY-MM-DD" },
+                formato: { type: "string", enum: ["reels", "carrossel", "story"], description: "Formato do post" },
+                responsavel: { type: "string", description: "Nome da responsável pelo post" },
+                tema: { type: "string", description: "Tema ou título do post" },
+                prazo_gravacao: { type: "string", description: "Data limite para gravar/finalizar (YYYY-MM-DD), se aplicável" },
+                observacoes: { type: "string", description: "Notas adicionais, roteiro resumido, etc." }
+              },
+              required: ["data_publicacao", "formato", "responsavel", "tema"]
+            }
+          }
+        },
+        required: ["posts"]
+      }
     }
   ];
 
@@ -183,7 +209,8 @@ Transação tributária, Holding, Equiparação hospitalar, Isenção IR, ITIV, 
 • @nogueirareisadvogados — escritório, voz institucional com humanização da equipe.
 
 ━━━━━━━━━━━ COMO AGIR ━━━━━━━━━━━
-• Ao gerar pauta semanal: indique EXATAMENTE quem posta o quê em qual dia, seguindo as regras acima.
+• Ao gerar pauta semanal ou mensal: use a ferramenta salvar_posts_calendario com TODOS os posts sugeridos antes de escrever o texto de resposta. Isso permite que a usuária salve tudo com um clique.
+• Ao sugerir posts individuais com data definida: use salvar_posts_calendario.
 • Ao sugerir carrossel: sempre atribuir à Diana.
 • Ao sugerir Reels de segunda: sempre atribuir à Mariana Pinheiro.
 • Ao sugerir stories: indicar a responsável da semana conforme o rodízio.
@@ -280,6 +307,15 @@ Transação tributária, Holding, Equiparação hospitalar, Isenção IR, ITIV, 
       return { instrucao: 'Gere o roteiro de stories dia a dia com quem posta, o quê e como.', input };
     }
 
+    if (nome === 'salvar_posts_calendario') {
+      // Retorna os posts estruturados — o frontend exibe botão "Salvar no calendário"
+      return {
+        status: 'pronto_para_salvar',
+        posts: input.posts,
+        mensagem: `${input.posts.length} post(s) prontos para salvar no calendário.`
+      };
+    }
+
     return { erro: `Ferramenta desconhecida: ${nome}` };
   }
 
@@ -308,7 +344,25 @@ Transação tributária, Holding, Equiparação hospitalar, Isenção IR, ITIV, 
     }
 
     const texto = resposta.content.find(b => b.type === 'text')?.text || 'Não consegui processar. Tente novamente.';
-    return res.status(200).json({ resposta: texto });
+
+    // Coletar posts sugeridos de todas as chamadas à ferramenta salvar_posts_calendario
+    const postsSugeridos = [];
+    for (const msg of mensagens) {
+      if (Array.isArray(msg.content)) {
+        for (const bloco of msg.content) {
+          if (bloco.type === 'tool_result') {
+            try {
+              const resultado = JSON.parse(bloco.content);
+              if (resultado.status === 'pronto_para_salvar' && Array.isArray(resultado.posts)) {
+                postsSugeridos.push(...resultado.posts);
+              }
+            } catch {}
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({ resposta: texto, posts_sugeridos: postsSugeridos });
 
   } catch (err) {
     return res.status(500).json({ erro: err.message });
