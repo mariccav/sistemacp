@@ -372,7 +372,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
         <option>Consultoria / Parecer</option><option>Reunião com Cliente</option>
         <option>Reunião Interna</option><option>Transação Tributária</option>
         <option>Recuperação de Créditos</option><option>Pesquisa Jurídica</option>
-        <option>Gestão / Administrativo</option><option>Comercial / Proposta</option><option>Outro</option>
+        <option>Gestão / Administrativo</option><option>Comercial / Proposta</option>
+        <option>Redes Sociais</option><option>Outro</option>
       </select>
     </div>
     <div class="macts"><button class="btn-cancel" onclick="fmod('mod-ini')">Cancelar</button><button class="btn-ok" onclick="iniciar()">▶ Iniciar</button></div>
@@ -396,9 +397,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
         <option>Consultoria / Parecer</option><option>Reunião com Cliente</option>
         <option>Reunião Interna</option><option>Transação Tributária</option>
         <option>Recuperação de Créditos</option><option>Pesquisa Jurídica</option>
-        <option>Gestão / Administrativo</option><option>Comercial / Proposta</option><option>Outro</option>
+        <option>Gestão / Administrativo</option><option>Comercial / Proposta</option>
+        <option>Redes Sociais</option><option>Outro</option>
       </select>
     </div>
+    <div class="frow"><label>Comentários / Links</label><textarea id="m-coment" placeholder="Cole links do Drive, observações, materiais..." rows="2" style="width:100%;padding:9px 11px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;resize:vertical;color:var(--v1);outline:none;"></textarea></div>
     <div class="macts"><button class="btn-cancel" onclick="fmod('mod-man')">Cancelar</button><button class="btn-ok" onclick="salvarManual()">Salvar</button></div>
   </div>
 </div>
@@ -466,7 +469,7 @@ const ini=n=>COLS.find(c=>c.nome===n)?.ini||n.slice(0,2).toUpperCase();
 async function sbGet(q){const sep=q.indexOf('?');const tab=sep>=0?q.slice(0,sep):q;const filt=sep>=0?q.slice(sep+1):'';return DB.get(tab,filt).catch(()=>[]);}
 async function sbPost(t,b){const r=await DB.insert(t,b);return r;}
 async function sbPatch(t,id,b){await DB.update(t,`id=eq.${id}`,b);}
-function fmod(id){document.getElementById(id).classList.remove('show');}
+// fmod definida mais abaixo com lógica de reset do modal manual
 
 let ativa=null,sessao=null,timerInt=null,pollInt=null,per='semana';
 let chCol=null,chSem=null,chRank=null;
@@ -531,13 +534,60 @@ async function iniciar(){
   if(row){const d=Array.isArray(row)?row[0]:row;sessao={id:d.id,inicio:new Date(d.inicio),cliente:cli,processo:proc};fmod('mod-ini');mostrarAtiva();carregarHoje();}
 }
 async function encerrar(){if(!sessao)return;const fim=new Date();const dur=Math.round((fim-sessao.inicio)/60000);await sbPatch('sessoes',sessao.id,{fim:fim.toISOString(),duracao_minutos:dur});sessao=null;mostrarInativa();carregarHoje();}
-async function salvarManual(){
+
+let editandoSessaoId=null;
+async function abrirEditarSessao(id){
+  // Buscar sessão completa
+  const rows=await DB.get('sessoes',`id=eq.${id}&limit=1`).catch(()=>[]);
+  const s=rows[0];if(!s)return;
+  editandoSessaoId=id;
+  const ini=new Date(s.inicio),fim=s.fim?new Date(s.fim):null;
+  document.getElementById('m-dt').value=ini.toISOString().split('T')[0];
+  document.getElementById('m-ini').value=ini.toTimeString().slice(0,5);
+  document.getElementById('m-fim').value=fim?fim.toTimeString().slice(0,5):'';
+  document.getElementById('m-cli').value=s.cliente||'';
+  document.getElementById('m-proc').value=s.processo||'';
+  document.getElementById('m-tipo').value=s.tipo_atividade||'';
+  document.getElementById('m-coment').value=s.comentario||'';
+  // Mudar botão para salvar edição
+  const btn=document.querySelector('#mod-man .btn-ok');
+  btn.textContent='Salvar edição';
+  btn.onclick=()=>salvarManual(editandoSessaoId);
+  document.getElementById('mod-man').classList.add('show');
+}
+
+function fmod(id){
+  document.getElementById(id).classList.remove('show');
+  editandoSessaoId=null;
+  // Restaurar botão de lançamento manual
+  if(id==='mod-man'){
+    const btn=document.querySelector('#mod-man .btn-ok');
+    if(btn){btn.textContent='Salvar';btn.onclick=()=>salvarManual(null);}
+  }
+}
+
+async function excluirSessao(id){
+  if(!confirm('Excluir esta atividade?'))return;
+  await DB.delete('sessoes',`id=eq.${id}`);
+  carregarHoje();
+}
+async function salvarManual(id_edit){
   const dt=document.getElementById('m-dt').value,ini2=document.getElementById('m-ini').value,fim=document.getElementById('m-fim').value;
   if(!dt||!ini2||!fim){alert('Informe data, início e fim.');return;}
   const id=new Date(`${dt}T${ini2}`),fd=new Date(`${dt}T${fim}`),dur=Math.round((fd-id)/60000);
   if(dur<=0){alert('Fim deve ser após início.');return;}
-  await sbPost('sessoes',{colaboradora:ativa.nome,cargo:ativa.cargo,inicio:id.toISOString(),fim:fd.toISOString(),duracao_minutos:dur,cliente:document.getElementById('m-cli').value.trim(),processo:document.getElementById('m-proc').value.trim(),tipo_atividade:document.getElementById('m-tipo').value||null,ambiente:'escritorio'});
-  fmod('mod-man');carregarHoje();
+  const dados={colaboradora:ativa.nome,cargo:ativa.cargo,inicio:id.toISOString(),fim:fd.toISOString(),duracao_minutos:dur,
+    cliente:document.getElementById('m-cli').value.trim(),processo:document.getElementById('m-proc').value.trim(),
+    tipo_atividade:document.getElementById('m-tipo').value||null,ambiente:'escritorio',
+    comentario:document.getElementById('m-coment').value.trim()||null};
+  if(id_edit){
+    await sbPatch('sessoes',id_edit,dados);
+  } else {
+    await sbPost('sessoes',dados);
+  }
+  fmod('mod-man');
+  document.getElementById('m-coment').value='';
+  carregarHoje();
 }
 
 // MEU DIA
@@ -553,8 +603,16 @@ async function carregarHoje(){
   const totSem=rSem.filter(s=>s.fim).reduce((a,s)=>a+(s.duracao_minutos||0),0);
   document.getElementById('ssem').textContent=hmin(totSem)||'0min';
   const tb=document.getElementById('tbody-hoje');
-  if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="empty">Nenhuma sessão hoje.</td></tr>';return;}
-  tb.innerHTML=rows.map(s=>`<tr><td>${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:var(--verde);font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="tbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`).join('');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7" class="empty">Nenhuma sessão hoje.</td></tr>';return;}
+  const agora=Date.now();
+  const isAdmin=window.CP_USER?.is_admin||window.CP_USER?.cargo==='Sócia Fundadora'||window.CP_USER?.cargo==='Coordenação Jurídica';
+  tb.innerHTML=rows.map(s=>{
+    const minutosDesde=s.criado_em?(agora-new Date(s.criado_em).getTime())/60000:999;
+    const podeEditar=isAdmin||(minutosDesde<=120&&s.colaboradora===ativa.nome); // 2h para a própria usuária
+    const coment=s.comentario?`<div style="font-size:11px;color:#5a8080;margin-top:3px;word-break:break-all">${s.comentario.replace(/https?:\/\/\S+/g,url=>`<a href="${url}" target="_blank" style="color:var(--v2)">${url.length>40?url.slice(0,40)+'…':url}</a>`)}</div>`:'';
+    const acoes=podeEditar?`<div style="display:flex;gap:4px"><button onclick="abrirEditarSessao('${s.id}')" style="background:none;border:1px solid #dde8e8;color:var(--v2);border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Editar</button><button onclick="excluirSessao('${s.id}')" style="background:none;border:1px solid #f4d0d0;color:#c25e5e;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Excluir</button></div>`:'';
+    return `<tr><td>${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:var(--verde);font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}${coment}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="tbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td><td>${acoes}</td></tr>`;
+  }).join('');
 }
 
 // ESCRITÓRIO
