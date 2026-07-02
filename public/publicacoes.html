@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="/auth.js"></script>
+<script src="/db-client.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Publicações — Cavalcante Pinheiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--verm:#c25e5e;--verde:#2a7a5a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-height:100vh;}
+header{background:var(--v1);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;border:1px solid rgba(167,168,151,.3);padding:5px 12px;border-radius:6px;}
+.hd-back:hover{color:#fff;border-color:#fff;}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 28px 0;}
+.kpi{background:#fff;border-radius:12px;padding:16px 20px;border:1px solid #e8f0f0;text-align:center;}
+.kpi-num{font-size:32px;font-weight:700;font-family:'Cormorant Garamond',serif;}
+.kpi-num.verm{color:var(--verm);}
+.kpi-num.verde{color:var(--verde);}
+.kpi-num.bege{color:var(--bege);}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-top:4px;}
+
+/* Filtros */
+.filtros{display:flex;gap:10px;align-items:center;padding:16px 28px;flex-wrap:wrap;}
+.filtros input{flex:1;min-width:240px;padding:9px 14px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;outline:none;}
+.filtros select{padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);background:#fff;outline:none;cursor:pointer;}
+.badge-filtro{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(31,62,60,.1);color:var(--v1);}
+
+/* Lista */
+.lista{padding:0 28px 40px;}
+.pub-card{background:#fff;border-radius:12px;border:1px solid #e8f0f0;margin-bottom:10px;overflow:hidden;transition:.2s;}
+.pub-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.07);}
+.pub-card.vencida{border-left:3px solid var(--verm);}
+.pub-header{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;}
+.pub-data{font-size:12px;color:var(--bege);min-width:80px;}
+.pub-icon{font-size:18px;}
+.pub-info{flex:1;}
+.pub-processo{font-size:13px;font-weight:700;color:var(--v1);}
+.pub-tribunal{font-size:11px;color:#5a8080;margin-top:2px;}
+.pub-responsavel{font-size:11px;color:var(--bege);}
+.pub-status{padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.st-nao_tratada{background:#fef2f2;color:var(--verm);}
+.st-tratada{background:#f0f9f4;color:var(--verde);}
+.st-descartada{background:#f5f5f5;color:var(--bege);}
+.pub-acoes{display:flex;gap:6px;align-items:center;}
+.btn-acao{padding:6px 14px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:.15s;}
+.btn-tarefa{background:var(--v1);color:#fff;}
+.btn-tarefa:hover{background:var(--v2);}
+.btn-tratar{background:#f0f9f4;color:var(--verde);border:1px solid rgba(42,122,90,.2);}
+.btn-descartar{background:#f5f5f5;color:var(--bege);border:1px solid rgba(167,168,151,.2);}
+
+/* Expansão */
+.pub-body{display:none;padding:0 18px 16px;border-top:1px solid #f0f7f7;margin-top:0;}
+.pub-body.open{display:block;}
+.pub-conteudo{font-size:12px;color:#445;line-height:1.7;background:#f8fdfd;padding:12px 14px;border-radius:8px;max-height:240px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
+.pub-meta{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;}
+.pub-meta span{font-size:11px;color:var(--bege);}
+.pub-meta strong{color:var(--v1);}
+
+/* Modal tarefa */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(6,51,39,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--v1);margin-bottom:16px;}
+.mfld{margin-bottom:12px;}
+.mfld label{display:block;font-size:11px;font-weight:700;color:var(--bege);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.mfld input,.mfld select,.mfld textarea{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.mfld textarea{resize:vertical;height:80px;}
+.modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+.btn-cancel{padding:9px 18px;background:#f5f5f5;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
+.btn-save{padding:9px 18px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.empty{text-align:center;padding:60px 20px;color:var(--bege);font-size:14px;}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr;}.pub-acoes{flex-wrap:wrap;}.filtros{gap:6px;}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Publicações</h1>
+    <p>Recorte Digital OAB/BA · Cavalcante Pinheiro Advocacia</p>
+  </div>
+  <a href="/" class="hd-back">← Voltar</a>
+</header>
+
+<!-- KPIs -->
+<div class="kpis">
+  <div class="kpi"><div class="kpi-num verm" id="k-nao">—</div><div class="kpi-label">Não Tratadas Hoje</div></div>
+  <div class="kpi"><div class="kpi-num verde" id="k-trat">—</div><div class="kpi-label">Tratadas Hoje</div></div>
+  <div class="kpi"><div class="kpi-num bege" id="k-desc">—</div><div class="kpi-label">Descartadas Hoje</div></div>
+  <div class="kpi"><div class="kpi-num" id="k-total">—</div><div class="kpi-label">Total Não Tratadas</div></div>
+</div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <input type="text" id="busca" placeholder="Buscar processo, tribunal ou vara..." oninput="filtrar()">
+  <select id="f-status" onchange="filtrar()">
+    <option value="nao_tratada">Não Tratadas</option>
+    <option value="tratada">Tratadas</option>
+    <option value="descartada">Descartadas</option>
+    <option value="">Todas</option>
+  </select>
+  <select id="f-tribunal" onchange="filtrar()">
+    <option value="">Todos os tribunais</option>
+  </select>
+</div>
+
+<!-- LISTA -->
+<div class="lista" id="lista"><div class="empty">Carregando...</div></div>
+
+<!-- MODAL CRIAR TAREFA -->
+<div class="modal-bg" id="modal-tarefa">
+  <div class="modal">
+    <h2>Criar Tarefa a partir da Publicação</h2>
+    <input type="hidden" id="t-pub-id">
+    <div class="mfld"><label>Título da Tarefa</label><input id="t-titulo" placeholder="Ex: Petição — Paulo Matheus x União Federal"></div>
+    <div class="mfld"><label>Processo</label><input id="t-processo" readonly style="background:#f8fdfd"></div>
+    <div class="mfld"><label>Tribunal / Diário</label><input id="t-tribunal" readonly style="background:#f8fdfd"></div>
+    <div class="mfld"><label>Responsável</label>
+      <select id="t-resp">
+        <option value="">Selecione...</option>
+        <option>Mariana Pinheiro</option><option>Diana</option>
+        <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+      </select>
+    </div>
+    <div class="mfld"><label>Prazo Fatal</label><input type="date" id="t-prazo"></div>
+    <div class="mfld"><label>Observações</label><textarea id="t-obs" placeholder="Detalhes, orientações..."></textarea></div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-save" onclick="criarTarefa()">Criar Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let todas = [], filtradas = [], pubExpandida = null;
+
+const hoje = () => new Date().toISOString().split('T')[0];
+const fmtData = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+
+async function carregar() {
+  todas = await DB.get('publicacoes', 'order=criado_em.desc&limit=300').catch(() => []);
+  // Popular filtro de tribunais
+  const tribunais = [...new Set(todas.map(p => p.tribunal).filter(Boolean))].sort();
+  const sel = document.getElementById('f-tribunal');
+  tribunais.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t.length > 50 ? t.slice(0,50)+'…' : t;
+    sel.appendChild(opt);
+  });
+  renderKPIs();
+  filtrar();
+}
+
+function renderKPIs() {
+  const hj = hoje();
+  const hojeList = todas.filter(p => (p.criado_em||'').startsWith(hj));
+  document.getElementById('k-nao').textContent   = hojeList.filter(p=>p.status==='nao_tratada').length;
+  document.getElementById('k-trat').textContent  = hojeList.filter(p=>p.status==='tratada').length;
+  document.getElementById('k-desc').textContent  = hojeList.filter(p=>p.status==='descartada').length;
+  document.getElementById('k-total').textContent = todas.filter(p=>p.status==='nao_tratada').length;
+}
+
+function filtrar() {
+  const q      = document.getElementById('busca').value.toLowerCase();
+  const status = document.getElementById('f-status').value;
+  const trib   = document.getElementById('f-tribunal').value;
+  filtradas = todas.filter(p =>
+    (!status || p.status === status) &&
+    (!trib   || p.tribunal === trib) &&
+    (!q || (p.numero_processo||'').toLowerCase().includes(q) ||
+           (p.tribunal||'').toLowerCase().includes(q) ||
+           (p.vara||'').toLowerCase().includes(q) ||
+           (p.conteudo||'').toLowerCase().includes(q))
+  );
+  renderLista();
+}
+
+function renderLista() {
+  const lista = document.getElementById('lista');
+  if (!filtradas.length) {
+    lista.innerHTML = '<div class="empty">Nenhuma publicação encontrada.<br><small>As publicações chegam automaticamente via e-mail da OAB/BA.</small></div>';
+    return;
+  }
+  lista.innerHTML = filtradas.map(p => {
+    const stClass = p.status === 'nao_tratada' ? 'st-nao_tratada' :
+                    p.status === 'tratada'      ? 'st-tratada'      : 'st-descartada';
+    const stLabel = p.status === 'nao_tratada' ? 'NÃO TRATADA' :
+                    p.status === 'tratada'      ? 'TRATADA'      : 'DESCARTADA';
+    const naoTrat = p.status === 'nao_tratada';
+    return `
+    <div class="pub-card${naoTrat?' vencida':''}" id="card-${p.id}">
+      <div class="pub-header" onclick="expandir('${p.id}')">
+        <div class="pub-data">${fmtData(p.data_disponibilizacao||p.criado_em?.slice(0,10))}</div>
+        <div class="pub-icon">📄</div>
+        <div class="pub-info">
+          <div class="pub-processo">${p.numero_processo||'Processo não identificado'}</div>
+          <div class="pub-tribunal">${p.tribunal||'—'} ${p.vara ? '· '+p.vara : ''}</div>
+          ${p.responsavel ? `<div class="pub-responsavel">→ ${p.responsavel}</div>` : ''}
+        </div>
+        <span class="pub-status ${stClass}">${stLabel}</span>
+        <div class="pub-acoes" onclick="event.stopPropagation()">
+          ${naoTrat ? `
+            <button class="btn-acao btn-tarefa" onclick="abrirModalTarefa('${p.id}')">+ Criar Tarefa</button>
+            <button class="btn-acao btn-tratar" onclick="mudarStatus('${p.id}','tratada')">✓ Tratar</button>
+            <button class="btn-acao btn-descartar" onclick="mudarStatus('${p.id}','descartada')">✕</button>
+          ` : `
+            <button class="btn-acao btn-descartar" onclick="mudarStatus('${p.id}','nao_tratada')">↩ Reabrir</button>
+          `}
+        </div>
+      </div>
+      <div class="pub-body" id="body-${p.id}">
+        <div class="pub-meta">
+          <span><strong>Jornal:</strong> ${p.jornal||'—'}</span>
+          <span><strong>Disponibilização:</strong> ${fmtData(p.data_disponibilizacao)}</span>
+          <span><strong>Publicação:</strong> ${fmtData(p.data_publicacao)}</span>
+          ${p.criado_em ? `<span><strong>Capturado:</strong> ${fmtData(p.criado_em.slice(0,10))}</span>` : ''}
+        </div>
+        ${p.conteudo ? `<div class="pub-conteudo">${p.conteudo}</div>` : '<div style="color:var(--bege);font-size:12px;font-style:italic">Conteúdo não disponível.</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function expandir(id) {
+  const body = document.getElementById('body-'+id);
+  if (!body) return;
+  const aberto = body.classList.contains('open');
+  // Fechar todos
+  document.querySelectorAll('.pub-body.open').forEach(b => b.classList.remove('open'));
+  if (!aberto) body.classList.add('open');
+}
+
+async function mudarStatus(id, novoStatus) {
+  await DB.update('publicacoes', `id=eq.${id}`, { status: novoStatus }).catch(() => {});
+  const pub = todas.find(p => p.id === id);
+  if (pub) pub.status = novoStatus;
+  renderKPIs();
+  filtrar();
+}
+
+// ── MODAL CRIAR TAREFA ──────────────────────────────────────────
+function abrirModalTarefa(pubId) {
+  const p = todas.find(x => x.id === pubId);
+  if (!p) return;
+  document.getElementById('t-pub-id').value  = pubId;
+  document.getElementById('t-titulo').value  = p.numero_processo ? `Petição — ${p.numero_processo}` : 'Nova tarefa de publicação';
+  document.getElementById('t-processo').value = p.numero_processo || '';
+  document.getElementById('t-tribunal').value = `${p.tribunal||''} ${p.jornal?'· '+p.jornal:''}`.trim();
+  document.getElementById('t-resp').value    = '';
+  document.getElementById('t-prazo').value   = '';
+  document.getElementById('t-obs').value     = p.conteudo ? p.conteudo.slice(0, 300) : '';
+  document.getElementById('modal-tarefa').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modal-tarefa').classList.remove('show');
+}
+
+async function criarTarefa() {
+  const titulo = document.getElementById('t-titulo').value.trim();
+  const resp   = document.getElementById('t-resp').value;
+  if (!titulo) { alert('Informe o título da tarefa.'); return; }
+
+  const pubId   = document.getElementById('t-pub-id').value;
+  const processo = document.getElementById('t-processo').value;
+  const prazo    = document.getElementById('t-prazo').value;
+  const obs      = document.getElementById('t-obs').value.trim();
+
+  try {
+    // Criar tarefa
+    const nova = await DB.insert('tarefas_astrea', {
+      titulo,
+      responsavel:     resp || null,
+      numero_processo: processo || null,
+      prazo_fatal:     prazo || null,
+      prazo:           prazo || null,
+      descricao:       obs || null,
+      status:          'a_fazer',
+      origem:          'publicacao'
+    });
+
+    // Marcar publicação como tratada e vincular tarefa
+    const tarefaId = (Array.isArray(nova) ? nova[0] : nova)?.id;
+    await DB.update('publicacoes', `id=eq.${pubId}`, {
+      status:     'tratada',
+      tarefa_id:  tarefaId || null,
+      responsavel: resp || null
+    });
+
+    const pub = todas.find(p => p.id === pubId);
+    if (pub) { pub.status = 'tratada'; pub.responsavel = resp; }
+
+    fecharModal();
+    renderKPIs();
+    filtrar();
+    alert(`✓ Tarefa criada${resp ? ' para ' + resp : ''}!\nAparece na aba de Tarefas.`);
+  } catch(e) {
+    alert('Erro: ' + e.message);
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('modal-tarefa').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-tarefa')) fecharModal();
+});
+
+carregar();
+</script>
+</body>
+</html>

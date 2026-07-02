@@ -31,6 +31,37 @@ module.exports = async (req, res) => {
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
+  // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
+  // Não requer sessão — usa PUBLICACAO_WEBHOOK_SECRET
+  if (body.action === 'publicacao') {
+    const SECRET = process.env.PUBLICACAO_WEBHOOK_SECRET;
+    if (SECRET && body.secret !== SECRET) {
+      return res.status(401).json({ erro: 'Webhook secret inválido.' });
+    }
+    const SH2 = {
+      apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`,
+      'Content-Type': 'application/json', Prefer: 'return=representation'
+    };
+    const { data_disponibilizacao, data_publicacao, jornal, tribunal, vara,
+            numero_processo, conteudo, email_origem } = body;
+    if (!tribunal && !jornal) return res.status(400).json({ erro: 'Publicação inválida.' });
+    // Deduplicar
+    if (numero_processo && data_disponibilizacao) {
+      const rD = await fetch(
+        `${SB_URL}/rest/v1/publicacoes?numero_processo=eq.${encodeURIComponent(numero_processo)}&data_disponibilizacao=eq.${data_disponibilizacao}&limit=1`,
+        { headers: SH2 }
+      );
+      if (rD.ok) { const d = await rD.json(); if (d.length) return res.status(200).json({ status: 'duplicata' }); }
+    }
+    const rI = await fetch(`${SB_URL}/rest/v1/publicacoes`, {
+      method: 'POST', headers: SH2,
+      body: JSON.stringify({ data_disponibilizacao, data_publicacao, jornal, tribunal,
+        vara, numero_processo, conteudo, email_origem, status: 'nao_tratada' })
+    });
+    const ins = rI.ok ? await rI.json() : null;
+    return res.status(rI.ok ? 200 : 502).json(ins || { erro: await rI.text() });
+  }
+
   // ── Rota especial: LOGIN (não requer sessão) ──────────────────────
   if (body.action === 'login') {
     const { username, senha_hash } = body;
