@@ -133,6 +133,7 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
   <div class="toggle-view">
     <button class="tv-btn active" id="btn-kanban" onclick="setView('kanban')">⊞ Kanban</button>
     <button class="tv-btn" id="btn-lista" onclick="setView('lista')">☰ Lista</button>
+    <button class="tv-btn" id="btn-cal" onclick="setView('calendario')">📅 Calendário</button>
   </div>
   <button class="btn-novo" onclick="abrirNova()">+ Nova Tarefa</button>
 </div>
@@ -144,6 +145,21 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
 <div class="kanban-area" id="view-kanban">
   <div class="kanban-scroll">
     <div class="kanban" id="kanban-board"></div>
+  </div>
+</div>
+
+<!-- CALENDÁRIO DE PRAZOS FATAIS -->
+<div id="view-calendario" style="display:none;padding:20px;max-width:900px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button onclick="navCal(-1)" style="background:var(--v1);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:16px;">‹</button>
+    <h2 id="cal-titulo" style="font-family:'Cormorant Garamond',serif;color:var(--v1);flex:1;text-align:center;font-size:20px;"></h2>
+    <button onclick="navCal(1)" style="background:var(--v1);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:16px;">›</button>
+  </div>
+  <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+  <div style="display:flex;gap:16px;margin-top:12px;font-size:12px;color:var(--bege);">
+    <span>🔴 Prazo fatal vencido</span>
+    <span>🟡 Prazo fatal em 3 dias</span>
+    <span>🟢 Prazo fatal futuro</span>
   </div>
 </div>
 
@@ -170,8 +186,13 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
           <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
         </select>
       </div>
-      <div class="mfld"><label>Prazo</label><input type="date" id="m-prazo"></div>
+      <div class="mfld"><label>Delegante</label><input id="m-delegante" placeholder="Quem delegou"></div>
     </div>
+    <div class="modal-row">
+      <div class="mfld"><label>Prazo Fatal</label><input type="date" id="m-prazo-fatal" title="Prazo do tribunal / cliente — não obrigatório"></div>
+      <div class="mfld"><label>Prazo Interno</label><input type="date" id="m-prazo-interno" title="Meta interna do escritório"></div>
+    </div>
+    <div class="mfld"><label>Descrição</label><textarea id="m-descricao" placeholder="Detalhes, orientações, contexto..." rows="3"></textarea></div>
     <div class="mfld"><label>Cliente</label><input id="m-cliente" placeholder="Nome do cliente"></div>
     <div class="mfld"><label>Processo</label><input id="m-processo" placeholder="Partes / descrição"></div>
     <div class="mfld"><label>Nº do Processo</label><input id="m-numero" placeholder="0000000-00.0000.0.00.0000"></div>
@@ -227,9 +248,97 @@ async function sbDelete(t,id) { await DB.delete(t,`id=eq.${id}`); }
 
 // ── CARREGAR ───────────────────────────────────────────────────────
 async function carregar() {
-  todas = await sbGet('tarefas_astrea?order=prazo.asc.nullslast,criado_em.desc&limit=500');
+  todas = await sbGet('tarefas_astrea?order=prazo_fatal.asc.nullslast,prazo.asc.nullslast,criado_em.desc&limit=500');
   filtrar();
   renderKPIs();
+  verificarNotificacoes();
+}
+
+// ── CALENDÁRIO ────────────────────────────────────────────────────
+let calAno = new Date().getFullYear();
+let calMes = new Date().getMonth();
+const MESES_CAL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DIAS_CAL  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function navCal(d) { calMes += d; if (calMes > 11){calMes=0;calAno++;} if (calMes<0){calMes=11;calAno--;} renderCalendario(); }
+
+function renderCalendario() {
+  document.getElementById('cal-titulo').textContent = `${MESES_CAL[calMes]} ${calAno}`;
+  const grid = document.getElementById('cal-grid');
+  const hj   = hoje();
+  // Indexar prazos fatais do mês
+  const prazosDoMes = {};
+  todas.filter(t => t.prazo_fatal && t.prazo_fatal.startsWith(`${calAno}-${String(calMes+1).padStart(2,'0')}`)).forEach(t => {
+    const dia = t.prazo_fatal.slice(8,10);
+    if (!prazosDoMes[dia]) prazosDoMes[dia] = [];
+    prazosDoMes[dia].push(t);
+  });
+  const primeiroDia = new Date(calAno, calMes, 1).getDay();
+  const ultimoDia   = new Date(calAno, calMes+1, 0).getDate();
+  let html = DIAS_CAL.map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--bege);padding:4px">${d}</div>`).join('');
+  for (let i=0;i<primeiroDia;i++) html += '<div></div>';
+  for (let d=1;d<=ultimoDia;d++) {
+    const dStr = `${calAno}-${String(calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const tarefasDia = prazosDoMes[String(d).padStart(2,'0')] || [];
+    const eHoje = dStr === hj;
+    const bg    = eHoje ? 'var(--v1)' : tarefasDia.length ? '#fff8f0' : '#fff';
+    const borda = eHoje ? 'none' : tarefasDia.length ? '1px solid #f0a060' : '1px solid #eee';
+    html += `<div onclick="abrirDiaCal('${dStr}')" style="min-height:60px;border-radius:8px;background:${bg};border:${borda};padding:6px;cursor:${tarefasDia.length?'pointer':'default'};position:relative;">
+      <div style="font-size:12px;font-weight:700;color:${eHoje?'#fff':'var(--v1)';}">${d}</div>
+      ${tarefasDia.slice(0,2).map(t=>{
+        const venc = t.prazo_fatal < hj;
+        const urg  = !venc && t.prazo_fatal <= daqui3();
+        const cor  = venc?'#dc2626':urg?'#d97706':'#1f3e3c';
+        return `<div style="font-size:9px;color:${cor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${venc?'🔴':urg?'🟡':'🟢'} ${t.titulo}</div>`;
+      }).join('')}
+      ${tarefasDia.length>2?`<div style="font-size:9px;color:var(--bege);margin-top:2px">+${tarefasDia.length-2} mais</div>`:''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function daqui3() { const d=new Date(); d.setDate(d.getDate()+3); return d.toISOString().split('T')[0]; }
+
+function abrirDiaCal(dStr) {
+  const ts = todas.filter(t=>t.prazo_fatal===dStr);
+  if (!ts.length) return;
+  if (ts.length===1) { abrirDetalhe(ts[0].id); return; }
+  alert(ts.map(t=>`• ${t.titulo} (${t.responsavel||'sem resp.'})`).join('\n'));
+}
+
+// ── NOTIFICAÇÕES ──────────────────────────────────────────────────
+async function verificarNotificacoes() {
+  const hj    = hoje();
+  const d3    = daqui3();
+  const urgentes = todas.filter(t =>
+    t.prazo_fatal && t.prazo_fatal >= hj && t.prazo_fatal <= d3 && t.status !== 'concluido'
+  );
+  const vencidas = todas.filter(t =>
+    t.prazo_fatal && t.prazo_fatal < hj && t.status !== 'concluido'
+  );
+  if (!urgentes.length && !vencidas.length) return;
+  // Enviar e-mail via Gmail Apps Script (se configurado)
+  const user = window.CP_USER;
+  if (!user) return;
+  const subject = `⚠️ CP Tarefas — ${vencidas.length} vencida(s), ${urgentes.length} urgente(s)`;
+  const body = [
+    vencidas.length  ? `VENCIDAS:\n${vencidas.map(t=>`• ${t.titulo} — prazo: ${t.prazo_fatal}`).join('\n')}` : '',
+    urgentes.length  ? `PRÓXIMAS (até 3 dias):\n${urgentes.map(t=>`• ${t.titulo} — prazo: ${t.prazo_fatal}`).join('\n')}` : ''
+  ].filter(Boolean).join('\n\n');
+  // Chamar webhook de e-mail se disponível
+  try {
+    await fetch('https://script.google.com/macros/s/AKfycbyX6HGBrT2Y2v-placeholder/exec', {
+      method:'POST', mode:'no-cors',
+      body: JSON.stringify({ to: 'mariana@cavalcantepinheiroadv.com.br', subject, body })
+    });
+  } catch {}
+  // Mostrar banner na tela de qualquer forma
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:70px;right:20px;background:#dc2626;color:#fff;padding:12px 16px;border-radius:10px;z-index:9999;max-width:320px;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+  banner.innerHTML = `⚠️ <strong>${vencidas.length} prazo(s) vencido(s)</strong> e ${urgentes.length} urgente(s)<br><small>Clique para ver</small>`;
+  banner.onclick = () => { setView('calendario'); banner.remove(); };
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 8000);
 }
 
 // ── FILTRAR ────────────────────────────────────────────────────────
@@ -374,11 +483,14 @@ function renderLista() {
 // ── TOGGLE VIEW ────────────────────────────────────────────────────
 function setView(v) {
   viewAtual = v;
-  document.getElementById('view-kanban').style.display = v==='kanban' ? 'flex' : 'none';
-  document.getElementById('view-lista').style.display  = v==='lista'  ? 'flex' : 'none';
+  document.getElementById('view-kanban').style.display    = v==='kanban'     ? 'flex'  : 'none';
+  document.getElementById('view-lista').style.display     = v==='lista'      ? 'flex'  : 'none';
+  document.getElementById('view-calendario').style.display= v==='calendario' ? 'block' : 'none';
   document.getElementById('btn-kanban').classList.toggle('active', v==='kanban');
   document.getElementById('btn-lista').classList.toggle('active',  v==='lista');
-  renderView();
+  document.getElementById('btn-cal').classList.toggle('active',    v==='calendario');
+  if (v==='calendario') renderCalendario();
+  else renderView();
 }
 
 // ── MODAL ──────────────────────────────────────────────────────────
@@ -387,9 +499,10 @@ function abrirNova() {
   document.getElementById('modal-titulo').textContent = 'Nova Tarefa';
   document.getElementById('modal-sub').textContent = '';
   document.getElementById('m-id').value = '';
-  ['m-titulo','m-cliente','m-processo','m-numero'].forEach(id=>document.getElementById(id).value='');
+  ['m-titulo','m-cliente','m-processo','m-numero','m-delegante','m-descricao'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('m-resp').value = '';
-  document.getElementById('m-prazo').value = '';
+  document.getElementById('m-prazo-fatal').value = '';
+  document.getElementById('m-prazo-interno').value = '';
   document.getElementById('m-status').value = 'a_fazer';
   document.getElementById('btn-del').style.display = 'none';
   document.getElementById('modal').classList.add('show');
@@ -404,7 +517,10 @@ function abrirDetalhe(id) {
   document.getElementById('m-id').value = t.id;
   document.getElementById('m-titulo').value = t.titulo||'';
   document.getElementById('m-resp').value = t.responsavel||'';
-  document.getElementById('m-prazo').value = t.prazo||'';
+  document.getElementById('m-delegante').value = t.delegante||'';
+  document.getElementById('m-prazo-fatal').value = t.prazo_fatal||t.prazo||'';
+  document.getElementById('m-prazo-interno').value = t.prazo_interno||'';
+  document.getElementById('m-descricao').value = t.descricao||'';
   document.getElementById('m-cliente').value = t.cliente||'';
   document.getElementById('m-processo').value = t.processo||'';
   document.getElementById('m-numero').value = t.numero_processo||'';
@@ -421,7 +537,11 @@ async function salvarTarefa() {
   const dados = {
     titulo,
     responsavel:     document.getElementById('m-resp').value||null,
-    prazo:           document.getElementById('m-prazo').value||null,
+    delegante:       document.getElementById('m-delegante').value.trim()||null,
+    prazo_fatal:     document.getElementById('m-prazo-fatal').value||null,
+    prazo_interno:   document.getElementById('m-prazo-interno').value||null,
+    prazo:           document.getElementById('m-prazo-fatal').value||null, // retrocompat
+    descricao:       document.getElementById('m-descricao').value.trim()||null,
     cliente:         document.getElementById('m-cliente').value.trim()||null,
     processo:        document.getElementById('m-processo').value.trim()||null,
     numero_processo: document.getElementById('m-numero').value.trim()||null,
