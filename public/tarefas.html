@@ -307,8 +307,8 @@ function abrirDiaCal(dStr) {
 }
 
 // ── NOTIFICAÇÕES ──────────────────────────────────────────────────
-// URL do Apps Script — preencher após configurar o script no Google
-const WEBHOOK_EMAIL = localStorage.getItem('cp_webhook_email') || '';
+// Webhook Gmail Apps Script — envia e-mails de alerta de prazo
+const WEBHOOK_EMAIL = 'https://script.google.com/macros/s/AKfycbzf8-XI0ojhmNDWAMbOgWepyJdwltcXCdzAisfHqInu-6pop32NdmBRz906O5HMFN7W/exec';
 
 async function verificarNotificacoes() {
   const hj  = hoje();
