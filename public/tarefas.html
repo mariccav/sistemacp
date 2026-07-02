@@ -225,11 +225,11 @@ const COLS_DEF = [
 ];
 
 const EQUIPE = {
-  'Mariana Pinheiro': { ini:'MP', cor:'#214949' },
-  'Diana':            { ini:'DC', cor:'#1f3e3c' },
-  'Jade':             { ini:'JL', cor:'#2b6052' },
-  'Mariana Barboza':  { ini:'MB', cor:'#4a7a70' },
-  'Laila Costa':      { ini:'LC', cor:'#8a9a8a' }
+  'Mariana Pinheiro': { ini:'MP', cor:'#214949', email:'mariana@cavalcantepinheiroadv.com.br' },
+  'Diana':            { ini:'DC', cor:'#1f3e3c', email:'diana@cavalcantepinheiroadv.com.br' },
+  'Jade':             { ini:'JL', cor:'#2b6052', email:'juridico@cavalcantepinheiroadv.com.br' },
+  'Mariana Barboza':  { ini:'MB', cor:'#4a7a70', email:'comercial@cavalcantepinheiroadv.com.br' },
+  'Laila Costa':      { ini:'LC', cor:'#8a9a8a', email:'lailabomfim01@gmail.com' }
 };
 
 const hoje = () => new Date().toISOString().split('T')[0];
@@ -307,38 +307,57 @@ function abrirDiaCal(dStr) {
 }
 
 // ── NOTIFICAÇÕES ──────────────────────────────────────────────────
+// URL do Apps Script — preencher após configurar o script no Google
+const WEBHOOK_EMAIL = localStorage.getItem('cp_webhook_email') || '';
+
 async function verificarNotificacoes() {
-  const hj    = hoje();
-  const d3    = daqui3();
-  const urgentes = todas.filter(t =>
-    t.prazo_fatal && t.prazo_fatal >= hj && t.prazo_fatal <= d3 && t.status !== 'concluido'
-  );
-  const vencidas = todas.filter(t =>
-    t.prazo_fatal && t.prazo_fatal < hj && t.status !== 'concluido'
-  );
-  if (!urgentes.length && !vencidas.length) return;
-  // Enviar e-mail via Gmail Apps Script (se configurado)
-  const user = window.CP_USER;
-  if (!user) return;
-  const subject = `⚠️ CP Tarefas — ${vencidas.length} vencida(s), ${urgentes.length} urgente(s)`;
-  const body = [
-    vencidas.length  ? `VENCIDAS:\n${vencidas.map(t=>`• ${t.titulo} — prazo: ${t.prazo_fatal}`).join('\n')}` : '',
-    urgentes.length  ? `PRÓXIMAS (até 3 dias):\n${urgentes.map(t=>`• ${t.titulo} — prazo: ${t.prazo_fatal}`).join('\n')}` : ''
-  ].filter(Boolean).join('\n\n');
-  // Chamar webhook de e-mail se disponível
-  try {
-    await fetch('https://script.google.com/macros/s/AKfycbyX6HGBrT2Y2v-placeholder/exec', {
-      method:'POST', mode:'no-cors',
-      body: JSON.stringify({ to: 'mariana@cavalcantepinheiroadv.com.br', subject, body })
-    });
-  } catch {}
-  // Mostrar banner na tela de qualquer forma
+  const hj  = hoje();
+  const d3  = daqui3();
+
+  // Agrupar por responsável
+  const porResponsavel = {};
+  todas.forEach(t => {
+    if (!t.prazo_fatal || t.status === 'concluido') return;
+    const venc = t.prazo_fatal < hj;
+    const urg  = !venc && t.prazo_fatal <= d3;
+    if (!venc && !urg) return;
+    const resp = t.responsavel || 'Sem responsável';
+    if (!porResponsavel[resp]) porResponsavel[resp] = { vencidas:[], urgentes:[] };
+    if (venc) porResponsavel[resp].vencidas.push(t);
+    else      porResponsavel[resp].urgentes.push(t);
+  });
+
+  if (!Object.keys(porResponsavel).length) return;
+
+  // Enviar e-mail individualizado para cada responsável
+  if (WEBHOOK_EMAIL) {
+    for (const [resp, dados] of Object.entries(porResponsavel)) {
+      const emailResp = EQUIPE[resp]?.email;
+      if (!emailResp) continue;
+      const subject = `⚠️ CP Tarefas — ${dados.vencidas.length} vencida(s) e ${dados.urgentes.length} urgente(s) — ${resp}`;
+      const linhas = [
+        dados.vencidas.length  ? `🔴 VENCIDAS:\n${dados.vencidas.map(t=>`• ${t.titulo} — prazo fatal: ${fmtData(t.prazo_fatal)} | ${t.cliente||'sem cliente'}`).join('\n')}` : '',
+        dados.urgentes.length  ? `🟡 VENCEM EM ATÉ 3 DIAS:\n${dados.urgentes.map(t=>`• ${t.titulo} — prazo fatal: ${fmtData(t.prazo_fatal)} | ${t.cliente||'sem cliente'}`).join('\n')}` : ''
+      ].filter(Boolean).join('\n\n');
+      const body = `Olá, ${resp.split(' ')[0]}!\n\nSeguem as tarefas com prazo próximo ou vencido:\n\n${linhas}\n\nAcesse: https://sistemacp.vercel.app/tarefas.html\n\nCavalcante Pinheiro Advocacia`;
+      try {
+        fetch(WEBHOOK_EMAIL, {
+          method:'POST', mode:'no-cors',
+          body: JSON.stringify({ to: emailResp, subject, body })
+        });
+      } catch {}
+    }
+  }
+
+  // Banner na tela
+  const totalVenc = Object.values(porResponsavel).reduce((s,d)=>s+d.vencidas.length,0);
+  const totalUrg  = Object.values(porResponsavel).reduce((s,d)=>s+d.urgentes.length,0);
   const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;top:70px;right:20px;background:#dc2626;color:#fff;padding:12px 16px;border-radius:10px;z-index:9999;max-width:320px;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2)';
-  banner.innerHTML = `⚠️ <strong>${vencidas.length} prazo(s) vencido(s)</strong> e ${urgentes.length} urgente(s)<br><small>Clique para ver</small>`;
+  banner.style.cssText = 'position:fixed;top:70px;right:20px;background:#dc2626;color:#fff;padding:14px 18px;border-radius:10px;z-index:9999;max-width:340px;font-size:13px;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.25)';
+  banner.innerHTML = `⚠️ <strong>${totalVenc} prazo(s) vencido(s)</strong>${totalUrg?` e ${totalUrg} urgente(s)`:''}<br><small style="opacity:.85">Clique para ver o calendário de prazos</small>`;
   banner.onclick = () => { setView('calendario'); banner.remove(); };
   document.body.appendChild(banner);
-  setTimeout(() => banner.remove(), 8000);
+  setTimeout(() => banner.remove(), 10000);
 }
 
 // ── FILTRAR ────────────────────────────────────────────────────────
