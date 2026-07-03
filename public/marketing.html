@@ -753,7 +753,7 @@ body {
     <div id="ag-sugestoes" style="display:none;padding:12px 16px;border-top:1px solid #e8f0f0;background:#f8fdfd">
       <div style="font-size:12px;font-weight:700;color:var(--v1);margin-bottom:8px">📅 Posts prontos para salvar no calendário:</div>
       <div id="ag-sugestoes-lista" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
-      <button onclick="salvarTodosSugeridos()" style="margin-top:10px;width:100%;background:var(--v1);color:#fff;border:none;border-radius:8px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer">✓ Salvar todos no calendário</button>
+      <button onclick="salvarTodosSugeridos()" style="margin-top:10px;width:100%;background:#1f3e3c;color:#ffffff;border:none;border-radius:8px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:block">✓ Salvar todos no calendário</button>
     </div>
     <div style="padding:12px 16px;border-top:1px solid #e8f0f0;display:flex;gap:8px">
       <textarea id="ag-input" placeholder="Peça a pauta de uma semana, um mês, um roteiro, uma legenda..." rows="2"
@@ -1761,7 +1761,7 @@ async function salvarPostSugerido(idx) {
     });
     if (btn) { btn.textContent = '✓ Salvo'; btn.style.background = '#22c55e'; }
     showToast(`Post "${p.tema}" salvo no calendário!`);
-    carregarPosts();
+    carregarMes();
   } catch(e) {
     if (btn) { btn.textContent = 'Erro'; btn.disabled = false; }
     showToast('Erro: ' + e.message, true);
