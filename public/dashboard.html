@@ -680,12 +680,20 @@ function iniciarRelogio() {
 // ── SESSÃO ATIVA ────────────────────────────────
 async function carregarSessaoAtiva() {
   try {
+    // Só considera sessões abertas das últimas 12h — evita sessões fantasma
+    const cutoff12h = new Date(Date.now() - 12 * 3600000).toISOString();
     const sessoes = await DB.get('sessoes',
-      `colaboradora=eq.${encodeURIComponent(U.nome)}&fim=is.null&limit=1`
+      `colaboradora=eq.${encodeURIComponent(U.nome)}&fim=is.null&inicio=gte.${cutoff12h}&order=inicio.desc&limit=1`
     );
     if (sessoes && sessoes.length > 0) {
       sessaoAtiva = sessoes[0];
       renderSessaoAtiva();
+    } else {
+      // Fechar automaticamente qualquer sessão aberta há mais de 12h
+      DB.update('sessoes',
+        `colaboradora=eq.${encodeURIComponent(U.nome)}&fim=is.null`,
+        { fim: new Date().toISOString(), duracao_minutos: 0 }
+      ).catch(() => {});
     }
   } catch(e) { console.warn('Sessão:', e); }
 }
