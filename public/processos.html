@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="/auth.js"></script>
+<script src="/db-client.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Processos — Cavalcante Pinheiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--verm:#c25e5e;--verde:#2a7a5a;--gold:#c9a84c;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-height:100vh;}
+
+/* ── HEADER ── */
+header{background:var(--v1);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-right{display:flex;align-items:center;gap:12px;}
+.hd-back{color:var(--bege);font-size:12px;text-decoration:none;border:1px solid rgba(167,168,151,.3);padding:5px 12px;border-radius:6px;transition:.2s;}
+.hd-back:hover{color:#fff;border-color:#fff;}
+.btn-novo{padding:8px 18px;background:#fff;color:var(--v1);border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-novo:hover{background:var(--bege);color:#fff;}
+
+/* ── KPIs ── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 28px 0;}
+.kpi{background:#fff;border-radius:12px;padding:16px 20px;border:1px solid #e8f0f0;text-align:center;}
+.kpi-num{font-size:30px;font-weight:700;font-family:'Cormorant Garamond',serif;color:var(--v1);}
+.kpi-num.verm{color:var(--verm);}
+.kpi-num.verde{color:var(--verde);}
+.kpi-num.gold{color:var(--gold);}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--bege);margin-top:4px;}
+
+/* ── FILTROS ── */
+.filtros{display:flex;gap:10px;align-items:center;padding:16px 28px;flex-wrap:wrap;}
+.search-wrap{position:relative;flex:1;min-width:220px;}
+.search-wrap input{width:100%;padding:9px 12px 9px 34px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:#fff;}
+.search-wrap::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;}
+.fsel{padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;cursor:pointer;}
+
+/* ── CARDS LISTA ── */
+.lista{padding:0 28px 40px;}
+.proc-card{background:#fff;border-radius:12px;border:1px solid #e8f0f0;margin-bottom:10px;padding:16px 20px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:16px;}
+.proc-card:hover{box-shadow:0 3px 16px rgba(31,62,60,.1);border-color:#c0d8d6;}
+.proc-card.st-encerrado{border-left:3px solid var(--bege);}
+.proc-card.st-arquivado{border-left:3px solid #ccc;opacity:.8;}
+.proc-card.st-ativo{border-left:3px solid var(--verde);}
+.pc-icon{font-size:26px;flex-shrink:0;}
+.pc-main{flex:1;min-width:0;}
+.pc-numero{font-size:13px;font-weight:700;color:var(--v1);font-family:'Nunito',sans-serif;}
+.pc-cliente{font-size:12px;color:var(--v2);margin-top:2px;}
+.pc-tribunal{font-size:11px;color:var(--bege);margin-top:2px;}
+.pc-right{text-align:right;flex-shrink:0;}
+.pc-resp{font-size:11px;color:var(--bege);}
+.pc-mov{font-size:11px;color:var(--bege);margin-top:3px;}
+.badge-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px;}
+.bs-ativo{background:#edf7f0;color:var(--verde);}
+.bs-encerrado{background:#f5f5f5;color:var(--bege);}
+.bs-arquivado{background:#f0f0f0;color:#999;}
+
+/* ── DETALHE ── */
+#view-detalhe{display:none;padding:0 0 40px;}
+.det-header{background:#fff;border-bottom:1px solid #e8f0f0;padding:20px 28px;display:flex;align-items:flex-start;gap:16px;}
+.det-back{color:var(--v1);font-size:12px;text-decoration:none;border:1px solid rgba(31,62,60,.2);padding:6px 14px;border-radius:7px;transition:.2s;white-space:nowrap;margin-top:2px;}
+.det-back:hover{background:var(--v1);color:#fff;}
+.det-info{flex:1;}
+.det-numero{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--v1);}
+.det-cliente{font-size:14px;color:var(--v2);margin-top:3px;}
+.det-meta{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;}
+.det-meta span{font-size:12px;color:var(--bege);}
+.det-meta strong{color:var(--v1);}
+.det-acts{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.btn-edit{padding:8px 16px;background:var(--bg);border:1px solid rgba(31,62,60,.2);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--v1);cursor:pointer;transition:.2s;}
+.btn-edit:hover{background:var(--v1);color:#fff;}
+.btn-encerrar{padding:8px 16px;background:#fef2f2;border:1px solid rgba(194,94,94,.2);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;color:var(--verm);cursor:pointer;transition:.2s;}
+.btn-encerrar:hover{background:var(--verm);color:#fff;}
+
+/* ── CONTEÚDO DETALHE ── */
+.det-body{display:grid;grid-template-columns:1fr 340px;gap:20px;padding:20px 28px;align-items:start;}
+.det-col-main{}
+.det-col-side{}
+
+/* ── TIMELINE ── */
+.section-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v1);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #e8f0f0;}
+.timeline{position:relative;padding-left:28px;}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:#e8f0f0;}
+.tl-item{position:relative;margin-bottom:18px;}
+.tl-dot{position:absolute;left:-23px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--bege);display:flex;align-items:center;justify-content:center;font-size:9px;z-index:1;}
+.tl-dot.tp-publicacao{border-color:#c25e5e;background:#fef2f2;}
+.tl-dot.tp-reuniao{border-color:var(--verde);background:#edf7f0;}
+.tl-dot.tp-audiencia{border-color:var(--v1);background:#e8f0f0;}
+.tl-dot.tp-peticao{border-color:var(--gold);background:#fdf8ee;}
+.tl-dot.tp-diligencia{border-color:#7b68ae;background:#f3f0fa;}
+.tl-dot.tp-telefonema{border-color:#2a9d8f;background:#e8f7f6;}
+.tl-dot.tp-email{border-color:#457b9d;background:#e8f2f8;}
+.tl-dot.tp-despacho{border-color:#e07b39;background:#fdf3ec;}
+.tl-dot.tp-outros{border-color:var(--bege);background:#f5f5f5;}
+.tl-card{background:#fff;border-radius:10px;border:1px solid #e8f0f0;padding:12px 14px;}
+.tl-card:hover{border-color:#c0d8d6;}
+.tl-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.tl-tipo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--bege);}
+.tl-data{font-size:11px;color:var(--bege);margin-left:auto;}
+.tl-desc{font-size:13px;color:var(--v1);line-height:1.6;}
+.tl-resp{font-size:11px;color:var(--bege);margin-top:6px;}
+.tl-pub-link{display:inline-block;margin-top:6px;font-size:11px;color:var(--verde);text-decoration:none;border:1px solid rgba(42,122,90,.2);padding:2px 9px;border-radius:6px;}
+.tl-pub-link:hover{background:var(--verde);color:#fff;}
+.tl-empty{text-align:center;padding:32px 12px;color:var(--bege);font-size:13px;}
+
+/* ── FORM HISTÓRICO ── */
+.form-hist{background:#fff;border-radius:12px;border:1px solid #e8f0f0;padding:18px;margin-top:16px;}
+.form-hist-title{font-size:13px;font-weight:700;color:var(--v1);margin-bottom:14px;}
+.fh-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fh-fld{margin-bottom:10px;}
+.fh-fld label{display:block;font-size:10px;font-weight:700;color:var(--bege);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.fh-fld input,.fh-fld select,.fh-fld textarea{width:100%;padding:8px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:var(--bg);}
+.fh-fld textarea{resize:vertical;height:72px;background:var(--bg);}
+.btn-salvar-hist{width:100%;padding:10px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;transition:.2s;}
+.btn-salvar-hist:hover{background:var(--v2);}
+
+/* ── PAINÉIS LATERAIS ── */
+.side-panel{background:#fff;border-radius:12px;border:1px solid #e8f0f0;padding:16px;margin-bottom:14px;}
+.sp-title{font-size:12px;font-weight:700;color:var(--v1);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f7f7;}
+.cliente-bloco{display:flex;align-items:center;gap:10px;}
+.cli-icon{font-size:24px;}
+.cli-nome{font-size:13px;font-weight:700;color:var(--v1);}
+.cli-doc{font-size:11px;color:var(--bege);}
+.cli-link{display:inline-block;margin-top:6px;font-size:11px;color:var(--verde);text-decoration:none;}
+.cli-link:hover{text-decoration:underline;}
+
+/* Autocomplete */
+.autocomplete-wrap{position:relative;}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(167,168,151,.3);border-radius:8px;z-index:300;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.ac-item{padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f5f5f5;color:var(--v1);transition:.15s;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover{background:var(--bg);}
+.ac-sub{font-size:11px;color:var(--bege);}
+.btn-vincular{width:100%;padding:8px;background:var(--bg);border:1px solid rgba(31,62,60,.2);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);cursor:pointer;margin-top:8px;transition:.2s;}
+.btn-vincular:hover{background:var(--v1);color:#fff;}
+
+/* Publicações relacionadas */
+.pub-rel{background:#fef9f9;border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid #f5e8e8;}
+.pub-rel-data{font-size:11px;color:var(--bege);}
+.pub-rel-desc{font-size:12px;color:var(--v1);margin-top:2px;line-height:1.5;}
+.pub-rel-link{font-size:11px;color:var(--verde);text-decoration:none;}
+.pub-rel-link:hover{text-decoration:underline;}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(6,51,39,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--v1);margin-bottom:20px;}
+.mfld{margin-bottom:14px;}
+.mfld label{display:block;font-size:10px;font-weight:700;color:var(--bege);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.mfld input,.mfld select,.mfld textarea{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;background:var(--bg);}
+.mfld textarea{resize:vertical;height:80px;background:var(--bg);}
+.mfld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;}
+.btn-cancel{padding:9px 18px;background:#f5f5f5;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;color:var(--v1);}
+.btn-cancel:hover{background:#e8e8e8;}
+.btn-save{padding:9px 20px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-save:hover{background:var(--v2);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{background:var(--v1);color:#fff;}
+.toast.err{background:var(--verm);color:#fff;}
+
+/* ── EMPTY / LOADING ── */
+.empty{text-align:center;padding:60px 20px;color:var(--bege);font-size:14px;}
+.loading{text-align:center;padding:40px;color:var(--bege);font-size:13px;}
+
+/* ── RESPONSIVO ── */
+@media(max-width:900px){
+  .det-body{grid-template-columns:1fr;}
+  .det-col-side{order:-1;}
+  .kpis{grid-template-columns:1fr 1fr;}
+  .det-header{flex-wrap:wrap;}
+  .det-acts{width:100%;margin-top:8px;}
+}
+@media(max-width:600px){
+  .kpis{grid-template-columns:1fr 1fr;}
+  .filtros{gap:6px;}
+  header{padding:12px 16px;}
+  .lista,.det-body{padding-left:16px;padding-right:16px;}
+  .det-header{padding:14px 16px;}
+  .kpis{padding:14px 16px 0;}
+  .filtros{padding:10px 16px;}
+  .fh-row{grid-template-columns:1fr;}
+  .mfld-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div>
+    <h1>Processos</h1>
+    <p>Cavalcante Pinheiro Sociedade Individual de Advocacia</p>
+  </div>
+  <div class="hd-right">
+    <button class="btn-novo" id="btn-novo-global" onclick="abrirModalNovo()">+ Novo Processo</button>
+    <a href="/" class="hd-back">← Voltar</a>
+  </div>
+</header>
+
+<!-- ════════════ VIEW LISTA ════════════ -->
+<div id="view-lista">
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-num verde" id="k-ativo">—</div><div class="kpi-label">Ativos</div></div>
+    <div class="kpi"><div class="kpi-num" id="k-total">—</div><div class="kpi-label">Total de Processos</div></div>
+    <div class="kpi"><div class="kpi-num verm" id="k-enc">—</div><div class="kpi-label">Encerrados</div></div>
+    <div class="kpi"><div class="kpi-num gold" id="k-pub">—</div><div class="kpi-label">Com Publicações</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <div class="search-wrap">
+      <input type="text" id="busca" placeholder="Buscar por número CNJ ou cliente..." oninput="filtrar()">
+    </div>
+    <select class="fsel" id="f-status" onchange="filtrar()">
+      <option value="">Todos os status</option>
+      <option value="ativo">Ativo</option>
+      <option value="encerrado">Encerrado</option>
+      <option value="arquivado">Arquivado</option>
+    </select>
+    <select class="fsel" id="f-resp" onchange="filtrar()">
+      <option value="">Todas as responsáveis</option>
+      <option>Mariana Pinheiro</option>
+      <option>Diana</option>
+      <option>Jade</option>
+      <option>Mariana Barboza</option>
+      <option>Laila Costa</option>
+    </select>
+  </div>
+
+  <!-- LISTA DE CARDS -->
+  <div class="lista" id="lista-processos">
+    <div class="loading">Carregando processos...</div>
+  </div>
+
+</div><!-- /view-lista -->
+
+<!-- ════════════ VIEW DETALHE ════════════ -->
+<div id="view-detalhe">
+
+  <!-- Cabeçalho do detalhe -->
+  <div class="det-header">
+    <a href="#" class="det-back" onclick="voltarLista(); return false;">← Voltar para lista</a>
+    <div class="det-info">
+      <div class="det-numero" id="det-numero">—</div>
+      <div class="det-cliente" id="det-cliente">—</div>
+      <div class="det-meta">
+        <span>Tribunal: <strong id="det-tribunal">—</strong></span>
+        <span>Vara: <strong id="det-vara">—</strong></span>
+        <span>Responsável: <strong id="det-resp">—</strong></span>
+        <span id="det-badge-status"></span>
+      </div>
+    </div>
+    <div class="det-acts">
+      <button class="btn-edit" onclick="abrirModalEditar()">Editar</button>
+      <button class="btn-encerrar" id="btn-encerrar" onclick="encerrarProcesso()">Encerrar processo</button>
+    </div>
+  </div>
+
+  <!-- Corpo do detalhe: main + sidebar -->
+  <div class="det-body">
+
+    <!-- COLUNA PRINCIPAL -->
+    <div class="det-col-main">
+
+      <!-- Timeline -->
+      <div class="section-title">Histórico do Processo</div>
+      <div class="timeline" id="timeline">
+        <div class="loading">Carregando histórico...</div>
+      </div>
+
+      <!-- Formulário adicionar ao histórico -->
+      <div class="form-hist">
+        <div class="form-hist-title">+ Adicionar ao histórico</div>
+        <div class="fh-row">
+          <div class="fh-fld">
+            <label>Tipo</label>
+            <select id="h-tipo">
+              <option value="publicacao">📄 Publicação</option>
+              <option value="reuniao">👥 Reunião</option>
+              <option value="audiencia">⚖️ Audiência</option>
+              <option value="peticao">📝 Petição</option>
+              <option value="diligencia">🏛️ Diligência</option>
+              <option value="despacho">📋 Despacho</option>
+              <option value="telefonema">📞 Telefonema</option>
+              <option value="email">📨 E-mail</option>
+              <option value="outros">📌 Outros</option>
+            </select>
+          </div>
+          <div class="fh-fld">
+            <label>Data do evento</label>
+            <input type="date" id="h-data">
+          </div>
+        </div>
+        <div class="fh-fld">
+          <label>Descrição</label>
+          <textarea id="h-desc" placeholder="Descreva o evento, decisão ou movimentação..."></textarea>
+        </div>
+        <div class="fh-fld">
+          <label>Responsável</label>
+          <select id="h-resp">
+            <option value="">Selecione...</option>
+            <option>Mariana Pinheiro</option>
+            <option>Diana</option>
+            <option>Jade</option>
+            <option>Mariana Barboza</option>
+            <option>Laila Costa</option>
+          </select>
+        </div>
+        <button class="btn-salvar-hist" onclick="salvarHistorico()">Salvar no histórico</button>
+      </div>
+
+    </div><!-- /col-main -->
+
+    <!-- COLUNA LATERAL -->
+    <div class="det-col-side">
+
+      <!-- Assunto e observações -->
+      <div class="side-panel" id="panel-obs">
+        <div class="sp-title">Sobre o processo</div>
+        <div style="font-size:12px;color:var(--bege);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Assunto</div>
+        <div style="font-size:13px;color:var(--v1);margin-bottom:14px;" id="det-assunto">—</div>
+        <div style="font-size:12px;color:var(--bege);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Observações</div>
+        <div style="font-size:13px;color:var(--v1);line-height:1.6;" id="det-obs">—</div>
+      </div>
+
+      <!-- Cliente vinculado -->
+      <div class="side-panel" id="panel-cliente">
+        <div class="sp-title">Cliente vinculado</div>
+        <div id="cliente-vinculado-bloco"></div>
+      </div>
+
+      <!-- Publicações relacionadas -->
+      <div class="side-panel" id="panel-pubs">
+        <div class="sp-title">Publicações relacionadas</div>
+        <div id="pubs-relacionadas">
+          <div class="loading" style="padding:12px 0;">Carregando...</div>
+        </div>
+      </div>
+
+    </div><!-- /col-side -->
+
+  </div><!-- /det-body -->
+</div><!-- /view-detalhe -->
+
+<!-- ════════════ MODAL NOVO / EDITAR PROCESSO ════════════ -->
+<div class="modal-bg" id="modal-processo">
+  <div class="modal">
+    <h2 id="modal-titulo">Novo Processo</h2>
+
+    <input type="hidden" id="m-id">
+
+    <div class="mfld">
+      <label>Número do processo (CNJ)</label>
+      <input type="text" id="m-numero" placeholder="0000000-00.0000.0.00.0000">
+    </div>
+
+    <div class="mfld">
+      <label>Cliente</label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="m-cliente-busca" placeholder="Digite o nome do cliente..." oninput="buscarClienteModal(this.value)" autocomplete="off">
+        <input type="hidden" id="m-cliente-id">
+        <input type="hidden" id="m-cliente-nome">
+        <div class="autocomplete-list" id="ac-modal" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="mfld-row">
+      <div class="mfld">
+        <label>Tribunal</label>
+        <input type="text" id="m-tribunal" placeholder="Ex: TJBA, TRF5, STJ...">
+      </div>
+      <div class="mfld">
+        <label>Vara</label>
+        <input type="text" id="m-vara" placeholder="Ex: 3ª Vara Federal">
+      </div>
+    </div>
+
+    <div class="mfld">
+      <label>Assunto</label>
+      <input type="text" id="m-assunto" placeholder="Ex: Exclusão de ICMS da base do PIS/COFINS">
+    </div>
+
+    <div class="mfld-row">
+      <div class="mfld">
+        <label>Responsável</label>
+        <select id="m-resp">
+          <option value="">Selecione...</option>
+          <option>Mariana Pinheiro</option>
+          <option>Diana</option>
+          <option>Jade</option>
+          <option>Mariana Barboza</option>
+          <option>Laila Costa</option>
+        </select>
+      </div>
+      <div class="mfld">
+        <label>Status</label>
+        <select id="m-status">
+          <option value="ativo">Ativo</option>
+          <option value="encerrado">Encerrado</option>
+          <option value="arquivado">Arquivado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mfld">
+      <label>Observações</label>
+      <textarea id="m-obs" placeholder="Informações internas, estratégias, prazos relevantes..."></textarea>
+    </div>
+
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-save" onclick="salvarProcesso()">Salvar processo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════ */
+let todosProcessos = [];
+let processoAtual = null;
+let historicoAtual = [];
+let acTimerModal = null;
+
+const RESPONSAVEIS = ['Mariana Pinheiro','Diana','Jade','Mariana Barboza','Laila Costa'];
+
+const TIPO_ICONE = {
+  publicacao: '📄',
+  reuniao: '👥',
+  audiencia: '⚖️',
+  peticao: '📝',
+  diligencia: '🏛️',
+  despacho: '📋',
+  telefonema: '📞',
+  email: '📨',
+  outros: '📌',
+};
+
+const TIPO_LABEL = {
+  publicacao: 'Publicação',
+  reuniao: 'Reunião',
+  audiencia: 'Audiência',
+  peticao: 'Petição',
+  diligencia: 'Diligência',
+  despacho: 'Despacho',
+  telefonema: 'Telefonema',
+  email: 'E-mail',
+  outros: 'Outros',
+};
+
+/* ═══════════════════════════════════════
+   INICIALIZAÇÃO
+═══════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  // pré-preencher data de hoje no form de histórico
+  document.getElementById('h-data').value = hoje();
+  await carregarLista();
+});
+
+function hoje() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function fmtData(str) {
+  if (!str) return '—';
+  const d = str.includes('T') ? new Date(str) : new Date(str + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR');
+}
+
+function fmtDataHora(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+/* ═══════════════════════════════════════
+   LISTA
+═══════════════════════════════════════ */
+async function carregarLista() {
+  try {
+    todosProcessos = await DB.get('processos', 'order=atualizado_em.desc');
+    todosProcessos = todosProcessos || [];
+    atualizarKPIs();
+    renderLista(todosProcessos);
+  } catch(e) {
+    document.getElementById('lista-processos').innerHTML = '<div class="empty">Erro ao carregar processos.</div>';
+    console.error(e);
+  }
+}
+
+function atualizarKPIs() {
+  const ativos = todosProcessos.filter(p => p.status === 'ativo').length;
+  const encerrados = todosProcessos.filter(p => p.status === 'encerrado').length;
+  document.getElementById('k-ativo').textContent = ativos;
+  document.getElementById('k-total').textContent = todosProcessos.length;
+  document.getElementById('k-enc').textContent = encerrados;
+  // KPI publicações: processos com número de processo preenchido que pode ter pubs
+  document.getElementById('k-pub').textContent = todosProcessos.filter(p => p.numero_processo).length;
+}
+
+function filtrar() {
+  const busca = document.getElementById('busca').value.toLowerCase().trim();
+  const status = document.getElementById('f-status').value;
+  const resp = document.getElementById('f-resp').value;
+
+  let lista = todosProcessos;
+  if (busca) {
+    lista = lista.filter(p =>
+      (p.numero_processo || '').toLowerCase().includes(busca) ||
+      (p.cliente_nome || '').toLowerCase().includes(busca)
+    );
+  }
+  if (status) lista = lista.filter(p => p.status === status);
+  if (resp) lista = lista.filter(p => p.responsavel === resp);
+
+  renderLista(lista);
+}
+
+function renderLista(lista) {
+  const el = document.getElementById('lista-processos');
+  if (!lista.length) {
+    el.innerHTML = '<div class="empty">Nenhum processo encontrado.</div>';
+    return;
+  }
+
+  el.innerHTML = lista.map(p => {
+    const ic = p.status === 'ativo' ? '⚖️' : p.status === 'encerrado' ? '📁' : '🗄️';
+    const badgeCls = `bs-${p.status || 'ativo'}`;
+    const badgeTxt = {ativo:'Ativo',encerrado:'Encerrado',arquivado:'Arquivado'}[p.status] || p.status;
+    const atualizado = fmtData(p.atualizado_em);
+    return `
+      <div class="proc-card st-${p.status || 'ativo'}" onclick="abrirDetalhe('${p.id}')">
+        <div class="pc-icon">${ic}</div>
+        <div class="pc-main">
+          <div class="pc-numero">${p.numero_processo || 'Sem número'}</div>
+          <div class="pc-cliente">${p.cliente_nome || 'Cliente não informado'}</div>
+          <div class="pc-tribunal">${[p.tribunal, p.vara].filter(Boolean).join(' · ') || 'Tribunal não informado'}</div>
+        </div>
+        <div class="pc-right">
+          <div class="badge-status ${badgeCls}">${badgeTxt}</div>
+          <div class="pc-resp">${p.responsavel || '—'}</div>
+          <div class="pc-mov">Atualizado ${atualizado}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   DETALHE
+═══════════════════════════════════════ */
+async function abrirDetalhe(id) {
+  processoAtual = todosProcessos.find(p => p.id === id) ||
+    todosProcessos.find(p => String(p.id) === String(id));
+
+  if (!processoAtual) return;
+
+  document.getElementById('view-lista').style.display = 'none';
+  document.getElementById('view-detalhe').style.display = 'block';
+  document.getElementById('btn-novo-global').style.display = 'none';
+
+  // Preencher cabeçalho
+  document.getElementById('det-numero').textContent = processoAtual.numero_processo || 'Processo sem número';
+  document.getElementById('det-cliente').textContent = processoAtual.cliente_nome || 'Cliente não informado';
+  document.getElementById('det-tribunal').textContent = processoAtual.tribunal || '—';
+  document.getElementById('det-vara').textContent = processoAtual.vara || '—';
+  document.getElementById('det-resp').textContent = processoAtual.responsavel || '—';
+  document.getElementById('det-assunto').textContent = processoAtual.assunto || '—';
+  document.getElementById('det-obs').textContent = processoAtual.observacoes || 'Sem observações.';
+
+  const badgeCls = `bs-${processoAtual.status || 'ativo'}`;
+  const badgeTxt = {ativo:'Ativo',encerrado:'Encerrado',arquivado:'Arquivado'}[processoAtual.status] || processoAtual.status;
+  document.getElementById('det-badge-status').innerHTML = `<span class="badge-status ${badgeCls}">${badgeTxt}</span>`;
+
+  // Botão encerrar: só aparece se ativo
+  const btnEnc = document.getElementById('btn-encerrar');
+  btnEnc.style.display = processoAtual.status === 'ativo' ? 'inline-block' : 'none';
+
+  // Carregar dados paralelos
+  await Promise.all([
+    carregarHistorico(),
+    carregarClienteVinculado(),
+    carregarPublicacoesRelacionadas(),
+  ]);
+
+  // Rolar para o topo
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function voltarLista() {
+  document.getElementById('view-detalhe').style.display = 'none';
+  document.getElementById('view-lista').style.display = 'block';
+  document.getElementById('btn-novo-global').style.display = 'inline-block';
+  processoAtual = null;
+}
+
+/* ═══════════════════════════════════════
+   HISTÓRICO / TIMELINE
+═══════════════════════════════════════ */
+async function carregarHistorico() {
+  const el = document.getElementById('timeline');
+  el.innerHTML = '<div class="loading">Carregando histórico...</div>';
+  try {
+    historicoAtual = await DB.get('processos_historico',
+      `processo_id=eq.${processoAtual.id}&order=data_evento.desc,criado_em.desc`
+    ) || [];
+    renderTimeline();
+  } catch(e) {
+    el.innerHTML = '<div class="tl-empty">Erro ao carregar histórico.</div>';
+    console.error(e);
+  }
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timeline');
+  if (!historicoAtual.length) {
+    el.innerHTML = '<div class="tl-empty">Nenhuma movimentação registrada ainda.<br>Use o formulário abaixo para adicionar.</div>';
+    return;
+  }
+
+  el.innerHTML = historicoAtual.map(h => {
+    const icone = TIPO_ICONE[h.tipo] || '📌';
+    const label = TIPO_LABEL[h.tipo] || h.tipo || 'Outros';
+    const tipoCls = `tp-${h.tipo || 'outros'}`;
+    const pubLink = h.publicacao_id
+      ? `<a href="/publicacoes.html" class="tl-pub-link">Ver publicação →</a>`
+      : '';
+    return `
+      <div class="tl-item">
+        <div class="tl-dot ${tipoCls}" title="${label}">${icone}</div>
+        <div class="tl-card">
+          <div class="tl-top">
+            <span class="tl-tipo">${label}</span>
+            <span class="tl-data">${fmtData(h.data_evento)}</span>
+          </div>
+          <div class="tl-desc">${escHtml(h.descricao || '—')}</div>
+          <div class="tl-resp">Por ${h.criado_por || h.responsavel || '—'} · registrado em ${fmtDataHora(h.criado_em)}</div>
+          ${pubLink}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function salvarHistorico() {
+  const tipo = document.getElementById('h-tipo').value;
+  const data = document.getElementById('h-data').value;
+  const desc = document.getElementById('h-desc').value.trim();
+  const resp = document.getElementById('h-resp').value;
+
+  if (!desc) { toast('Informe a descrição do evento.', 'err'); return; }
+  if (!data) { toast('Informe a data do evento.', 'err'); return; }
+
+  const btn = document.querySelector('.btn-salvar-hist');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    await DB.insert('processos_historico', {
+      processo_id: processoAtual.id,
+      tipo,
+      descricao: desc,
+      data_evento: data,
+      responsavel: resp,
+      criado_por: window.CP_USER?.nome || resp,
+    });
+
+    // Atualizar atualizado_em do processo
+    await DB.update('processos', processoAtual.id, { atualizado_em: new Date().toISOString() });
+
+    document.getElementById('h-desc').value = '';
+    document.getElementById('h-data').value = hoje();
+
+    await carregarHistorico();
+    toast('Evento adicionado ao histórico.', 'ok');
+  } catch(e) {
+    toast('Erro ao salvar. Tente novamente.', 'err');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar no histórico';
+  }
+}
+
+/* ═══════════════════════════════════════
+   CLIENTE VINCULADO
+═══════════════════════════════════════ */
+async function carregarClienteVinculado() {
+  const el = document.getElementById('cliente-vinculado-bloco');
+
+  if (processoAtual.cliente_id) {
+    // Buscar dados do cliente
+    try {
+      const res = await DB.get('clientes', `id=eq.${processoAtual.cliente_id}&select=id,nome,cpf_cnpj`);
+      const cli = res && res[0];
+      if (cli) {
+        el.innerHTML = `
+          <div class="cliente-bloco">
+            <div class="cli-icon">👤</div>
+            <div>
+              <div class="cli-nome">${escHtml(cli.nome)}</div>
+              <div class="cli-doc">${cli.cpf_cnpj || ''}</div>
+              <a class="cli-link" href="/crm.html">Ver ficha do cliente →</a>
+            </div>
+          </div>`;
+        return;
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  // Sem cliente vinculado: mostrar busca
+  el.innerHTML = `
+    <div style="font-size:13px;color:var(--bege);margin-bottom:10px;">Nenhum cliente vinculado.</div>
+    <div class="autocomplete-wrap">
+      <input type="text" id="cli-busca-det"
+        placeholder="Buscar cliente para vincular..."
+        oninput="buscarClienteDetalhe(this.value)"
+        autocomplete="off"
+        style="width:100%;padding:8px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;">
+      <div class="autocomplete-list" id="ac-detalhe" style="display:none;"></div>
+    </div>`;
+}
+
+let acTimerDet = null;
+function buscarClienteDetalhe(termo) {
+  clearTimeout(acTimerDet);
+  const ac = document.getElementById('ac-detalhe');
+  if (!termo || termo.length < 2) { ac.style.display = 'none'; return; }
+  acTimerDet = setTimeout(async () => {
+    try {
+      const res = await DB.get('clientes', `nome=ilike.*${termo}*&limit=5&select=id,nome,cpf_cnpj`);
+      if (!res || !res.length) { ac.innerHTML = '<div class="ac-item" style="color:var(--bege);">Nenhum cliente encontrado.</div>'; ac.style.display = 'block'; return; }
+      ac.innerHTML = res.map(c => `
+        <div class="ac-item" onclick="vincularCliente('${c.id}','${escAttr(c.nome)}')">
+          <div>${escHtml(c.nome)}</div>
+          <div class="ac-sub">${c.cpf_cnpj || ''}</div>
+        </div>`).join('');
+      ac.style.display = 'block';
+    } catch(e) { console.error(e); }
+  }, 300);
+}
+
+async function vincularCliente(clienteId, clienteNome) {
+  document.getElementById('ac-detalhe').style.display = 'none';
+  try {
+    await DB.update('processos', processoAtual.id, {
+      cliente_id: clienteId,
+      cliente_nome: clienteNome,
+      atualizado_em: new Date().toISOString()
+    });
+    processoAtual.cliente_id = clienteId;
+    processoAtual.cliente_nome = clienteNome;
+    await carregarClienteVinculado();
+    toast('Cliente vinculado com sucesso.', 'ok');
+  } catch(e) {
+    toast('Erro ao vincular cliente.', 'err');
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════
+   PUBLICAÇÕES RELACIONADAS
+═══════════════════════════════════════ */
+async function carregarPublicacoesRelacionadas() {
+  const el = document.getElementById('pubs-relacionadas');
+  if (!processoAtual.numero_processo) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--bege);">Processo sem número CNJ para busca.</div>';
+    return;
+  }
+  try {
+    const pubs = await DB.get('publicacoes',
+      `numero_processo=eq.${encodeURIComponent(processoAtual.numero_processo)}&order=data_disponibilizacao.desc&limit=10`
+    ) || [];
+    if (!pubs.length) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--bege);">Nenhuma publicação encontrada para este processo.</div>';
+      return;
+    }
+    el.innerHTML = pubs.map(p => `
+      <div class="pub-rel">
+        <div class="pub-rel-data">${fmtData(p.data_disponibilizacao)} · ${escHtml(p.tribunal || p.diario || '')}</div>
+        <div class="pub-rel-desc">${escHtml((p.conteudo || p.resumo || '').substring(0, 120))}${(p.conteudo || '').length > 120 ? '...' : ''}</div>
+        <a class="pub-rel-link" href="/publicacoes.html">Ver publicação →</a>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--bege);">Erro ao carregar publicações.</div>';
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════
+   MODAL NOVO / EDITAR
+═══════════════════════════════════════ */
+function abrirModalNovo() {
+  document.getElementById('modal-titulo').textContent = 'Novo Processo';
+  document.getElementById('m-id').value = '';
+  document.getElementById('m-numero').value = '';
+  document.getElementById('m-cliente-busca').value = '';
+  document.getElementById('m-cliente-id').value = '';
+  document.getElementById('m-cliente-nome').value = '';
+  document.getElementById('m-tribunal').value = '';
+  document.getElementById('m-vara').value = '';
+  document.getElementById('m-assunto').value = '';
+  document.getElementById('m-resp').value = '';
+  document.getElementById('m-status').value = 'ativo';
+  document.getElementById('m-obs').value = '';
+  document.getElementById('ac-modal').style.display = 'none';
+  document.getElementById('modal-processo').classList.add('show');
+}
+
+function abrirModalEditar() {
+  if (!processoAtual) return;
+  document.getElementById('modal-titulo').textContent = 'Editar Processo';
+  document.getElementById('m-id').value = processoAtual.id;
+  document.getElementById('m-numero').value = processoAtual.numero_processo || '';
+  document.getElementById('m-cliente-busca').value = processoAtual.cliente_nome || '';
+  document.getElementById('m-cliente-id').value = processoAtual.cliente_id || '';
+  document.getElementById('m-cliente-nome').value = processoAtual.cliente_nome || '';
+  document.getElementById('m-tribunal').value = processoAtual.tribunal || '';
+  document.getElementById('m-vara').value = processoAtual.vara || '';
+  document.getElementById('m-assunto').value = processoAtual.assunto || '';
+  document.getElementById('m-resp').value = processoAtual.responsavel || '';
+  document.getElementById('m-status').value = processoAtual.status || 'ativo';
+  document.getElementById('m-obs').value = processoAtual.observacoes || '';
+  document.getElementById('ac-modal').style.display = 'none';
+  document.getElementById('modal-processo').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modal-processo').classList.remove('show');
+  document.getElementById('ac-modal').style.display = 'none';
+}
+
+document.getElementById('modal-processo').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+async function salvarProcesso() {
+  const id = document.getElementById('m-id').value;
+  const numero = document.getElementById('m-numero').value.trim();
+  const clienteId = document.getElementById('m-cliente-id').value;
+  const clienteNome = document.getElementById('m-cliente-nome').value ||
+    document.getElementById('m-cliente-busca').value.trim();
+  const tribunal = document.getElementById('m-tribunal').value.trim();
+  const vara = document.getElementById('m-vara').value.trim();
+  const assunto = document.getElementById('m-assunto').value.trim();
+  const responsavel = document.getElementById('m-resp').value;
+  const status = document.getElementById('m-status').value;
+  const observacoes = document.getElementById('m-obs').value.trim();
+
+  if (!numero) { toast('Informe o número do processo.', 'err'); return; }
+
+  const dados = {
+    numero_processo: numero,
+    cliente_nome: clienteNome,
+    cliente_id: clienteId || null,
+    tribunal,
+    vara,
+    assunto,
+    responsavel,
+    status,
+    observacoes,
+    atualizado_em: new Date().toISOString(),
+  };
+
+  const btn = document.querySelector('.btn-save');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    if (id) {
+      await DB.update('processos', id, dados);
+      toast('Processo atualizado com sucesso.', 'ok');
+    } else {
+      dados.criado_em = new Date().toISOString();
+      await DB.insert('processos', dados);
+      toast('Processo cadastrado com sucesso.', 'ok');
+    }
+    fecharModal();
+    await carregarLista();
+
+    // Se estava no detalhe, recarregar
+    if (processoAtual && id === String(processoAtual.id)) {
+      processoAtual = { ...processoAtual, ...dados };
+      abrirDetalhe(processoAtual.id);
+    }
+  } catch(e) {
+    toast('Erro ao salvar o processo.', 'err');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar processo';
+  }
+}
+
+/* ═══════════════════════════════════════
+   ENCERRAR PROCESSO
+═══════════════════════════════════════ */
+async function encerrarProcesso() {
+  if (!processoAtual) return;
+  if (!confirm(`Encerrar o processo ${processoAtual.numero_processo || 'selecionado'}? Esta ação pode ser desfeita editando o processo.`)) return;
+
+  try {
+    await DB.update('processos', processoAtual.id, {
+      status: 'encerrado',
+      atualizado_em: new Date().toISOString()
+    });
+    processoAtual.status = 'encerrado';
+
+    // Registrar no histórico
+    await DB.insert('processos_historico', {
+      processo_id: processoAtual.id,
+      tipo: 'outros',
+      descricao: 'Processo encerrado.',
+      data_evento: hoje(),
+      responsavel: window.CP_USER?.nome || 'Sistema',
+      criado_por: window.CP_USER?.nome || 'Sistema',
+    });
+
+    document.getElementById('btn-encerrar').style.display = 'none';
+    document.getElementById('det-badge-status').innerHTML = '<span class="badge-status bs-encerrado">Encerrado</span>';
+
+    await carregarHistorico();
+    await carregarLista();
+    toast('Processo encerrado.', 'ok');
+  } catch(e) {
+    toast('Erro ao encerrar o processo.', 'err');
+    console.error(e);
+  }
+}
+
+/* ═══════════════════════════════════════
+   AUTOCOMPLETE CLIENTES (MODAL)
+═══════════════════════════════════════ */
+function buscarClienteModal(termo) {
+  clearTimeout(acTimerModal);
+  const ac = document.getElementById('ac-modal');
+  document.getElementById('m-cliente-id').value = '';
+  document.getElementById('m-cliente-nome').value = '';
+
+  if (!termo || termo.length < 2) { ac.style.display = 'none'; return; }
+
+  acTimerModal = setTimeout(async () => {
+    try {
+      const res = await DB.get('clientes', `nome=ilike.*${termo}*&limit=5&select=id,nome,cpf_cnpj`);
+      if (!res || !res.length) {
+        ac.innerHTML = '<div class="ac-item" style="color:var(--bege);">Nenhum cliente encontrado.</div>';
+        ac.style.display = 'block';
+        return;
+      }
+      ac.innerHTML = res.map(c => `
+        <div class="ac-item" onclick="selecionarClienteModal('${c.id}','${escAttr(c.nome)}')">
+          <div>${escHtml(c.nome)}</div>
+          <div class="ac-sub">${c.cpf_cnpj || ''}</div>
+        </div>`).join('');
+      ac.style.display = 'block';
+    } catch(e) { console.error(e); }
+  }, 300);
+}
+
+function selecionarClienteModal(id, nome) {
+  document.getElementById('m-cliente-id').value = id;
+  document.getElementById('m-cliente-nome').value = nome;
+  document.getElementById('m-cliente-busca').value = nome;
+  document.getElementById('ac-modal').style.display = 'none';
+}
+
+// Fechar autocomplete ao clicar fora
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.querySelectorAll('.autocomplete-list').forEach(el => el.style.display = 'none');
+  }
+});
+
+/* ═══════════════════════════════════════
+   UTILITÁRIOS
+═══════════════════════════════════════ */
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return String(str).replace(/'/g,"\\'");
+}
+
+let toastTimer = null;
+function toast(msg, tipo = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${tipo} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3200);
+}
+</script>
+</body>
+</html>

@@ -11,7 +11,8 @@ const TABELAS_PERMITIDAS = new Set([
   'contratos', 'despesas', 'repasses', 'lancamentos_manuais', 'agenda',
   'tarefas_astrea', 'publicacoes', 'sessoes',
   'transacoes', 'transacoes_historico', 'transacoes_prazos',
-  'mural', 'elogios', 'redes_posts'
+  'mural', 'elogios', 'redes_posts',
+  'processos', 'processos_historico'
 ]);
 
 // Operações permitidas
@@ -53,12 +54,72 @@ module.exports = async (req, res) => {
       );
       if (rD.ok) { const d = await rD.json(); if (d.length) return res.status(200).json({ status: 'duplicata' }); }
     }
+    // Inserir publicação
     const rI = await fetch(`${SB_URL}/rest/v1/publicacoes`, {
       method: 'POST', headers: SH2,
       body: JSON.stringify({ data_disponibilizacao, data_publicacao, jornal, tribunal,
         vara, numero_processo, conteudo, email_origem, status: 'nao_tratada' })
     });
     const ins = rI.ok ? await rI.json() : null;
+    const pubId = ins?.[0]?.id || ins?.id;
+
+    // Auto-criar processo se tiver número CNJ e não existir ainda
+    if (numero_processo && pubId) {
+      const rProc = await fetch(
+        `${SB_URL}/rest/v1/processos?numero_processo=eq.${encodeURIComponent(numero_processo)}&limit=1`,
+        { headers: SH2 }
+      );
+      const procs = rProc.ok ? await rProc.json() : [];
+      if (procs.length === 0) {
+        // Criar processo novo
+        const rNovo = await fetch(`${SB_URL}/rest/v1/processos`, {
+          method: 'POST', headers: SH2,
+          body: JSON.stringify({ numero_processo, tribunal, vara, status: 'ativo' })
+        });
+        if (rNovo.ok) {
+          const proc = await rNovo.json();
+          const procId = proc?.[0]?.id || proc?.id;
+          // Adicionar publicação ao histórico do processo
+          if (procId) {
+            await fetch(`${SB_URL}/rest/v1/processos_historico`, {
+              method: 'POST', headers: SH2,
+              body: JSON.stringify({
+                processo_id: procId, tipo: 'publicacao',
+                descricao: `Publicação capturada automaticamente — ${jornal||tribunal||''}`,
+                data_evento: data_disponibilizacao || data_publicacao,
+                publicacao_id: pubId, criado_por: 'Sistema'
+              })
+            });
+            // Vincular processo à publicação
+            await fetch(`${SB_URL}/rest/v1/publicacoes?id=eq.${pubId}`, {
+              method: 'PATCH', headers: SH2,
+              body: JSON.stringify({ processo_id: procId })
+            });
+          }
+        }
+      } else {
+        // Processo já existe — só adicionar ao histórico
+        const procId = procs[0].id;
+        await fetch(`${SB_URL}/rest/v1/processos_historico`, {
+          method: 'POST', headers: SH2,
+          body: JSON.stringify({
+            processo_id: procId, tipo: 'publicacao',
+            descricao: `Nova publicação — ${jornal||tribunal||''}`,
+            data_evento: data_disponibilizacao || data_publicacao,
+            publicacao_id: pubId, criado_por: 'Sistema'
+          })
+        });
+        await fetch(`${SB_URL}/rest/v1/processos?id=eq.${procId}`, {
+          method: 'PATCH', headers: SH2,
+          body: JSON.stringify({ atualizado_em: new Date().toISOString() })
+        });
+        await fetch(`${SB_URL}/rest/v1/publicacoes?id=eq.${pubId}`, {
+          method: 'PATCH', headers: SH2,
+          body: JSON.stringify({ processo_id: procId })
+        });
+      }
+    }
+
     return res.status(rI.ok ? 200 : 502).json(ins || { erro: await rI.text() });
   }
 
