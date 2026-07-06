@@ -739,7 +739,13 @@ function renderCard(l) {
          ondragstart="dragStart(event,'${l.id}')"
          ondragend="dragEnd(event)"
          onclick="abrirLead('${l.id}')">
-      <div class="card-nome">${l.nome_fantasia || l.razao_social}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
+        <div class="card-nome" style="flex:1">${l.nome_fantasia || l.razao_social}</div>
+        <button onclick="event.stopPropagation();excluirLead('${l.id}')"
+          title="Excluir lead"
+          style="background:none;border:none;color:#c25e5e;cursor:pointer;font-size:14px;padding:0 2px;opacity:.6;line-height:1"
+          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6">✕</button>
+      </div>
       <div class="card-cnpj">${l.cnpj||'—'}</div>
       ${l.valor_divida ? `<div class="card-divida">${brl(l.valor_divida)}</div>` : ''}
       <div class="card-tags">
@@ -1157,18 +1163,21 @@ function abrirNovoLead() {
   abrirModal('mod-lead');
 }
 
-async function excluirLeadAtual() {
-  if (!editandoLeadId) return;
-  if (!confirm('Excluir este lead? Esta ação não pode ser desfeita.')) return;
+async function excluirLead(id) {
+  if (!confirm('Excluir este lead?')) return;
   try {
-    await sbPatch('leads', editandoLeadId, { etapa: 'perdido' }); // soft delete
-    // Remover da lista local
-    todosLeads = todosLeads.filter(l => l.id !== editandoLeadId);
-    leadsFiltrados = leadsFiltrados.filter(l => l.id !== editandoLeadId);
-    fecharModal('mod-lead');
+    await sbPatch('leads', id, { etapa: 'perdido' });
+    todosLeads = todosLeads.filter(l => l.id !== id);
+    leadsFiltrados = leadsFiltrados.filter(l => l.id !== id);
     renderView(); renderKPIs();
     toast('Lead removido ✓');
   } catch(e) { toast('Erro ao excluir: ' + e.message, true); }
+}
+
+async function excluirLeadAtual() {
+  if (!editandoLeadId) return;
+  await excluirLead(editandoLeadId);
+  fecharModal('mod-lead');
 }
 
 async function salvarLead() {
