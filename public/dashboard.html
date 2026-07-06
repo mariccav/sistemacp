@@ -769,14 +769,15 @@ async function iniciarSessao() {
 
   try {
     const nova = await DB.insert('sessoes', {
-      colaboradora: U.nome,
+      colaboradora:    U.nome,
+      cargo:           U.cargo || null,
       cliente,
-      processo: processo || null,
+      processo:        processo || null,
       ambiente,
-      tipo,
-      obs: obs || null,
-      inicio: new Date().toISOString(),
-      fim: null
+      tipo_atividade:  tipo || null,
+      comentario:      obs || null,
+      inicio:          new Date().toISOString(),
+      fim:             null
     });
     sessaoAtiva = Array.isArray(nova) ? nova[0] : nova;
     fecharModal();
