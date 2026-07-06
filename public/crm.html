@@ -1590,8 +1590,30 @@ ${conteudo}
 </body></html>`;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-carregarLeads();
+// ── CONTROLE DE ACESSO ────────────────────────────────────────────────────────
+// Apenas Mariana Pinheiro e Mariana Barboza têm acesso ao CRM
+const USUARIOS_CRM = ['Mariana Pinheiro', 'Mariana Barboza'];
+
+(function verificarAcessoCRM() {
+  const U = window.CP_USER;
+  if (!U || !USUARIOS_CRM.includes(U.nome)) {
+    document.body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                  min-height:100vh;background:#f2fdff;font-family:'Nunito',sans-serif;color:#1f3e3c;text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">🔒</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;margin-bottom:8px">
+          Acesso restrito
+        </div>
+        <div style="font-size:14px;color:#a7a897;max-width:320px;line-height:1.6;margin-bottom:24px">
+          O módulo de CRM é acessível apenas para a equipe comercial.
+        </div>
+        <a href="/dashboard.html" style="background:#1f3e3c;color:#fff;padding:10px 24px;border-radius:8px;
+           text-decoration:none;font-size:13px;font-weight:700">← Voltar ao dashboard</a>
+      </div>`;
+    return;
+  }
+  carregarLeads();
+})();
 </script>
 
 </body>
