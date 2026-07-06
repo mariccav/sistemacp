@@ -601,12 +601,18 @@ async function consultarBrasilAPI() {
 // ── CARREGAR LEADS ────────────────────────────────────────────────────────────
 async function carregarLeads() {
   document.getElementById('kanban-board').innerHTML = '<div class="loading"><div class="spinner"></div><br>Carregando leads...</div>';
-  // Todos veem todos os leads — responsável é atribuição, não restrição de visibilidade
-  todosLeads = await sbGet('leads', 'order=created_at.desc&limit=2000');
+  try {
+    const resultado = await DB.get('leads', 'order=created_at.desc&limit=2000');
+    todosLeads = resultado || [];
+    document.getElementById('kanban-board').innerHTML = `<div style="padding:20px;color:green">DEBUG: ${todosLeads.length} leads carregados</div>`;
+  } catch(e) {
+    document.getElementById('kanban-board').innerHTML = `<div style="padding:20px;color:red">ERRO: ${e.message}</div>`;
+    console.error('carregarLeads erro:', e);
+    todosLeads = [];
+  }
   leadsFiltrados = [...todosLeads];
   renderKPIs();
   renderView();
-  // Configurar UI conforme perfil
   configurarUI();
 }
 
