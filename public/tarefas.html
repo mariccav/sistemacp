@@ -284,7 +284,7 @@ function renderCalendario() {
     const bg    = eHoje ? 'var(--v1)' : tarefasDia.length ? '#fff8f0' : '#fff';
     const borda = eHoje ? 'none' : tarefasDia.length ? '1px solid #f0a060' : '1px solid #eee';
     html += `<div onclick="abrirDiaCal('${dStr}')" style="min-height:60px;border-radius:8px;background:${bg};border:${borda};padding:6px;cursor:${tarefasDia.length?'pointer':'default'};position:relative;">
-      <div style="font-size:12px;font-weight:700;color:${eHoje?'#fff':'var(--v1)';}">${d}</div>
+      <div style="font-size:12px;font-weight:700;color:${eHoje?'#fff':'var(--v1)'}">${d}</div>
       ${tarefasDia.slice(0,2).map(t=>{
         const venc = t.prazo_fatal < hj;
         const urg  = !venc && t.prazo_fatal <= daqui3();
