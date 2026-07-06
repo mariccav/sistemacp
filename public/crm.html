@@ -46,6 +46,8 @@ header p{font-size:11px;color:var(--bege);margin-top:2px;}
 .btn-primary:hover{background:var(--v2);}
 .btn-outline{background:#fff;color:var(--v1);border:1px solid rgba(167,168,151,.4);}
 .btn-outline:hover{background:var(--bg);}
+.btn-danger{background:#fef2f2;color:#c25e5e;border:1px solid rgba(194,94,94,.3);}
+.btn-danger:hover{background:#c25e5e;color:#fff;}
 .toggle-view{display:flex;border:1px solid rgba(167,168,151,.4);border-radius:10px;overflow:hidden;}
 .toggle-view button{padding:8px 14px;border:none;background:#fff;font-family:'Nunito',sans-serif;font-size:12px;color:var(--bege);cursor:pointer;transition:.2s;}
 .toggle-view button.active{background:var(--v1);color:#fff;}
@@ -258,9 +260,12 @@ textarea.field-input{resize:vertical;min-height:80px;}
 <div class="painel-overlay" id="painel-overlay" onclick="fecharPainel()"></div>
 <div class="painel" id="painel">
   <button class="painel-close" onclick="fecharPainel()">✕</button>
-  <div class="painel-header">
-    <h2 id="painel-nome">—</h2>
-    <p id="painel-cnpj">—</p>
+  <div class="painel-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h2 id="painel-nome">—</h2>
+      <p id="painel-cnpj">—</p>
+    </div>
+    <button onclick="editarLeadAtivo()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 12px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
   </div>
   <div class="painel-etapa-bar">
     <select id="p-etapa" class="filter-select" style="flex:1">
@@ -301,7 +306,7 @@ textarea.field-input{resize:vertical;min-height:80px;}
 <!-- MODAL NOVO LEAD -->
 <div class="modal-bg" id="mod-lead">
   <div class="modal">
-    <h2>Novo Lead</h2>
+    <h2 id="mod-lead-titulo">Novo Lead</h2>
     <div class="modal-row">
       <div>
         <label class="modal-label">CNPJ</label>
@@ -325,11 +330,22 @@ textarea.field-input{resize:vertical;min-height:80px;}
     <div class="modal-row">
       <div>
         <label class="modal-label">Valor da Dívida (R$)</label>
-        <input class="modal-input" id="nl-divida" type="number" min="0" step="0.01">
+        <input class="modal-input" id="nl-divida" type="text" placeholder="Ex: 1.250.000,00"
+          oninput="formatarDivida(this)" inputmode="numeric">
       </div>
       <div>
         <label class="modal-label">Score (0–100)</label>
         <input class="modal-input" id="nl-score" type="number" min="0" max="100">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Telefone</label>
+        <input class="modal-input" id="nl-tel1" placeholder="(71) 99999-0000">
+      </div>
+      <div>
+        <label class="modal-label">Telefone 2</label>
+        <input class="modal-input" id="nl-tel2" placeholder="(71) 99999-0000">
       </div>
     </div>
     <div class="modal-row">
@@ -341,8 +357,8 @@ textarea.field-input{resize:vertical;min-height:80px;}
         <label class="modal-label">Porte</label>
         <select class="modal-input" id="nl-porte">
           <option value="">Selecione...</option>
-          <option>MEI</option><option>ME</option><option>EPP</option>
-          <option>Médio</option><option>Grande</option>
+          <option>MEI</option><option>Microempresa</option><option>Pequena</option>
+          <option>Média</option><option>Grande</option>
         </select>
       </div>
     </div>
@@ -351,6 +367,10 @@ textarea.field-input{resize:vertical;min-height:80px;}
         <label class="modal-label">Modalidade de Transação</label>
         <select class="modal-input" id="nl-modalidade">
           <option value="">Selecione...</option>
+          <option>Transação por Adesão</option>
+          <option>Transação por Adesão PGFN</option>
+          <option>Transação Individual</option>
+          <option>Transação Excepcional</option>
           <option>REFIS Federal</option><option>REFIS Estadual</option>
           <option>REFIS Municipal</option><option>CARF</option>
           <option>Negociação Direta</option><option>Outro</option>
@@ -359,6 +379,7 @@ textarea.field-input{resize:vertical;min-height:80px;}
       <div>
         <label class="modal-label">Origem</label>
         <select class="modal-input" id="nl-origem">
+          <option value="captacao_ativa">Captação Ativa</option>
           <option value="trafego_pago">Tráfego Pago</option>
           <option value="indicacao">Indicação</option>
           <option value="organico">Orgânico</option>
@@ -375,7 +396,7 @@ textarea.field-input{resize:vertical;min-height:80px;}
           <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
         </select>
       </div>
-      <div>
+      <div id="nl-followup-row" style="display:none">
         <label class="modal-label">Próximo Follow-up</label>
         <input class="modal-input" id="nl-followup" type="date">
       </div>
@@ -388,7 +409,8 @@ textarea.field-input{resize:vertical;min-height:80px;}
     </div>
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="fecharModal('mod-lead')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarLead()">Salvar Lead</button>
+      <button class="btn btn-danger" id="nl-btn-excluir" style="display:none" onclick="excluirLeadAtual()">Excluir</button>
+      <button class="btn btn-primary" id="nl-btn-salvar" onclick="salvarLead()">Salvar Lead</button>
     </div>
   </div>
 </div>
@@ -634,8 +656,10 @@ function configurarUI() {
 
 // ── KPIs ──────────────────────────────────────────────────────────────────────
 function renderKPIs() {
-  const total = todosLeads.length;
-  const valor = todosLeads.reduce((s,l) => s + (l.valor_divida||0), 0);
+  const total = todosLeads.filter(l => l.etapa !== 'perdido').length;
+  // Dívida em negociação: apenas leads em etapas ativas (não novos e não perdidos)
+  const ETAPAS_ATIVAS = ['contato_feito','reuniao_agendada','proposta_enviada','convertido'];
+  const valor = todosLeads.filter(l => ETAPAS_ATIVAS.includes(l.etapa)).reduce((s,l) => s + (l.valor_divida||0), 0);
   const vencidos = todosLeads.filter(l => l.proximo_followup && l.proximo_followup < hoje() && l.etapa !== 'convertido' && l.etapa !== 'perdido').length;
   const mesAtual = new Date().toISOString().slice(0,7);
   const convertidos = todosLeads.filter(l => l.etapa === 'convertido' && (l.updated_at||'').startsWith(mesAtual)).length;
@@ -1068,6 +1092,85 @@ function abrirNovoLead() {
   abrirModal('mod-lead');
 }
 
+// Formatar valor monetário enquanto digita
+function formatarDivida(el) {
+  let v = el.value.replace(/\D/g,'');
+  if (!v) { el.value = ''; return; }
+  v = (parseInt(v,10)/100).toFixed(2);
+  el.value = parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function parseDivida(str) {
+  if (!str) return null;
+  const n = parseFloat(str.replace(/\./g,'').replace(',','.'));
+  return isNaN(n) ? null : n;
+}
+
+let editandoLeadId = null;
+
+function editarLeadAtivo() {
+  if (!leadAtivo) return;
+  abrirEditarLead(leadAtivo);
+}
+
+function abrirEditarLead(lead) {
+  editandoLeadId = lead.id;
+  document.getElementById('mod-lead-titulo').textContent = 'Editar Lead';
+  document.getElementById('nl-cnpj').value = lead.cnpj || '';
+  document.getElementById('nl-situacao').value = lead.situacao_cadastral || '';
+  document.getElementById('nl-razao').value = lead.razao_social || '';
+  document.getElementById('nl-fantasia').value = lead.nome_fantasia || '';
+  document.getElementById('nl-divida').value = lead.valor_divida
+    ? lead.valor_divida.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+  document.getElementById('nl-score').value = lead.score || '';
+  document.getElementById('nl-tel1').value = lead.telefone_receita || '';
+  document.getElementById('nl-tel2').value = '';
+  document.getElementById('nl-setor').value = lead.setor || '';
+  document.getElementById('nl-porte').value = lead.porte || '';
+  document.getElementById('nl-modalidade').value = lead.modalidade_transacao || '';
+  document.getElementById('nl-origem').value = lead.origem || '';
+  document.getElementById('nl-resp').value = lead.responsavel || '';
+  document.getElementById('nl-obs').value = lead.observacoes || '';
+  // Follow-up só aparece se já houve contato
+  const emNegociacao = !['novo'].includes(lead.etapa);
+  document.getElementById('nl-followup-row').style.display = emNegociacao ? 'block' : 'none';
+  document.getElementById('nl-followup').value = lead.proximo_followup || '';
+  document.getElementById('nl-btn-excluir').style.display = 'inline-block';
+  document.getElementById('nl-btn-salvar').textContent = 'Salvar Alterações';
+  abrirModal('mod-lead');
+}
+
+function abrirNovoLead() {
+  editandoLeadId = null;
+  document.getElementById('mod-lead-titulo').textContent = 'Novo Lead';
+  ['nl-cnpj','nl-situacao','nl-razao','nl-fantasia','nl-divida','nl-score',
+   'nl-tel1','nl-tel2','nl-setor','nl-obs','nl-followup'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('nl-porte').value = '';
+  document.getElementById('nl-modalidade').value = '';
+  document.getElementById('nl-origem').value = 'captacao_ativa';
+  document.getElementById('nl-resp').value = window.CP_USER?.nome || 'Mariana Barboza';
+  document.getElementById('nl-followup-row').style.display = 'none'; // só após contato
+  document.getElementById('nl-btn-excluir').style.display = 'none';
+  document.getElementById('nl-btn-salvar').textContent = 'Salvar Lead';
+  abrirModal('mod-lead');
+}
+
+async function excluirLeadAtual() {
+  if (!editandoLeadId) return;
+  if (!confirm('Excluir este lead? Esta ação não pode ser desfeita.')) return;
+  try {
+    await sbPatch('leads', editandoLeadId, { etapa: 'perdido' }); // soft delete
+    // Remover da lista local
+    todosLeads = todosLeads.filter(l => l.id !== editandoLeadId);
+    leadsFiltrados = leadsFiltrados.filter(l => l.id !== editandoLeadId);
+    fecharModal('mod-lead');
+    renderView(); renderKPIs();
+    toast('Lead removido ✓');
+  } catch(e) { toast('Erro ao excluir: ' + e.message, true); }
+}
+
 async function salvarLead() {
   const razao = document.getElementById('nl-razao').value.trim();
   if (!razao) { toast('Razão social obrigatória', true); return; }
@@ -1076,38 +1179,52 @@ async function salvarLead() {
     cnpj:                cnpj || null,
     razao_social:        razao,
     nome_fantasia:       document.getElementById('nl-fantasia').value || null,
-    valor_divida:        parseFloat(document.getElementById('nl-divida').value) || null,
+    valor_divida:        parseDivida(document.getElementById('nl-divida').value),
     score:               parseFloat(document.getElementById('nl-score').value) || null,
     setor:               document.getElementById('nl-setor').value || null,
     porte:               document.getElementById('nl-porte').value || null,
     modalidade_transacao:document.getElementById('nl-modalidade').value || null,
     origem:              document.getElementById('nl-origem').value,
-    // Não-admins ficam sempre como responsável pelo próprio lead
-    responsavel: window.CP_USER?.is_admin
-      ? document.getElementById('nl-resp').value
-      : (window.CP_USER?.nome || document.getElementById('nl-resp').value),
+    responsavel:         document.getElementById('nl-resp').value,
     proximo_followup:    document.getElementById('nl-followup').value || null,
     observacoes:         document.getElementById('nl-obs').value || null,
     situacao_cadastral:  document.getElementById('nl-situacao').value || null,
-    etapa: 'novo'
+    telefone_receita:    document.getElementById('nl-tel1').value || null,
   };
+
   try {
-    const novo = await sbPost('leads', body);
-    todosLeads.unshift(novo);
-    leadsFiltrados = [...todosLeads];
-    renderView(); renderKPIs();
-    fecharModal('mod-lead');
-    toast('Lead cadastrado ✓');
-    // Buscar dados completos do CNPJ se disponível
-    if (cnpj && cnpj.length === 14) {
-      const dados = await buscarCNPJ(cnpj);
-      if (dados && dados.qsa) {
-        for (const s of dados.qsa) {
-          await sbPost('leads_contatos', {
-            lead_id: novo.id, nome: s.nome_socio,
-            cargo: s.qualificacao_socio, origem: 'qsa'
-          });
-        }
+    if (editandoLeadId) {
+      // EDITAR: atualizar lead existente (sem duplicar)
+      await sbPatch('leads', editandoLeadId, body);
+      const idx = todosLeads.findIndex(l => l.id === editandoLeadId);
+      if (idx >= 0) Object.assign(todosLeads[idx], body);
+      fecharModal('mod-lead');
+      renderView(); renderKPIs();
+      toast('Lead atualizado ✓');
+      if (leadAtivo?.id === editandoLeadId) renderPainel(todosLeads[idx]);
+    } else {
+      // NOVO: criar lead
+      body.etapa = 'novo';
+      const novo = await sbPost('leads', body);
+      todosLeads.unshift(novo);
+      leadsFiltrados = [...todosLeads];
+      renderView(); renderKPIs();
+      fecharModal('mod-lead');
+      toast('Lead cadastrado ✓');
+      // Adicionar telefone 2 como contato se preenchido
+      const tel2 = document.getElementById('nl-tel2').value;
+      if (tel2 && novo?.id) {
+        await sbPost('leads_contatos', { lead_id: novo.id, nome: razao, telefone: tel2, origem: 'manual' }).catch(()=>{});
+      }
+      // Buscar sócios via BrasilAPI
+      if (cnpj && cnpj.length === 14) {
+        buscarCNPJ(cnpj).then(async dados => {
+          if (dados?.qsa) {
+            for (const s of dados.qsa) {
+              await sbPost('leads_contatos', { lead_id: novo.id, nome: s.nome_socio, cargo: s.qualificacao_socio, origem: 'qsa' }).catch(()=>{});
+            }
+          }
+        });
       }
     }
   } catch(e) { toast('Erro ao salvar: ' + e.message, true); }
