@@ -378,10 +378,10 @@ function filtrar() {
     }
     return true;
   });
-  renderView();
+  // Não chama renderView aqui — renderView é quem chama filtrar
 }
 
-function renderView() { filtrar(); if(viewAtual==='kanban') renderKanban(); else renderLista(); }
+function renderView() { filtrar(); if(viewAtual==='kanban') renderKanban(); else if(viewAtual==='lista') renderLista(); }
 
 // ── KPIs ───────────────────────────────────────────────────────────
 function renderKPIs() {
