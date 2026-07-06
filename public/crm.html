@@ -602,11 +602,8 @@ async function consultarBrasilAPI() {
 async function carregarLeads() {
   document.getElementById('kanban-board').innerHTML = '<div class="loading"><div class="spinner"></div><br>Carregando leads...</div>';
   try {
-    const resultado = await DB.get('leads', 'order=created_at.desc&limit=2000');
-    todosLeads = resultado || [];
-    document.getElementById('kanban-board').innerHTML = `<div style="padding:20px;color:green">DEBUG: ${todosLeads.length} leads carregados</div>`;
+    todosLeads = await DB.get('leads', 'order=created_at.desc&limit=2000') || [];
   } catch(e) {
-    document.getElementById('kanban-board').innerHTML = `<div style="padding:20px;color:red">ERRO: ${e.message}</div>`;
     console.error('carregarLeads erro:', e);
     todosLeads = [];
   }
