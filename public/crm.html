@@ -601,10 +601,8 @@ async function consultarBrasilAPI() {
 // ── CARREGAR LEADS ────────────────────────────────────────────────────────────
 async function carregarLeads() {
   document.getElementById('kanban-board').innerHTML = '<div class="loading"><div class="spinner"></div><br>Carregando leads...</div>';
-  // Admin vê todos; demais veem só os próprios
-  const U = window.CP_USER;
-  const filtroResp = (U && !U.is_admin) ? `&responsavel=eq.${encodeURIComponent(U.nome)}` : '';
-  todosLeads = await sbGet(`leads?order=created_at.desc&limit=500${filtroResp}`);
+  // Todos veem todos os leads — responsável é atribuição, não restrição de visibilidade
+  todosLeads = await sbGet(`leads?order=created_at.desc&limit=2000`);
   leadsFiltrados = [...todosLeads];
   renderKPIs();
   renderView();
