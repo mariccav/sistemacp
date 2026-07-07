@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="/auth.js"></script>
+<script src="/db-client.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Projetos Colaborativos — CP</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--v1:#1f3e3c;--v2:#2b5050;--bg:#f2fdff;--bege:#a7a897;--verm:#c25e5e;--verde:#2a7a5a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-height:100vh;}
+header{background:var(--v1);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
+header p{font-size:11px;color:var(--bege);margin-top:1px;}
+.hd-right{display:flex;gap:10px;align-items:center;}
+.btn-back{color:var(--bege);font-size:12px;text-decoration:none;border:1px solid rgba(167,168,151,.3);padding:5px 12px;border-radius:6px;}
+.btn-novo{background:#a7a897;color:var(--v1);border:none;padding:8px 18px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-novo:hover{background:#c9c9b5;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 58px);}
+.sidebar{background:#fff;border-right:1px solid #e8f0f0;overflow-y:auto;padding:16px;}
+.main{overflow-y:auto;padding:24px;}
+
+/* LISTA */
+.proj-card{background:#fff;border:1px solid #e8f0f0;border-radius:12px;padding:16px;margin-bottom:10px;cursor:pointer;transition:.15s;}
+.proj-card:hover,.proj-card.ativo{border-color:var(--v1);box-shadow:0 2px 12px rgba(31,62,60,.1);}
+.proj-card.ativo{border-left:3px solid var(--v1);}
+.proj-nome{font-weight:700;font-size:14px;color:var(--v1);}
+.proj-cliente{font-size:11px;color:var(--bege);margin-top:2px;}
+.proj-prog{margin-top:10px;}
+.prog-bar{height:4px;background:#e8f0f0;border-radius:2px;overflow:hidden;margin-top:4px;}
+.prog-fill{height:100%;background:var(--verde);border-radius:2px;transition:.3s;}
+.prog-txt{font-size:10px;color:var(--bege);}
+.status-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;margin-top:6px;}
+.st-em_andamento{background:#e8f4ff;color:#1a5fa8;}
+.st-aguardando{background:#fff8e1;color:#8a5a00;}
+.st-concluido{background:#e8f8f0;color:var(--verde);}
+
+/* DETALHE */
+.det-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:12px;}
+.det-titulo{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--v1);}
+.det-sub{font-size:13px;color:var(--bege);margin-top:4px;}
+.btn-link{background:var(--v1);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-link:hover{background:var(--v2);}
+.sec{background:#fff;border-radius:12px;border:1px solid #e8f0f0;padding:20px;margin-bottom:16px;}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--v1);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.btn-add{background:none;border:1px dashed var(--bege);color:var(--bege);padding:6px 14px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;}
+.btn-add:hover{border-color:var(--v1);color:var(--v1);}
+
+/* ETAPAS */
+.etapa{border:1px solid #e8f0f0;border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.etapa-header{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;background:#fff;}
+.etapa-header:hover{background:#f8fdfd;}
+.etapa-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.et-pendente .etapa-num{background:#f0f0f0;color:#999;}
+.et-em_andamento .etapa-num{background:#e8f4ff;color:#1a5fa8;}
+.et-concluido .etapa-num{background:#e8f8f0;color:var(--verde);}
+.et-bloqueado .etapa-num{background:#fef2f2;color:var(--verm);}
+.etapa-titulo{font-weight:600;font-size:13px;flex:1;}
+.et-pendente .etapa-titulo{color:#888;}
+.etapa-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.et-pendente .etapa-status{background:#f0f0f0;color:#999;}
+.et-em_andamento .etapa-status{background:#e8f4ff;color:#1a5fa8;}
+.et-concluido .etapa-status{background:#e8f8f0;color:var(--verde);}
+.et-bloqueado .etapa-status{background:#fef2f2;color:var(--verm);}
+.etapa-body{display:none;padding:12px 16px;border-top:1px solid #f0f7f7;background:#fafefe;}
+.etapa-body.open{display:block;}
+.etapa-desc{font-size:13px;color:#5a7878;margin-bottom:10px;line-height:1.6;}
+.etapa-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.ef-full{grid-column:span 2;}
+.ef label{font-size:10px;font-weight:700;color:var(--bege);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px;}
+.ef input,.ef select,.ef textarea{width:100%;padding:7px 10px;border:1px solid rgba(167,168,151,.3);border-radius:7px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);outline:none;}
+.ef textarea{resize:vertical;height:60px;}
+.etapa-acoes{display:flex;gap:6px;margin-top:10px;}
+.btn-sm{padding:5px 12px;border-radius:6px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border:none;}
+.btn-salvar{background:var(--v1);color:#fff;}
+.btn-excluir{background:#fef2f2;color:var(--verm);}
+
+/* DOCS */
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f7f7;}
+.doc-item:last-child{border-bottom:none;}
+.doc-icon{font-size:18px;}
+.doc-nome{flex:1;font-size:13px;font-weight:600;}
+.doc-desc{font-size:11px;color:var(--bege);}
+.doc-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.ds-solicitado{background:#fff8e1;color:#8a5a00;}
+.ds-recebido{background:#e8f4ff;color:#1a5fa8;}
+.ds-aprovado{background:#e8f8f0;color:var(--verde);}
+.doc-acoes{display:flex;gap:4px;}
+.btn-doc{padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:none;}
+
+/* LOG */
+.log-item{display:flex;gap:10px;margin-bottom:12px;}
+.log-avatar{width:32px;height:32px;border-radius:50%;background:var(--v2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.log-bubble{background:#f0f7f7;border-radius:0 10px 10px 10px;padding:10px 14px;flex:1;}
+.log-bubble.cliente{background:#e8f4ff;}
+.log-autor{font-size:10px;font-weight:700;color:var(--bege);}
+.log-texto{font-size:13px;color:var(--v1);margin-top:2px;line-height:1.5;}
+.log-data{font-size:10px;color:var(--bege);margin-top:4px;}
+.log-form{display:flex;gap:8px;margin-top:12px;}
+.log-form textarea{flex:1;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;height:60px;outline:none;}
+.log-opts{display:flex;flex-direction:column;gap:6px;}
+.log-check{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--bege);}
+
+/* MODAIS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(6,51,39,.75);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--v1);margin-bottom:16px;}
+.mfld{margin-bottom:12px;}
+.mfld label{display:block;font-size:11px;font-weight:700;color:var(--bege);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.mfld input,.mfld select,.mfld textarea{width:100%;padding:9px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--v1);outline:none;}
+.mfld textarea{resize:vertical;height:80px;}
+.modal-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+.btn-cancel{padding:9px 18px;background:#f5f5f5;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;cursor:pointer;}
+.btn-save{padding:9px 18px;background:var(--v1);color:#fff;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.empty{text-align:center;padding:40px 20px;color:var(--bege);font-size:13px;}
+@media(max-width:768px){.layout{grid-template-columns:1fr;}.sidebar{height:auto;max-height:40vh;}.main{padding:16px;}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Projetos Colaborativos</h1>
+    <p>Fluxos de trabalho com clientes · Cavalcante Pinheiro Advocacia</p>
+  </div>
+  <div class="hd-right">
+    <a href="/" class="btn-back">← Voltar</a>
+    <button class="btn-novo" onclick="abrirModalProjeto()">+ Novo Projeto</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR: lista de projetos -->
+  <div class="sidebar">
+    <div id="lista-projetos"><div class="empty">Carregando...</div></div>
+  </div>
+
+  <!-- MAIN: detalhe do projeto -->
+  <div class="main" id="main-detalhe">
+    <div class="empty" style="margin-top:80px">
+      <div style="font-size:48px;margin-bottom:12px">🤝</div>
+      Selecione um projeto para ver os detalhes<br>ou crie um novo.
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO PROJETO -->
+<div class="modal-bg" id="modal-proj">
+  <div class="modal">
+    <h2 id="modal-proj-titulo">Novo Projeto</h2>
+    <input type="hidden" id="proj-id">
+    <div class="mfld"><label>Cliente *</label><input id="proj-cliente" placeholder="Nome do cliente ou empresa"></div>
+    <div class="mfld"><label>Nome do Projeto *</label><input id="proj-nome" placeholder="Ex: Abertura CNO + Adesão RET"></div>
+    <div class="mfld"><label>Descrição</label><textarea id="proj-desc" placeholder="Objetivo e contexto do projeto..."></textarea></div>
+    <div class="mfld"><label>Responsável</label>
+      <select id="proj-resp">
+        <option>Mariana Pinheiro</option><option>Diana</option>
+        <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+      </select>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal('modal-proj')">Cancelar</button>
+      <button class="btn-save" onclick="salvarProjeto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA ETAPA -->
+<div class="modal-bg" id="modal-etapa">
+  <div class="modal">
+    <h2>Nova Etapa</h2>
+    <div class="mfld"><label>Título *</label><input id="et-titulo" placeholder="Ex: Abertura CNO no e-CAC"></div>
+    <div class="mfld"><label>Descrição</label><textarea id="et-desc" placeholder="O que precisa ser feito nesta etapa..."></textarea></div>
+    <div class="mfld"><label>Responsável</label>
+      <select id="et-resp">
+        <option value="">— Equipe CP —</option>
+        <option>Mariana Pinheiro</option><option>Diana</option>
+        <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        <option value="cliente">Cliente</option>
+      </select>
+    </div>
+    <div class="mfld"><label>Status</label>
+      <select id="et-status">
+        <option value="pendente">⏳ Pendente</option>
+        <option value="em_andamento">🔄 Em andamento</option>
+        <option value="bloqueado">🔴 Bloqueado — aguardando cliente</option>
+        <option value="concluido">✅ Concluído</option>
+      </select>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal('modal-etapa')">Cancelar</button>
+      <button class="btn-save" onclick="salvarEtapa()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO DOC -->
+<div class="modal-bg" id="modal-doc">
+  <div class="modal">
+    <h2>Solicitar Documento</h2>
+    <div class="mfld"><label>Documento *</label><input id="doc-titulo" placeholder="Ex: Contrato Social atualizado"></div>
+    <div class="mfld"><label>Instrução para o cliente</label><textarea id="doc-desc" placeholder="Como o cliente deve enviar, qual versão, etc."></textarea></div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal('modal-doc')">Cancelar</button>
+      <button class="btn-save" onclick="salvarDoc()">Solicitar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let projetos = [], projetoAtivo = null;
+let etapas = [], docs = [], logs = [];
+
+// ── UTILS ──────────────────────────────────────────────────────────
+function fmtData(iso){if(!iso)return'—';return new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtHora(iso){if(!iso)return'';return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function ini(nome){return(nome||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();}
+function toast(msg,err=false){const t=document.createElement('div');t.textContent=msg;t.style.cssText=`position:fixed;bottom:20px;right:20px;background:${err?'#c25e5e':'#1f3e3c'};color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;`;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+function fecharModal(id){document.getElementById(id).classList.remove('show');}
+function abrirModal(id){document.getElementById(id).classList.add('show');}
+const stLabel={pendente:'⏳ Pendente',em_andamento:'🔄 Em andamento',concluido:'✅ Concluído',bloqueado:'🔴 Aguardando cliente'};
+const dsLabel={solicitado:'📤 Solicitado',recebido:'📥 Recebido',aprovado:'✅ Aprovado'};
+
+// ── CARREGAR ───────────────────────────────────────────────────────
+async function carregar(){
+  projetos = await DB.get('projetos_cp','order=atualizado_em.desc').catch(()=>[]);
+  renderLista();
+}
+
+function renderLista(){
+  const el=document.getElementById('lista-projetos');
+  if(!projetos.length){el.innerHTML='<div class="empty">Nenhum projeto.<br>Crie o primeiro!</div>';return;}
+  el.innerHTML=projetos.map(p=>{
+    const etAtivas=p._etTotal||0,etConc=p._etConc||0;
+    const pct=etAtivas>0?Math.round(etConc/etAtivas*100):0;
+    const stClass=p.status==='concluido'?'st-concluido':p.status==='aguardando'?'st-aguardando':'st-em_andamento';
+    const stTxt=p.status==='concluido'?'Concluído':p.status==='aguardando'?'Aguardando cliente':'Em andamento';
+    return`<div class="proj-card${projetoAtivo?.id===p.id?' ativo':''}" onclick="abrirProjeto('${p.id}')">
+      <div class="proj-nome">${p.nome}</div>
+      <div class="proj-cliente">👤 ${p.cliente_nome}</div>
+      <span class="status-badge ${stClass}">${stTxt}</span>
+      <div class="proj-prog">
+        <div class="prog-txt">${etConc} de ${etAtivas} etapas concluídas</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function abrirProjeto(id){
+  projetoAtivo=projetos.find(p=>p.id===id);
+  if(!projetoAtivo)return;
+  renderLista();
+  const main=document.getElementById('main-detalhe');
+  main.innerHTML='<div class="empty">Carregando...</div>';
+  [etapas,docs,logs]=await Promise.all([
+    DB.get('projetos_etapas',`projeto_id=eq.${id}&order=ordem.asc`).catch(()=>[]),
+    DB.get('projetos_docs',`projeto_id=eq.${id}&order=criado_em.asc`).catch(()=>[]),
+    DB.get('projetos_logs',`projeto_id=eq.${id}&order=criado_em.asc`).catch(()=>[])
+  ]);
+  // Atualizar contadores no projeto
+  projetoAtivo._etTotal=etapas.length;
+  projetoAtivo._etConc=etapas.filter(e=>e.status==='concluido').length;
+  renderDetalhe();
+}
+
+function renderDetalhe(){
+  if(!projetoAtivo)return;
+  const link=`https://sistemacp.vercel.app/portal.html?token=${projetoAtivo.token_acesso}`;
+  const pct=etapas.length>0?Math.round(etapas.filter(e=>e.status==='concluido').length/etapas.length*100):0;
+
+  document.getElementById('main-detalhe').innerHTML=`
+    <div class="det-header">
+      <div>
+        <div class="det-titulo">${projetoAtivo.nome}</div>
+        <div class="det-sub">Cliente: ${projetoAtivo.cliente_nome} · Responsável: ${projetoAtivo.responsavel||'—'}</div>
+        ${projetoAtivo.descricao?`<div style="font-size:13px;color:#5a7878;margin-top:6px;line-height:1.5">${projetoAtivo.descricao}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+        <button class="btn-link" onclick="copiarLink('${link}')">📋 Copiar link do cliente</button>
+        <button class="btn-add" onclick="abrirModalProjeto('${projetoAtivo.id}')">✏️ Editar projeto</button>
+      </div>
+    </div>
+
+    <!-- Progresso geral -->
+    <div style="background:#fff;border-radius:12px;border:1px solid #e8f0f0;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--bege);font-weight:700;margin-bottom:6px">PROGRESSO GERAL</div>
+        <div style="height:8px;background:#e8f0f0;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--verde);border-radius:4px;transition:.3s"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:28px;font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--v1)">${pct}%</div>
+        <div style="font-size:11px;color:var(--bege)">${etapas.filter(e=>e.status==='concluido').length} de ${etapas.length} etapas</div>
+      </div>
+    </div>
+
+    <!-- Etapas -->
+    <div class="sec">
+      <div class="sec-title">
+        Etapas do Projeto
+        <button class="btn-add" onclick="abrirModalEtapa()">+ Adicionar etapa</button>
+      </div>
+      <div id="lista-etapas">${renderEtapas()}</div>
+    </div>
+
+    <!-- Documentos -->
+    <div class="sec">
+      <div class="sec-title">
+        Documentos Solicitados
+        <button class="btn-add" onclick="abrirModal('modal-doc')">+ Solicitar documento</button>
+      </div>
+      <div id="lista-docs">${renderDocs()}</div>
+    </div>
+
+    <!-- Log -->
+    <div class="sec">
+      <div class="sec-title">Comunicações e Atualizações</div>
+      <div id="lista-logs">${renderLogs()}</div>
+      <div class="log-form">
+        <textarea id="log-texto" placeholder="Adicionar atualização..."></textarea>
+        <div class="log-opts">
+          <label class="log-check"><input type="checkbox" id="log-visivel"> Visível ao cliente</label>
+          <button class="btn-sm btn-salvar" onclick="adicionarLog()">Enviar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderEtapas(){
+  if(!etapas.length)return'<div class="empty">Nenhuma etapa. Adicione a primeira.</div>';
+  return etapas.map((e,i)=>`
+    <div class="etapa et-${e.status}" id="etapa-${e.id}">
+      <div class="etapa-header" onclick="toggleEtapa('${e.id}')">
+        <div class="etapa-num">${i+1}</div>
+        <div style="flex:1">
+          <div class="etapa-titulo">${e.titulo}</div>
+          ${e.responsavel?`<div style="font-size:10px;color:var(--bege);margin-top:2px">👤 ${e.responsavel}</div>`:''}
+        </div>
+        <span class="etapa-status">${stLabel[e.status]||e.status}</span>
+      </div>
+      <div class="etapa-body" id="body-${e.id}">
+        ${e.descricao?`<div class="etapa-desc">${e.descricao}</div>`:''}
+        <div class="etapa-form">
+          <div class="ef"><label>Status</label>
+            <select onchange="atualizarEtapa('${e.id}','status',this.value)">
+              ${['pendente','em_andamento','bloqueado','concluido'].map(s=>`<option value="${s}"${e.status===s?' selected':''}>${stLabel[s]}</option>`).join('')}
+            </select>
+          </div>
+          <div class="ef"><label>Data conclusão</label>
+            <input type="date" value="${e.data_conclusao||''}" onchange="atualizarEtapa('${e.id}','data_conclusao',this.value)">
+          </div>
+          <div class="ef ef-full"><label>Descrição</label>
+            <textarea onblur="atualizarEtapa('${e.id}','descricao',this.value)">${e.descricao||''}</textarea>
+          </div>
+        </div>
+        <div class="etapa-acoes">
+          <button class="btn-sm btn-excluir" onclick="excluirEtapa('${e.id}')">Excluir etapa</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderDocs(){
+  if(!docs.length)return'<div style="color:var(--bege);font-size:13px;text-align:center;padding:16px">Nenhum documento solicitado.</div>';
+  return docs.map(d=>`
+    <div class="doc-item">
+      <div class="doc-icon">${d.status==='aprovado'?'✅':d.status==='recebido'?'📥':'📤'}</div>
+      <div style="flex:1">
+        <div class="doc-nome">${d.titulo}</div>
+        ${d.descricao?`<div class="doc-desc">${d.descricao}</div>`:''}
+      </div>
+      <div class="doc-acoes">
+        ${d.status==='solicitado'?`<button class="btn-doc" style="background:#e8f4ff;color:#1a5fa8" onclick="atualizarDoc('${d.id}','recebido')">Marcar recebido</button>`:''}
+        ${d.status==='recebido'?`<button class="btn-doc" style="background:#e8f8f0;color:var(--verde)" onclick="atualizarDoc('${d.id}','aprovado')">Aprovar</button>`:''}
+        <button class="btn-doc" style="background:#fef2f2;color:var(--verm)" onclick="excluirDoc('${d.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderLogs(){
+  const visiveis=logs;
+  if(!visiveis.length)return'<div style="color:var(--bege);font-size:13px;text-align:center;padding:12px">Nenhuma comunicação ainda.</div>';
+  return visiveis.map(l=>`
+    <div class="log-item">
+      <div class="log-avatar">${ini(l.autor)}</div>
+      <div class="log-bubble${l.tipo==='cliente'?' cliente':''}">
+        <div class="log-autor">${l.autor||'Equipe CP'}${l.tipo==='cliente'?' · Cliente':l.tipo==='publico'?' · Visível ao cliente':' · Interno'}</div>
+        <div class="log-texto">${l.texto}</div>
+        <div class="log-data">${fmtHora(l.criado_em)}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── INTERAÇÕES ─────────────────────────────────────────────────────
+function copiarLink(link){
+  navigator.clipboard.writeText(link).then(()=>toast('Link copiado! ✓')).catch(()=>{
+    prompt('Copie o link:',link);
+  });
+}
+
+function toggleEtapa(id){
+  const body=document.getElementById('body-'+id);
+  body.classList.toggle('open');
+}
+
+async function atualizarEtapa(id,campo,valor){
+  await DB.update('projetos_etapas',`id=eq.${id}`,{[campo]:valor||null}).catch(()=>{});
+  const et=etapas.find(e=>e.id===id);
+  if(et){et[campo]=valor;if(campo==='status'){projetoAtivo._etConc=etapas.filter(e=>e.status==='concluido').length;}}
+  document.getElementById('lista-etapas').innerHTML=renderEtapas();
+  // Reabrir a etapa editada
+  const body=document.getElementById('body-'+id);
+  if(body)body.classList.add('open');
+}
+
+async function excluirEtapa(id){
+  if(!confirm('Excluir esta etapa?'))return;
+  await DB.delete('projetos_etapas',`id=eq.${id}`).catch(()=>{});
+  etapas=etapas.filter(e=>e.id!==id);
+  document.getElementById('lista-etapas').innerHTML=renderEtapas();
+  toast('Etapa removida');
+}
+
+async function atualizarDoc(id,status){
+  await DB.update('projetos_docs',`id=eq.${id}`,{status}).catch(()=>{});
+  const d=docs.find(x=>x.id===id);if(d)d.status=status;
+  document.getElementById('lista-docs').innerHTML=renderDocs();
+}
+
+async function excluirDoc(id){
+  if(!confirm('Excluir solicitação?'))return;
+  await DB.delete('projetos_docs',`id=eq.${id}`).catch(()=>{});
+  docs=docs.filter(x=>x.id!==id);
+  document.getElementById('lista-docs').innerHTML=renderDocs();
+}
+
+async function adicionarLog(){
+  const texto=document.getElementById('log-texto').value.trim();
+  if(!texto)return;
+  const visivel=document.getElementById('log-visivel').checked;
+  const U=window.CP_USER;
+  const novo=await DB.insert('projetos_logs',{
+    projeto_id:projetoAtivo.id,texto,
+    autor:U?.nome||'Equipe CP',
+    tipo:visivel?'publico':'interno'
+  }).catch(()=>null);
+  if(novo){logs.push(Array.isArray(novo)?novo[0]:novo);}
+  document.getElementById('log-texto').value='';
+  document.getElementById('log-visivel').checked=false;
+  document.getElementById('lista-logs').innerHTML=renderLogs();
+}
+
+// ── MODAIS ─────────────────────────────────────────────────────────
+function abrirModalProjeto(id){
+  if(id&&id!=='undefined'){
+    const p=projetos.find(x=>x.id===id);
+    document.getElementById('modal-proj-titulo').textContent='Editar Projeto';
+    document.getElementById('proj-id').value=p.id;
+    document.getElementById('proj-cliente').value=p.cliente_nome;
+    document.getElementById('proj-nome').value=p.nome;
+    document.getElementById('proj-desc').value=p.descricao||'';
+    document.getElementById('proj-resp').value=p.responsavel||'';
+  } else {
+    document.getElementById('modal-proj-titulo').textContent='Novo Projeto';
+    document.getElementById('proj-id').value='';
+    ['proj-cliente','proj-nome','proj-desc'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('proj-resp').value='Mariana Pinheiro';
+  }
+  abrirModal('modal-proj');
+}
+
+async function salvarProjeto(){
+  const cliente=document.getElementById('proj-cliente').value.trim();
+  const nome=document.getElementById('proj-nome').value.trim();
+  if(!cliente||!nome){toast('Preencha cliente e nome',true);return;}
+  const id=document.getElementById('proj-id').value;
+  const dados={cliente_nome:cliente,nome,descricao:document.getElementById('proj-desc').value||null,responsavel:document.getElementById('proj-resp').value,atualizado_em:new Date().toISOString()};
+  try{
+    if(id){
+      await DB.update('projetos_cp',`id=eq.${id}`,dados);
+      const p=projetos.find(x=>x.id===id);if(p)Object.assign(p,dados);
+    } else {
+      const novo=await DB.insert('projetos_cp',{...dados,status:'em_andamento'});
+      const p=Array.isArray(novo)?novo[0]:novo;
+      if(p){projetos.unshift(p);}
+    }
+    fecharModal('modal-proj');
+    renderLista();
+    toast('Projeto salvo ✓');
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
+function abrirModalEtapa(){
+  ['et-titulo','et-desc'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('et-resp').value='';
+  document.getElementById('et-status').value='pendente';
+  abrirModal('modal-etapa');
+}
+
+async function salvarEtapa(){
+  const titulo=document.getElementById('et-titulo').value.trim();
+  if(!titulo){toast('Título obrigatório',true);return;}
+  const novo=await DB.insert('projetos_etapas',{
+    projeto_id:projetoAtivo.id,titulo,
+    descricao:document.getElementById('et-desc').value||null,
+    responsavel:document.getElementById('et-resp').value||null,
+    status:document.getElementById('et-status').value,
+    ordem:etapas.length+1
+  }).catch(e=>{toast('Erro: '+e.message,true);return null;});
+  if(novo){
+    const e=Array.isArray(novo)?novo[0]:novo;
+    etapas.push(e);
+    projetoAtivo._etTotal=etapas.length;
+    document.getElementById('lista-etapas').innerHTML=renderEtapas();
+    fecharModal('modal-etapa');
+    toast('Etapa adicionada ✓');
+  }
+}
+
+async function salvarDoc(){
+  const titulo=document.getElementById('doc-titulo').value.trim();
+  if(!titulo){toast('Título obrigatório',true);return;}
+  const novo=await DB.insert('projetos_docs',{
+    projeto_id:projetoAtivo.id,titulo,
+    descricao:document.getElementById('doc-desc').value||null,
+    status:'solicitado'
+  }).catch(e=>{toast('Erro: '+e.message,true);return null;});
+  if(novo){
+    docs.push(Array.isArray(novo)?novo[0]:novo);
+    document.getElementById('lista-docs').innerHTML=renderDocs();
+    fecharModal('modal-doc');
+    toast('Documento solicitado ✓');
+  }
+}
+
+// Fechar modal clicando fora
+['modal-proj','modal-etapa','modal-doc'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    if(e.target===document.getElementById(id))fecharModal(id);
+  });
+});
+
+carregar();
+</script>
+</body>
+</html>

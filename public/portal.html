@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portal do Cliente — Cavalcante Pinheiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:#f2fdff;color:#1f3e3c;min-height:100vh;}
+
+/* HEADER */
+.header{background:#1f3e3c;padding:16px 24px;display:flex;align-items:center;gap:16px;}
+.header-logo{height:40px;width:auto;filter:brightness(0) invert(1);}
+.header-info{border-left:1px solid rgba(167,168,151,.3);padding-left:16px;}
+.header-escritorio{font-size:10px;color:#a7a897;letter-spacing:1px;text-transform:uppercase;}
+.header-projeto{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;margin-top:2px;}
+
+/* CONTAINER */
+.container{max-width:680px;margin:0 auto;padding:24px 16px 60px;}
+
+/* RESUMO */
+.resumo{background:#1f3e3c;border-radius:16px;padding:24px;color:#fff;margin-bottom:20px;}
+.resumo-cliente{font-size:11px;color:#a7a897;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.resumo-nome{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:16px;}
+.prog-label{font-size:11px;color:#a7a897;margin-bottom:6px;}
+.prog-bar{height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;background:#a7a897;border-radius:4px;transition:.5s;}
+.prog-nums{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#a7a897;}
+
+/* CARDS */
+.card{background:#fff;border-radius:14px;border:1px solid #e8f0f0;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(31,62,60,.04);}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#1f3e3c;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ETAPAS — timeline */
+.etapa-item{display:flex;gap:14px;margin-bottom:0;position:relative;}
+.etapa-item::before{content:'';position:absolute;left:15px;top:32px;bottom:-14px;width:2px;background:#e8f0f0;z-index:0;}
+.etapa-item:last-child::before{display:none;}
+.et-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;position:relative;z-index:1;margin-top:2px;}
+.et-concluido .et-circle{background:#e8f8f0;border:2px solid #2a7a5a;}
+.et-em_andamento .et-circle{background:#e8f4ff;border:2px solid #1a5fa8;animation:pulse 2s infinite;}
+.et-bloqueado .et-circle{background:#fef2f2;border:2px solid #c25e5e;}
+.et-pendente .et-circle{background:#f5f5f5;border:2px solid #ddd;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(26,95,168,.2)}50%{box-shadow:0 0 0 6px rgba(26,95,168,.05)}}
+.et-content{flex:1;padding-bottom:20px;}
+.et-titulo{font-weight:700;font-size:14px;margin-bottom:3px;}
+.et-concluido .et-titulo{color:#2a7a5a;}
+.et-em_andamento .et-titulo{color:#1a5fa8;}
+.et-bloqueado .et-titulo{color:#c25e5e;}
+.et-pendente .et-titulo{color:#aaa;}
+.et-desc{font-size:12px;color:#7a9a9a;line-height:1.5;margin-bottom:6px;}
+.et-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.et-concluido .et-badge{background:#e8f8f0;color:#2a7a5a;}
+.et-em_andamento .et-badge{background:#e8f4ff;color:#1a5fa8;}
+.et-bloqueado .et-badge{background:#fef2f2;color:#c25e5e;}
+.et-pendente .et-badge{background:#f5f5f5;color:#aaa;}
+
+/* DOCS */
+.doc-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f7f7;}
+.doc-row:last-child{border:none;}
+.doc-icon-big{font-size:24px;flex-shrink:0;}
+.doc-info{flex:1;}
+.doc-nome{font-weight:600;font-size:13px;}
+.doc-inst{font-size:11px;color:#7a9a9a;margin-top:2px;line-height:1.4;}
+.doc-st{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.st-solicitado{background:#fff8e1;color:#8a5a00;}
+.st-recebido{background:#e8f4ff;color:#1a5fa8;}
+.st-aprovado{background:#e8f8f0;color:#2a7a5a;}
+.btn-enviei{background:#1f3e3c;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;display:block;}
+.btn-enviei:hover{background:#2b5050;}
+
+/* LOGS */
+.log-item{display:flex;gap:10px;margin-bottom:14px;}
+.log-av{width:34px;height:34px;border-radius:50%;background:#1f3e3c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.log-av.cli{background:#1a5fa8;}
+.log-bub{background:#f0f7f7;border-radius:0 10px 10px 10px;padding:10px 14px;flex:1;}
+.log-bub.cli{background:#e8f4ff;}
+.log-aut{font-size:10px;font-weight:700;color:#a7a897;}
+.log-txt{font-size:13px;line-height:1.5;margin-top:3px;}
+.log-dt{font-size:10px;color:#a7a897;margin-top:4px;}
+.msg-form{margin-top:14px;}
+.msg-form textarea{width:100%;border:1px solid rgba(167,168,151,.3);border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;height:80px;outline:none;color:#1f3e3c;}
+.msg-form button{margin-top:8px;background:#1f3e3c;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
+.msg-form button:hover{background:#2b5050;}
+
+/* FOOTER */
+.footer{text-align:center;padding:30px 20px;font-size:11px;color:#a7a897;border-top:1px solid #e8f0f0;margin-top:20px;}
+
+/* ERRO */
+.erro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:40px;}
+.erro-icon{font-size:64px;margin-bottom:16px;}
+.erro-titulo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#1f3e3c;margin-bottom:8px;}
+.erro-sub{font-size:14px;color:#a7a897;max-width:300px;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="/logo-cp.png" alt="CP" class="header-logo" onerror="this.style.display='none'">
+  <div class="header-info">
+    <div class="header-escritorio">Cavalcante Pinheiro Advocacia</div>
+    <div class="header-projeto" id="header-projeto">Portal do Cliente</div>
+  </div>
+</div>
+
+<div id="conteudo">
+  <div class="container"><div class="erro"><div class="erro-icon">⏳</div><div class="erro-titulo">Carregando...</div></div></div>
+</div>
+
+<script>
+const API = '/api/db';
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+let nomeCliente = 'Cliente';
+
+const stLabel = {pendente:'⏳ Próxima etapa',em_andamento:'🔄 Em andamento',concluido:'✅ Concluído',bloqueado:'🔴 Aguardando você'};
+const dsLabel = {solicitado:'📤 Aguardando envio',recebido:'📥 Recebido',aprovado:'✅ Aprovado'};
+
+function fmtHora(iso){if(!iso)return'';return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function ini(nome){return(nome||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();}
+
+async function carregar(){
+  if(!token){mostrarErro();return;}
+  try{
+    const r=await fetch(API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal',token})
+    });
+    if(!r.ok){mostrarErro();return;}
+    const data=await r.json();
+    if(!data.projeto){mostrarErro();return;}
+    renderPortal(data);
+  }catch(e){mostrarErro();}
+}
+
+function mostrarErro(){
+  document.getElementById('conteudo').innerHTML=`
+    <div class="erro">
+      <div class="erro-icon">🔒</div>
+      <div class="erro-titulo">Link inválido</div>
+      <div class="erro-sub">Este link não existe ou expirou. Entre em contato com o escritório.</div>
+      <div style="margin-top:20px;font-size:12px;color:#a7a897">
+        📞 (71) 99129-2322<br>
+        ✉️ mariana@cavalcantepinheiroadv.com.br
+      </div>
+    </div>`;}
+
+function renderPortal({projeto,etapas,docs,logs}){
+  nomeCliente = projeto.cliente_nome;
+  document.getElementById('header-projeto').textContent = projeto.nome;
+  document.title = `${projeto.nome} — CP`;
+
+  const total=etapas.length;
+  const conc=etapas.filter(e=>e.status==='concluido').length;
+  const pct=total>0?Math.round(conc/total*100):0;
+
+  const logsPublicos=logs.filter(l=>l.tipo==='publico'||l.tipo==='cliente');
+
+  document.getElementById('conteudo').innerHTML=`
+  <div class="container">
+
+    <!-- RESUMO -->
+    <div class="resumo">
+      <div class="resumo-cliente">Olá, ${projeto.cliente_nome}!</div>
+      <div class="resumo-nome">${projeto.nome}</div>
+      <div class="prog-label">Progresso geral</div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-nums"><span>${conc} concluída${conc!==1?'s':''}</span><span>${total} etapa${total!==1?'s':''} no total</span></div>
+    </div>
+
+    <!-- ETAPAS -->
+    ${total>0?`<div class="card">
+      <div class="card-title">📋 Etapas do Projeto</div>
+      ${etapas.map(e=>`
+        <div class="etapa-item et-${e.status}">
+          <div class="et-circle">${e.status==='concluido'?'✓':e.status==='em_andamento'?'▶':e.status==='bloqueado'?'⚠':'○'}</div>
+          <div class="et-content">
+            <div class="et-titulo">${e.titulo}</div>
+            ${e.descricao?`<div class="et-desc">${e.descricao}</div>`:''}
+            <span class="et-badge">${stLabel[e.status]||e.status}</span>
+            ${e.status==='bloqueado'?'<div style="font-size:12px;color:#c25e5e;margin-top:6px;font-weight:600">👆 Precisamos da sua ação para continuar</div>':''}
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+
+    <!-- DOCUMENTOS -->
+    ${docs.length>0?`<div class="card">
+      <div class="card-title">📄 Documentos Solicitados</div>
+      ${docs.map(d=>`
+        <div class="doc-row">
+          <div class="doc-icon-big">${d.status==='aprovado'?'✅':d.status==='recebido'?'📥':'📤'}</div>
+          <div class="doc-info">
+            <div class="doc-nome">${d.titulo}</div>
+            ${d.descricao?`<div class="doc-inst">${d.descricao}</div>`:''}
+            ${d.status==='solicitado'?`<button class="btn-enviei" onclick="marcarEnviado('${d.id}','${projeto.id}')">Já enviei por e-mail →</button>`:''}
+          </div>
+          <span class="doc-st st-${d.status}">${dsLabel[d.status]||d.status}</span>
+        </div>`).join('')}
+    </div>`:''}
+
+    <!-- COMUNICAÇÕES -->
+    <div class="card">
+      <div class="card-title">💬 Comunicações</div>
+      <div id="lista-msgs">
+        ${logsPublicos.length?logsPublicos.map(l=>`
+          <div class="log-item">
+            <div class="log-av${l.tipo==='cliente'?' cli':''}">${ini(l.autor)}</div>
+            <div class="log-bub${l.tipo==='cliente'?' cli':''}">
+              <div class="log-aut">${l.autor||'Equipe CP'}${l.tipo==='cliente'?' · Você':' · Escritório'}</div>
+              <div class="log-txt">${l.texto}</div>
+              <div class="log-dt">${fmtHora(l.criado_em)}</div>
+            </div>
+          </div>`).join('')
+          :'<div style="color:#a7a897;font-size:13px;text-align:center;padding:16px">Nenhuma mensagem ainda.</div>'}
+      </div>
+      <div class="msg-form">
+        <textarea id="msg-texto" placeholder="Envie uma mensagem para a equipe..."></textarea>
+        <button onclick="enviarMensagem('${projeto.id}')">Enviar mensagem</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="footer">
+    Cavalcante Pinheiro Sociedade Individual de Advocacia · OAB/BA nº 49.675<br>
+    (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
+  </div>`;
+}
+
+async function marcarEnviado(docId, projetoId){
+  try{
+    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal_doc',token,doc_id:docId,status:'recebido'})});
+    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto:`Documento enviado pelo cliente por e-mail.`,autor:nomeCliente,tipo:'cliente'})});
+    alert('Obrigada! Nossa equipe vai verificar e confirmar o recebimento.');
+    carregar();
+  }catch(e){alert('Erro ao registrar. Tente novamente.');}
+}
+
+async function enviarMensagem(projetoId){
+  const texto=document.getElementById('msg-texto').value.trim();
+  if(!texto){alert('Escreva uma mensagem.');return;}
+  try{
+    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto,autor:nomeCliente,tipo:'cliente'})});
+    document.getElementById('msg-texto').value='';
+    alert('Mensagem enviada! A equipe responderá em breve.');
+    carregar();
+  }catch(e){alert('Erro ao enviar. Tente novamente.');}
+}
+
+carregar();
+</script>
+</body>
+</html>

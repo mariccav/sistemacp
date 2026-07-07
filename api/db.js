@@ -12,7 +12,8 @@ const TABELAS_PERMITIDAS = new Set([
   'tarefas_astrea', 'publicacoes', 'sessoes',
   'transacoes', 'transacoes_historico', 'transacoes_prazos',
   'mural', 'elogios', 'redes_posts',
-  'processos', 'processos_historico'
+  'processos', 'processos_historico',
+  'projetos_cp', 'projetos_etapas', 'projetos_docs', 'projetos_logs'
 ]);
 
 // Operações permitidas
@@ -31,6 +32,39 @@ module.exports = async (req, res) => {
   if (!SERVICE_KEY) return res.status(500).json({ erro: 'SUPABASE_SERVICE_KEY não configurada.' });
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+
+  // ── Rotas do Portal do Cliente (sem sessão — acesso por token) ──────
+  if (body.action === 'portal') {
+    const { token } = body;
+    if (!token) return res.status(400).json({ erro: 'Token obrigatório.' });
+    const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&limit=1`, { headers: SHP });
+    const projArr = rP.ok ? await rP.json() : [];
+    if (!projArr.length) return res.status(404).json({ erro: 'Projeto não encontrado.' });
+    const projeto = projArr[0];
+    const [etapas, docs, logs] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=eq.${projeto.id}&order=ordem.asc`, { headers: SHP }).then(r=>r.json()).catch(()=>[]),
+      fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=eq.${projeto.id}&order=criado_em.asc`, { headers: SHP }).then(r=>r.json()).catch(()=>[]),
+      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=eq.${projeto.id}&order=criado_em.asc`, { headers: SHP }).then(r=>r.json()).catch(()=>[])
+    ]);
+    return res.status(200).json({ projeto, etapas, docs, logs });
+  }
+
+  if (body.action === 'portal_log') {
+    const { token, projeto_id, texto, autor, tipo } = body;
+    if (!token || !projeto_id || !texto) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHP, body: JSON.stringify({ projeto_id, texto, autor, tipo: tipo||'cliente' }) });
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.action === 'portal_doc') {
+    const { token, doc_id, status } = body;
+    if (!token || !doc_id) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}`, { method: 'PATCH', headers: SHP, body: JSON.stringify({ status }) });
+    return res.status(200).json({ ok: true });
+  }
 
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
   // Não requer sessão — usa PUBLICACAO_WEBHOOK_SECRET
