@@ -586,6 +586,17 @@ main { max-width: 1280px; margin: 0 auto; padding: 28px 32px; }
 
   </section>
 
+  <!-- SEÇÃO 4B: PROJETOS COLABORATIVOS -->
+  <section id="sec-projetos" style="display:none;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--v1)">🤝 Projetos dos Clientes</h3>
+      <a href="/colaborativo.html" class="ver-todas" style="font-size:11px;color:var(--bege);text-decoration:none">Gerenciar todos →</a>
+    </div>
+    <div id="lista-projetos-dash" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+      <div class="skeleton" style="height:80px;border-radius:10px"></div>
+    </div>
+  </section>
+
   <!-- SEÇÃO 4: ESCRITÓRIO AO VIVO (só admin) -->
   <section class="online-section" id="online-section" style="display:none">
     <div class="online-header">
@@ -635,7 +646,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     carregarTarefas(),
     carregarAgenda(),
     carregarPublicacoes(),
-    carregarKpis()
+    carregarKpis(),
+    carregarProjetos()
   ]);
 
   await carregarAlertas();
@@ -1009,6 +1021,33 @@ async function carregarAgenda() {
     }).join('');
   } catch(e) {
     container.innerHTML = `<div class="vazio">Não foi possível carregar a agenda.</div>`;
+  }
+}
+
+// ── PROJETOS COLABORATIVOS ────────────────────────
+async function carregarProjetos() {
+  try {
+    const projetos = await DB.get('projetos_cp', 'status=neq.concluido&order=atualizado_em.desc&limit=6');
+    const sec = document.getElementById('sec-projetos');
+    const container = document.getElementById('lista-projetos-dash');
+    if (!projetos || projetos.length === 0) { if(sec) sec.style.display='none'; return; }
+    if (sec) sec.style.display = 'block';
+    container.innerHTML = projetos.map(p => {
+      const stCor = p.status === 'aguardando' ? '#d97706' : p.status === 'concluido' ? '#2a7a5a' : '#1a5fa8';
+      const stLabel = p.status === 'aguardando' ? '⏳ Aguardando cliente' : p.status === 'concluido' ? '✅ Concluído' : '🔄 Em andamento';
+      const link = `https://sistemacp.vercel.app/portal.html?token=${p.token_acesso}`;
+      return `<div onclick="location.href='/colaborativo.html'" style="background:#fff;border:1px solid #e8f0f0;border-radius:10px;padding:14px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#1f3e3c'" onmouseout="this.style.borderColor='#e8f0f0'">
+        <div style="font-weight:700;font-size:13px;color:#1f3e3c;margin-bottom:3px">${p.nome}</div>
+        <div style="font-size:11px;color:#a7a897;margin-bottom:8px">👤 ${p.cliente_nome}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:10px;font-weight:700;color:${stCor}">${stLabel}</span>
+          <button onclick="event.stopPropagation();navigator.clipboard.writeText('${link}').then(()=>alert('Link copiado!'))" style="background:none;border:1px solid #e8f0f0;border-radius:5px;padding:3px 8px;font-size:10px;color:#a7a897;cursor:pointer">📋 Link</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    const sec = document.getElementById('sec-projetos');
+    if (sec) sec.style.display = 'none';
   }
 }
 
