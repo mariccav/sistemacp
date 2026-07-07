@@ -955,7 +955,7 @@ function calcBadgePrazo(prazoStr, hoje) {
 
 async function concluirTarefa(id, checkbox) {
   try {
-    await DB.update('tarefas_astrea', { status: 'concluido' }, `id=eq.${id}`);
+    await DB.update('tarefas_astrea', `id=eq.${id}`, { status: 'concluido' });
     const el = document.getElementById(`tar-${id}`);
     if (el) {
       el.style.opacity = '0.4';
