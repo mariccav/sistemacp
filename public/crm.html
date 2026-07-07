@@ -1017,16 +1017,36 @@ async function renderPainelHistorico() {
 
 async function registrarInteracao() {
   const desc = document.getElementById('hi-desc').value.trim();
-  if (!desc) { toast('Descreva a interação', true); return; }
-  await sbPost('leads_interacoes', {
-    lead_id:   leadAtivo.id,
-    tipo:      document.getElementById('hi-tipo').value,
-    descricao: desc,
-    resultado: document.getElementById('hi-resultado').value,
-    criado_por: document.getElementById('hi-quem').value
-  });
-  toast('Interação registrada ✓');
-  renderPainelHistorico();
+  if (!desc) { toast('Escreva um comentário ou descreva a interação', true); return; }
+  if (!leadAtivo?.id) { toast('Selecione um lead antes', true); return; }
+
+  // Preencher quem registrou automaticamente se vazio
+  const quemEl = document.getElementById('hi-quem');
+  if (!quemEl.value.trim()) quemEl.value = window.CP_USER?.nome || 'Equipe CP';
+
+  try {
+    const btn = document.querySelector('[onclick="registrarInteracao()"]');
+    if (btn) { btn.textContent = 'Salvando...'; btn.disabled = true; }
+
+    await sbPost('leads_interacoes', {
+      lead_id:    leadAtivo.id,
+      tipo:       document.getElementById('hi-tipo').value,
+      descricao:  desc,
+      resultado:  document.getElementById('hi-resultado').value || null,
+      criado_por: quemEl.value
+    });
+
+    document.getElementById('hi-desc').value = '';
+    document.getElementById('hi-resultado').value = '';
+    toast('Comentário registrado ✓');
+    await renderPainelHistorico();
+  } catch(e) {
+    toast('Erro ao salvar: ' + e.message, true);
+    console.error('registrarInteracao:', e);
+  } finally {
+    const btn = document.querySelector('[onclick="registrarInteracao()"]');
+    if (btn) { btn.textContent = 'Registrar'; btn.disabled = false; }
+  }
 }
 
 async function renderPainelFollowups() {
