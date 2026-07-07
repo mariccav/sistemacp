@@ -54,6 +54,10 @@ module.exports = async (req, res) => {
     const { token, projeto_id, texto, autor, tipo } = body;
     if (!token || !projeto_id || !texto) return res.status(400).json({ erro: 'Dados incompletos.' });
     const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    // SEGURANÇA: verificar que o token pertence ao projeto_id antes de inserir
+    const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${projeto_id}&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const vArr = rV.ok ? await rV.json() : [];
+    if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
     await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHP, body: JSON.stringify({ projeto_id, texto, autor, tipo: tipo||'cliente' }) });
     return res.status(200).json({ ok: true });
   }
@@ -62,6 +66,13 @@ module.exports = async (req, res) => {
     const { token, doc_id, status } = body;
     if (!token || !doc_id) return res.status(400).json({ erro: 'Dados incompletos.' });
     const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    // SEGURANÇA: verificar que o doc pertence a um projeto com esse token
+    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const dArr = rD.ok ? await rD.json() : [];
+    if (!dArr.length) return res.status(404).json({ erro: 'Documento não encontrado.' });
+    const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${dArr[0].projeto_id}&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const vArr = rV.ok ? await rV.json() : [];
+    if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
     await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}`, { method: 'PATCH', headers: SHP, body: JSON.stringify({ status }) });
     return res.status(200).json({ ok: true });
   }
