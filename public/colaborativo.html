@@ -198,6 +198,28 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
   </div>
 </div>
 
+<!-- MODAL DELEGAR TAREFA -->
+<div class="modal-bg" id="modal-tarefa">
+  <div class="modal">
+    <h2>→ Criar Tarefa da Equipe</h2>
+    <input type="hidden" id="tar-etapa-id">
+    <div class="mfld"><label>Título da tarefa</label><input id="tar-titulo" placeholder="O que precisa ser feito?"></div>
+    <div class="mfld"><label>Responsável *</label>
+      <select id="tar-resp">
+        <option value="">Selecione...</option>
+        <option>Mariana Pinheiro</option><option>Diana</option>
+        <option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+      </select>
+    </div>
+    <div class="mfld"><label>Prazo Fatal</label><input type="date" id="tar-prazo"></div>
+    <div class="mfld"><label>Observações</label><textarea id="tar-obs" placeholder="Detalhes, instruções..."></textarea></div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="fecharModal('modal-tarefa')">Cancelar</button>
+      <button class="btn-save" onclick="confirmarTarefa()">Criar Tarefa</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOVO DOC -->
 <div class="modal-bg" id="modal-doc">
   <div class="modal">
@@ -360,8 +382,10 @@ function renderEtapas(){
           </div>
         </div>
         <div class="etapa-acoes">
+          <button class="btn-sm" style="background:#e8f4ff;color:#1a5fa8" onclick="delegarTarefa('${e.id}','${e.titulo.replace(/'/g,"\\'")}')">→ Criar Tarefa</button>
           <button class="btn-sm btn-excluir" onclick="excluirEtapa('${e.id}')">Excluir etapa</button>
         </div>
+        ${e.tarefa_id?`<div style="margin-top:8px;font-size:11px;background:#f0f7f4;padding:6px 10px;border-radius:6px;color:#2a7a5a">✅ Tarefa criada e delegada à equipe</div>`:''}
       </div>
     </div>`).join('');
 }
@@ -539,8 +563,58 @@ async function salvarDoc(){
   }
 }
 
+// ── DELEGAR COMO TAREFA ────────────────────────────────────────────
+function delegarTarefa(etapaId, etapaTitulo){
+  document.getElementById('tar-etapa-id').value = etapaId;
+  document.getElementById('tar-titulo').value = etapaTitulo;
+  document.getElementById('tar-resp').value = '';
+  document.getElementById('tar-prazo').value = '';
+  document.getElementById('tar-obs').value = '';
+  abrirModal('modal-tarefa');
+}
+
+async function confirmarTarefa(){
+  const etapaId = document.getElementById('tar-etapa-id').value;
+  const titulo  = document.getElementById('tar-titulo').value.trim();
+  const resp    = document.getElementById('tar-resp').value;
+  const prazo   = document.getElementById('tar-prazo').value;
+  const obs     = document.getElementById('tar-obs').value.trim();
+  if(!titulo||!resp){toast('Título e responsável obrigatórios',true);return;}
+  try{
+    // Criar tarefa no módulo de tarefas
+    const novaTarefa = await DB.insert('tarefas_astrea',{
+      titulo,
+      responsavel: resp,
+      cliente:     projetoAtivo?.cliente_nome||null,
+      processo:    projetoAtivo?.nome||null,
+      prazo_fatal: prazo||null,
+      prazo:       prazo||null,
+      descricao:   obs||null,
+      status:      'a_fazer',
+      origem:      'portal'
+    });
+    const tarefaId = (Array.isArray(novaTarefa)?novaTarefa[0]:novaTarefa)?.id;
+    // Registrar no log do projeto
+    await DB.insert('projetos_logs',{
+      projeto_id: projetoAtivo.id,
+      texto: `Tarefa criada: "${titulo}" → delegada a ${resp}`,
+      autor: window.CP_USER?.nome||'Equipe CP',
+      tipo: 'interno'
+    });
+    // Marcar etapa como em andamento se estava pendente
+    const et = etapas.find(e=>e.id===etapaId);
+    if(et&&et.status==='pendente'){
+      await DB.update('projetos_etapas',`id=eq.${etapaId}`,{status:'em_andamento'});
+      et.status='em_andamento';
+    }
+    fecharModal('modal-tarefa');
+    document.getElementById('lista-etapas').innerHTML=renderEtapas();
+    toast(`Tarefa criada e atribuída a ${resp} ✓`);
+  }catch(e){toast('Erro: '+e.message,true);}
+}
+
 // Fechar modal clicando fora
-['modal-proj','modal-etapa','modal-doc'].forEach(id=>{
+['modal-proj','modal-etapa','modal-doc','modal-tarefa'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{
     if(e.target===document.getElementById(id))fecharModal(id);
   });

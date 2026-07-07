@@ -1,251 +1,267 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="dark" lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal do Cliente — Cavalcante Pinheiro</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"background":"#001711","surface":"#001711","surface-dim":"#001711","surface-bright":"#1f3f36","surface-container-low":"#002019","surface-container":"#02251d","surface-container-high":"#0e2f27","on-surface":"#c7eadd","on-surface-variant":"#c1c8c3","outline":"#8b928e","primary":"#a9cfbe","on-primary":"#13362b","secondary":"#e4c099","on-secondary":"#422c10"},fontFamily:{"headline":["Playfair Display"],"body":["Manrope"],"sans":["Nunito"]}}}}</script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Nunito',sans-serif;background:#f2fdff;color:#1f3e3c;min-height:100vh;}
+.fade-in-up{animation:fadeInUp 1.2s cubic-bezier(.22,1,.36,1) forwards;opacity:0;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:.2s;}.delay-2{animation-delay:.4s;}.delay-3{animation-delay:.6s;}
+.glass-panel{background:rgba(0,23,17,.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(169,207,190,.12);}
+.shimmer{background:linear-gradient(90deg,rgba(228,192,153,0) 0%,rgba(228,192,153,.08) 50%,rgba(228,192,153,0) 100%);background-size:200% 100%;animation:shimmer 3s infinite;}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.office-texture{position:fixed;inset:0;z-index:-2;pointer-events:none;background-color:#001711;}
+.wood-bg{background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuC3ptTjRqUB-VV9Aye72X5VXhbcRokmCBu1uCseiOrG8Jj06U9K5W5ELVAlm5Twd9pBi8C2dAVNnRKveGx3hI3VfuAHi0yhzGtAT38b4hO3Hj5h9dmBvtb438p57tSWyhd06lEfIDr0cEyvfD7l5ZAc0rcZ4-mDM9giwAm9vVKR40oRiaLi_IgfYfDisTqGaTwUqh9XGJqxQFmeeA9GrbEGTUKFzGWJsEcHv1ddkBbuUjuwLn43ZKJ2knGUwM7bcnKrN8wDdaIIsLBy');background-size:cover;background-position:center;opacity:.1;mix-blend-mode:luminosity;}
+#dna-canvas{opacity:.35;mix-blend-mode:screen;}
 
-/* HEADER */
-.header{background:#1f3e3c;padding:16px 24px;display:flex;align-items:center;gap:16px;}
-.header-logo{height:40px;width:auto;filter:brightness(0) invert(1);}
-.header-info{border-left:1px solid rgba(167,168,151,.3);padding-left:16px;}
-.header-escritorio{font-size:10px;color:#a7a897;letter-spacing:1px;text-transform:uppercase;}
-.header-projeto{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:#fff;margin-top:2px;}
+/* ETAPA TIMELINE */
+.step-line{position:absolute;left:15px;top:34px;bottom:-16px;width:2px;background:rgba(169,207,190,.15);}
+.step-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;position:relative;z-index:1;margin-top:2px;}
+.step-pendente .step-dot{background:rgba(139,146,142,.15);border:2px solid rgba(139,146,142,.3);}
+.step-em_andamento .step-dot{background:rgba(169,207,190,.15);border:2px solid rgba(169,207,190,.5);animation:glow 2s infinite;}
+.step-bloqueado .step-dot{background:rgba(228,192,153,.15);border:2px solid rgba(228,192,153,.5);}
+.step-concluido .step-dot{background:rgba(42,122,90,.2);border:2px solid rgba(42,122,90,.5);}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(169,207,190,.2)}50%{box-shadow:0 0 0 8px rgba(169,207,190,.05)}}
 
-/* CONTAINER */
-.container{max-width:680px;margin:0 auto;padding:24px 16px 60px;}
-
-/* RESUMO */
-.resumo{background:#1f3e3c;border-radius:16px;padding:24px;color:#fff;margin-bottom:20px;}
-.resumo-cliente{font-size:11px;color:#a7a897;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.resumo-nome{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;margin-bottom:16px;}
-.prog-label{font-size:11px;color:#a7a897;margin-bottom:6px;}
-.prog-bar{height:8px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden;}
-.prog-fill{height:100%;background:#a7a897;border-radius:4px;transition:.5s;}
-.prog-nums{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#a7a897;}
-
-/* CARDS */
-.card{background:#fff;border-radius:14px;border:1px solid #e8f0f0;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(31,62,60,.04);}
-.card-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:#1f3e3c;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-
-/* ETAPAS — timeline */
-.etapa-item{display:flex;gap:14px;margin-bottom:0;position:relative;}
-.etapa-item::before{content:'';position:absolute;left:15px;top:32px;bottom:-14px;width:2px;background:#e8f0f0;z-index:0;}
-.etapa-item:last-child::before{display:none;}
-.et-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;position:relative;z-index:1;margin-top:2px;}
-.et-concluido .et-circle{background:#e8f8f0;border:2px solid #2a7a5a;}
-.et-em_andamento .et-circle{background:#e8f4ff;border:2px solid #1a5fa8;animation:pulse 2s infinite;}
-.et-bloqueado .et-circle{background:#fef2f2;border:2px solid #c25e5e;}
-.et-pendente .et-circle{background:#f5f5f5;border:2px solid #ddd;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(26,95,168,.2)}50%{box-shadow:0 0 0 6px rgba(26,95,168,.05)}}
-.et-content{flex:1;padding-bottom:20px;}
-.et-titulo{font-weight:700;font-size:14px;margin-bottom:3px;}
-.et-concluido .et-titulo{color:#2a7a5a;}
-.et-em_andamento .et-titulo{color:#1a5fa8;}
-.et-bloqueado .et-titulo{color:#c25e5e;}
-.et-pendente .et-titulo{color:#aaa;}
-.et-desc{font-size:12px;color:#7a9a9a;line-height:1.5;margin-bottom:6px;}
-.et-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
-.et-concluido .et-badge{background:#e8f8f0;color:#2a7a5a;}
-.et-em_andamento .et-badge{background:#e8f4ff;color:#1a5fa8;}
-.et-bloqueado .et-badge{background:#fef2f2;color:#c25e5e;}
-.et-pendente .et-badge{background:#f5f5f5;color:#aaa;}
-
-/* DOCS */
-.doc-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f7f7;}
+/* DOC */
+.doc-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid rgba(169,207,190,.08);}
 .doc-row:last-child{border:none;}
-.doc-icon-big{font-size:24px;flex-shrink:0;}
-.doc-info{flex:1;}
-.doc-nome{font-weight:600;font-size:13px;}
-.doc-inst{font-size:11px;color:#7a9a9a;margin-top:2px;line-height:1.4;}
-.doc-st{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;}
-.st-solicitado{background:#fff8e1;color:#8a5a00;}
-.st-recebido{background:#e8f4ff;color:#1a5fa8;}
-.st-aprovado{background:#e8f8f0;color:#2a7a5a;}
-.btn-enviei{background:#1f3e3c;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;display:block;}
-.btn-enviei:hover{background:#2b5050;}
 
-/* LOGS */
-.log-item{display:flex;gap:10px;margin-bottom:14px;}
-.log-av{width:34px;height:34px;border-radius:50%;background:#1f3e3c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
-.log-av.cli{background:#1a5fa8;}
-.log-bub{background:#f0f7f7;border-radius:0 10px 10px 10px;padding:10px 14px;flex:1;}
-.log-bub.cli{background:#e8f4ff;}
-.log-aut{font-size:10px;font-weight:700;color:#a7a897;}
-.log-txt{font-size:13px;line-height:1.5;margin-top:3px;}
-.log-dt{font-size:10px;color:#a7a897;margin-top:4px;}
-.msg-form{margin-top:14px;}
-.msg-form textarea{width:100%;border:1px solid rgba(167,168,151,.3);border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;resize:none;height:80px;outline:none;color:#1f3e3c;}
-.msg-form button{margin-top:8px;background:#1f3e3c;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
-.msg-form button:hover{background:#2b5050;}
+/* MENSAGEM */
+.msg-item{display:flex;gap:10px;margin-bottom:16px;}
+.msg-av{width:34px;height:34px;border-radius:50%;background:rgba(169,207,190,.15);border:1px solid rgba(169,207,190,.2);color:#a9cfbe;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.msg-av.cli{background:rgba(228,192,153,.15);border-color:rgba(228,192,153,.3);color:#e4c099;}
+.msg-bub{background:rgba(169,207,190,.06);border:1px solid rgba(169,207,190,.1);border-radius:0 12px 12px 12px;padding:10px 14px;flex:1;}
+.msg-bub.cli{background:rgba(228,192,153,.08);border-color:rgba(228,192,153,.15);}
+.msg-input{width:100%;background:rgba(14,47,39,.6);border:1px solid rgba(169,207,190,.15);border-radius:10px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;color:#c7eadd;resize:none;height:80px;outline:none;}
+.msg-input::placeholder{color:rgba(193,200,195,.3);}
+.msg-input:focus{border-color:rgba(228,192,153,.4);}
+.msg-btn{background:#e4c099;color:#422c10;border:none;border-radius:8px;padding:10px 20px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;transition:.2s;}
+.msg-btn:hover{box-shadow:0 0 20px rgba(228,192,153,.3);}
+.doc-btn{background:rgba(228,192,153,.15);color:#e4c099;border:1px solid rgba(228,192,153,.3);border-radius:7px;padding:6px 14px;font-family:'Manrope',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;}
+.doc-btn:hover{background:rgba(228,192,153,.25);}
 
-/* FOOTER */
-.footer{text-align:center;padding:30px 20px;font-size:11px;color:#a7a897;border-top:1px solid #e8f0f0;margin-top:20px;}
-
-/* ERRO */
-.erro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:40px;}
-.erro-icon{font-size:64px;margin-bottom:16px;}
-.erro-titulo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:#1f3e3c;margin-bottom:8px;}
-.erro-sub{font-size:14px;color:#a7a897;max-width:300px;line-height:1.6;}
+/* LANDING */
+.landing-btn{width:100%;background:#e4c099;color:#422c10;border:none;border-radius:10px;padding:16px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;letter-spacing:.05em;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.landing-btn:hover{box-shadow:0 0 30px rgba(228,192,153,.4);}
 </style>
 </head>
-<body>
+<body class="bg-background text-on-surface font-body antialiased min-h-screen">
 
-<div class="header">
-  <img src="/logo-cp.png" alt="CP" class="header-logo" onerror="this.style.display='none'">
-  <div class="header-info">
-    <div class="header-escritorio">Cavalcante Pinheiro Advocacia</div>
-    <div class="header-projeto" id="header-projeto">Portal do Cliente</div>
-  </div>
+<!-- Texturas -->
+<div class="office-texture wood-bg"></div>
+<div style="position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 10% 10%,rgba(255,221,185,.04) 0%,transparent 50%)"></div>
+
+<!-- DNA WebGL -->
+<div class="fixed inset-0 w-full h-full" style="z-index:-1">
+<canvas id="dna-canvas" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function(){
+  const canvas=document.getElementById('dna-canvas');
+  function syncSize(){const w=canvas.clientWidth||1280,h=canvas.clientHeight||720;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}}
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(syncSize).observe(canvas);
+  syncSize();
+  const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');if(!gl)return;
+  const vs=`attribute vec2 a_position;varying vec2 v_texCoord;void main(){v_texCoord=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
+  const fs=`precision highp float;uniform float u_time;uniform vec2 u_resolution;varying vec2 v_texCoord;void main(){vec2 uv=v_texCoord;vec2 p=(uv-0.5)*2.0;p.x*=u_resolution.x/u_resolution.y;float t=u_time*0.3;float s=sin(t*0.1);float c=cos(t*0.1);p=mat2(c,-s,s,c)*p;float helix=0.0;for(float i=0.0;i<2.0;i++){float offset=i*3.14159;float x=p.x+sin(p.y*2.5+u_time*0.8+offset)*0.35;float line=smoothstep(0.06,0.0,abs(x));float steps=smoothstep(0.04,0.0,abs(sin(p.y*10.0+u_time*0.4)))*step(abs(p.x),0.35);helix+=line*0.7+steps*0.4;}vec3 color1=vec3(0.0,0.08,0.06);vec3 color2=vec3(0.89,0.75,0.60);float mask=smoothstep(1.0,0.2,length(p*0.7));vec3 finalColor=mix(color1,color2,helix*mask*0.5);finalColor+=color2*(0.05*sin(u_time)+0.05)*helix*mask;gl_FragColor=vec4(finalColor,1.0);}`;
+  function cs(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const prog=gl.createProgram();gl.attachShader(prog,cs(gl.VERTEX_SHADER,vs));gl.attachShader(prog,cs(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'a_position');gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const uTime=gl.getUniformLocation(prog,'u_time');const uRes=gl.getUniformLocation(prog,'u_resolution');
+  function render(t){gl.viewport(0,0,canvas.width,canvas.height);if(uTime)gl.uniform1f(uTime,t*0.001);if(uRes)gl.uniform2f(uRes,canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(render);}
+  render(0);
+})();
+</script>
 </div>
 
-<div id="conteudo">
-  <div class="container"><div class="erro"><div class="erro-icon">⏳</div><div class="erro-titulo">Carregando...</div></div></div>
+<!-- LANDING / CONTEÚDO -->
+<div id="app" class="relative min-h-screen flex flex-col items-center justify-center px-4 py-8">
+  <!-- Estado de carregamento inicial -->
+  <div id="landing" class="w-full max-w-lg text-center fade-in-up">
+    <img src="/logo-cp.png" alt="CP" style="height:48px;width:auto;filter:brightness(0) invert(1);opacity:.8;margin:0 auto 24px;">
+    <p class="font-body text-xs tracking-[0.3em] uppercase text-secondary mb-4 opacity-70">Cavalcante Pinheiro · Advocacia</p>
+    <h1 class="font-headline text-3xl md:text-4xl text-on-surface leading-tight mb-2">
+      A excelência está no<br><span class="text-secondary italic">nosso DNA.</span>
+    </h1>
+    <p class="text-on-surface-variant text-sm mt-4 mb-8">Carregando seu portal...</p>
+    <div style="width:40px;height:40px;border-radius:50%;border:2px solid rgba(228,192,153,.3);border-top-color:#e4c099;animation:spin 1s linear infinite;margin:0 auto"></div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+  </div>
 </div>
 
 <script>
 const API = '/api/db';
 const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
-let nomeCliente = 'Cliente';
-
-const stLabel = {pendente:'⏳ Próxima etapa',em_andamento:'🔄 Em andamento',concluido:'✅ Concluído',bloqueado:'🔴 Aguardando você'};
-const dsLabel = {solicitado:'📤 Aguardando envio',recebido:'📥 Recebido',aprovado:'✅ Aprovado'};
+let nomeCliente = '';
+let projetoId = '';
 
 function fmtHora(iso){if(!iso)return'';return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function ini(nome){return(nome||'?').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();}
 
+const stInfo = {
+  pendente:{icon:'○',label:'Próxima etapa',color:'text-on-surface-variant/50'},
+  em_andamento:{icon:'▶',label:'Em andamento',color:'text-primary'},
+  bloqueado:{icon:'⚠',label:'Aguardando você',color:'text-secondary'},
+  concluido:{icon:'✓',label:'Concluído',color:'text-emerald-400'}
+};
+
 async function carregar(){
-  if(!token){mostrarErro();return;}
+  if(!token){mostrarErro('Link inválido ou expirado.');return;}
   try{
-    const r=await fetch(API,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'portal',token})
-    });
-    if(!r.ok){mostrarErro();return;}
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal',token})});
+    if(!r.ok){mostrarErro('Projeto não encontrado.');return;}
     const data=await r.json();
-    if(!data.projeto){mostrarErro();return;}
+    if(!data.projeto){mostrarErro('Projeto não encontrado.');return;}
+    nomeCliente=data.projeto.cliente_nome;
+    projetoId=data.projeto.id;
+    document.title=`${data.projeto.nome} — Cavalcante Pinheiro`;
     renderPortal(data);
-  }catch(e){mostrarErro();}
+  }catch(e){mostrarErro('Erro de conexão. Tente novamente.');}
 }
 
-function mostrarErro(){
-  document.getElementById('conteudo').innerHTML=`
-    <div class="erro">
-      <div class="erro-icon">🔒</div>
-      <div class="erro-titulo">Link inválido</div>
-      <div class="erro-sub">Este link não existe ou expirou. Entre em contato com o escritório.</div>
-      <div style="margin-top:20px;font-size:12px;color:#a7a897">
-        📞 (71) 99129-2322<br>
-        ✉️ mariana@cavalcantepinheiroadv.com.br
+function mostrarErro(msg){
+  document.getElementById('app').innerHTML=`
+    <div class="text-center fade-in-up">
+      <img src="/logo-cp.png" alt="CP" style="height:40px;width:auto;filter:brightness(0) invert(1);opacity:.6;margin:0 auto 24px;">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <div class="font-headline text-2xl text-on-surface mb-3">Link inválido</div>
+      <div class="text-on-surface-variant text-sm max-w-xs mx-auto">${msg}</div>
+      <div class="mt-8 text-xs text-on-surface-variant/50">
+        (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
       </div>
     </div>`;}
 
 function renderPortal({projeto,etapas,docs,logs}){
-  nomeCliente = projeto.cliente_nome;
-  document.getElementById('header-projeto').textContent = projeto.nome;
-  document.title = `${projeto.nome} — CP`;
-
   const total=etapas.length;
   const conc=etapas.filter(e=>e.status==='concluido').length;
   const pct=total>0?Math.round(conc/total*100):0;
-
   const logsPublicos=logs.filter(l=>l.tipo==='publico'||l.tipo==='cliente');
 
-  document.getElementById('conteudo').innerHTML=`
-  <div class="container">
+  document.getElementById('app').innerHTML=`
+  <div class="w-full max-w-2xl mx-auto py-8 px-4 fade-in-up">
 
-    <!-- RESUMO -->
-    <div class="resumo">
-      <div class="resumo-cliente">Olá, ${projeto.cliente_nome}!</div>
-      <div class="resumo-nome">${projeto.nome}</div>
-      <div class="prog-label">Progresso geral</div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-      <div class="prog-nums"><span>${conc} concluída${conc!==1?'s':''}</span><span>${total} etapa${total!==1?'s':''} no total</span></div>
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+      <img src="/logo-cp.png" alt="CP" style="height:36px;width:auto;filter:brightness(0) invert(1);opacity:.7;">
+      <div style="width:1px;height:36px;background:rgba(169,207,190,.2)"></div>
+      <div>
+        <div class="text-xs text-on-surface-variant/50 tracking-widest uppercase font-body">Portal do Cliente</div>
+        <div class="font-headline text-lg text-on-surface">${projeto.nome}</div>
+      </div>
     </div>
 
-    <!-- ETAPAS -->
-    ${total>0?`<div class="card">
-      <div class="card-title">📋 Etapas do Projeto</div>
-      ${etapas.map(e=>`
-        <div class="etapa-item et-${e.status}">
-          <div class="et-circle">${e.status==='concluido'?'✓':e.status==='em_andamento'?'▶':e.status==='bloqueado'?'⚠':'○'}</div>
-          <div class="et-content">
-            <div class="et-titulo">${e.titulo}</div>
-            ${e.descricao?`<div class="et-desc">${e.descricao}</div>`:''}
-            <span class="et-badge">${stLabel[e.status]||e.status}</span>
-            ${e.status==='bloqueado'?'<div style="font-size:12px;color:#c25e5e;margin-top:6px;font-weight:600">👆 Precisamos da sua ação para continuar</div>':''}
-          </div>
-        </div>`).join('')}
+    <!-- Resumo -->
+    <div class="glass-panel rounded-2xl p-6 mb-6 relative overflow-hidden">
+      <div class="shimmer absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-700"></div>
+      <div class="relative">
+        <div class="text-xs text-secondary tracking-widest uppercase font-body mb-1">Olá, ${projeto.cliente_nome}!</div>
+        <div class="font-headline text-2xl text-on-surface mb-4">${projeto.nome}</div>
+        <div class="text-xs text-on-surface-variant/50 mb-2 uppercase tracking-wider">Progresso geral</div>
+        <div style="height:6px;background:rgba(169,207,190,.1);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#a9cfbe,#e4c099);border-radius:3px;transition:.5s"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-on-surface-variant/50">
+          <span>${conc} concluída${conc!==1?'s':''}</span>
+          <span>${pct}% — ${total} etapa${total!==1?'s':''}</span>
+        </div>
+      </div>
+    </div>
+
+    ${total>0?`
+    <!-- Etapas -->
+    <div class="glass-panel rounded-2xl p-6 mb-6">
+      <div class="text-xs text-on-surface-variant/50 uppercase tracking-widest mb-5">📋 Etapas do Projeto</div>
+      <div>
+        ${etapas.map((e,i)=>{
+          const si=stInfo[e.status]||stInfo.pendente;
+          return`<div class="flex gap-4 mb-4 relative step-${e.status}">
+            ${i<etapas.length-1?'<div class="step-line"></div>':''}
+            <div class="step-dot">${e.status==='concluido'?'✓':e.status==='em_andamento'?'▶':e.status==='bloqueado'?'⚠':'○'}</div>
+            <div class="flex-1 pb-4">
+              <div class="font-semibold text-sm ${e.status==='pendente'?'text-on-surface-variant/40':e.status==='concluido'?'text-emerald-400':e.status==='bloqueado'?'text-secondary':'text-primary'} mb-1">${e.titulo}</div>
+              ${e.descricao?`<div class="text-xs text-on-surface-variant/50 leading-relaxed mb-2">${e.descricao}</div>`:''}
+              <span class="text-xs ${si.color} font-semibold">${si.icon} ${si.label}</span>
+              ${e.status==='bloqueado'?`<div class="mt-2 text-xs text-secondary/80 bg-secondary/10 border border-secondary/20 rounded-lg px-3 py-2">👆 Precisamos da sua participação para avançar nesta etapa.</div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`:''}
 
-    <!-- DOCUMENTOS -->
-    ${docs.length>0?`<div class="card">
-      <div class="card-title">📄 Documentos Solicitados</div>
+    ${docs.length>0?`
+    <!-- Documentos -->
+    <div class="glass-panel rounded-2xl p-6 mb-6">
+      <div class="text-xs text-on-surface-variant/50 uppercase tracking-widest mb-5">📄 Documentos Solicitados</div>
       ${docs.map(d=>`
         <div class="doc-row">
-          <div class="doc-icon-big">${d.status==='aprovado'?'✅':d.status==='recebido'?'📥':'📤'}</div>
-          <div class="doc-info">
-            <div class="doc-nome">${d.titulo}</div>
-            ${d.descricao?`<div class="doc-inst">${d.descricao}</div>`:''}
-            ${d.status==='solicitado'?`<button class="btn-enviei" onclick="marcarEnviado('${d.id}','${projeto.id}')">Já enviei por e-mail →</button>`:''}
+          <div style="font-size:22px;flex-shrink:0">${d.status==='aprovado'?'✅':d.status==='recebido'?'📥':'📤'}</div>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-on-surface">${d.titulo}</div>
+            ${d.descricao?`<div class="text-xs text-on-surface-variant/50 mt-1 leading-relaxed">${d.descricao}</div>`:''}
+            <div class="text-xs mt-2 ${d.status==='solicitado'?'text-secondary':d.status==='recebido'?'text-primary':'text-emerald-400'} font-semibold">
+              ${d.status==='solicitado'?'📤 Aguardando envio':d.status==='recebido'?'📥 Recebido pela equipe':'✅ Aprovado'}
+            </div>
+            ${d.status==='solicitado'?`<button class="doc-btn mt-2" onclick="confirmarDocEnviado('${d.id}')">Já enviei por e-mail →</button>`:''}
           </div>
-          <span class="doc-st st-${d.status}">${dsLabel[d.status]||d.status}</span>
         </div>`).join('')}
     </div>`:''}
 
-    <!-- COMUNICAÇÕES -->
-    <div class="card">
-      <div class="card-title">💬 Comunicações</div>
+    <!-- Mensagens -->
+    <div class="glass-panel rounded-2xl p-6 mb-6">
+      <div class="text-xs text-on-surface-variant/50 uppercase tracking-widest mb-5">💬 Comunicações</div>
       <div id="lista-msgs">
         ${logsPublicos.length?logsPublicos.map(l=>`
-          <div class="log-item">
-            <div class="log-av${l.tipo==='cliente'?' cli':''}">${ini(l.autor)}</div>
-            <div class="log-bub${l.tipo==='cliente'?' cli':''}">
-              <div class="log-aut">${l.autor||'Equipe CP'}${l.tipo==='cliente'?' · Você':' · Escritório'}</div>
-              <div class="log-txt">${l.texto}</div>
-              <div class="log-dt">${fmtHora(l.criado_em)}</div>
+          <div class="msg-item">
+            <div class="msg-av${l.tipo==='cliente'?' cli':''}">${ini(l.autor)}</div>
+            <div class="msg-bub${l.tipo==='cliente'?' cli':''}">
+              <div class="text-xs font-bold text-on-surface-variant/50">${l.autor||'Equipe CP'}${l.tipo==='cliente'?' · Você':' · Escritório'}</div>
+              <div class="text-sm text-on-surface mt-1 leading-relaxed">${l.texto}</div>
+              <div class="text-xs text-on-surface-variant/30 mt-2">${fmtHora(l.criado_em)}</div>
             </div>
           </div>`).join('')
-          :'<div style="color:#a7a897;font-size:13px;text-align:center;padding:16px">Nenhuma mensagem ainda.</div>'}
+          :'<div class="text-xs text-on-surface-variant/40 text-center py-4">Nenhuma mensagem ainda.</div>'}
       </div>
-      <div class="msg-form">
-        <textarea id="msg-texto" placeholder="Envie uma mensagem para a equipe..."></textarea>
-        <button onclick="enviarMensagem('${projeto.id}')">Enviar mensagem</button>
+      <div class="mt-4">
+        <textarea id="msg-texto" class="msg-input" placeholder="Escreva uma mensagem para a equipe..."></textarea>
+        <button class="msg-btn" onclick="enviarMensagem()">Enviar mensagem</button>
       </div>
     </div>
 
-  </div>
-  <div class="footer">
-    Cavalcante Pinheiro Sociedade Individual de Advocacia · OAB/BA nº 49.675<br>
-    (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
+    <!-- Footer -->
+    <div class="text-center text-xs text-on-surface-variant/30 pb-4">
+      Cavalcante Pinheiro Sociedade Individual de Advocacia · OAB/BA nº 49.675<br>
+      (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br
+    </div>
+
   </div>`;
 }
 
-async function marcarEnviado(docId, projetoId){
+async function confirmarDocEnviado(docId){
   try{
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'portal_doc',token,doc_id:docId,status:'recebido'})});
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto:`Documento enviado pelo cliente por e-mail.`,autor:nomeCliente,tipo:'cliente'})});
-    alert('Obrigada! Nossa equipe vai verificar e confirmar o recebimento.');
+      body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto:`Documento confirmado como enviado pelo cliente por e-mail.`,autor:nomeCliente,tipo:'cliente'})});
+    alert('Registrado! Nossa equipe vai confirmar o recebimento.');
     carregar();
-  }catch(e){alert('Erro ao registrar. Tente novamente.');}
+  }catch(e){alert('Erro. Tente novamente.');}
 }
 
-async function enviarMensagem(projetoId){
+async function enviarMensagem(){
   const texto=document.getElementById('msg-texto').value.trim();
   if(!texto){alert('Escreva uma mensagem.');return;}
   try{
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto,autor:nomeCliente,tipo:'cliente'})});
     document.getElementById('msg-texto').value='';
-    alert('Mensagem enviada! A equipe responderá em breve.');
     carregar();
   }catch(e){alert('Erro ao enviar. Tente novamente.');}
 }
