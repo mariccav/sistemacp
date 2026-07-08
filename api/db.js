@@ -5,6 +5,63 @@
 
 const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
 
+// ── Helpers: WhatsApp (Twilio) e arquivos (Supabase Storage) ────────
+const BUCKET_PORTAL = 'portal-docs';
+
+function fmtTelefone(raw) {
+  const tel = (raw || '').replace(/\D/g, '');
+  if (tel.length < 10) return null;
+  return tel.startsWith('55') ? `+${tel}` : `+55${tel}`;
+}
+
+async function enviarWhatsApp(telefone, mensagem) {
+  const SID  = process.env.TWILIO_ACCOUNT_SID;
+  const TK   = process.env.TWILIO_AUTH_TOKEN;
+  const FROM = process.env.TWILIO_WHATSAPP_FROM;
+  const para = fmtTelefone(telefone);
+  if (!SID || !TK || !FROM || !para) return false;
+  try {
+    const params = new URLSearchParams({ From: FROM, To: `whatsapp:${para}`, Body: mensagem });
+    const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${SID}:${TK}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+// Telefone da colaboradora responsável (tabela usuarios, coluna telefone)
+async function telefoneDoUsuario(SERVICE_KEY, nome) {
+  if (!nome) return null;
+  try {
+    const r = await fetch(
+      `${SB_URL}/rest/v1/usuarios?nome=eq.${encodeURIComponent(nome)}&select=telefone&limit=1`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
+    );
+    const u = r.ok ? await r.json() : [];
+    return u[0]?.telefone || null;
+  } catch { return null; }
+}
+
+// Link temporário (assinado) para arquivo no bucket privado
+async function linkArquivo(SERVICE_KEY, path, expiresIn = 3600) {
+  if (!path) return null;
+  try {
+    const r = await fetch(`${SB_URL}/storage/v1/object/sign/${BUCKET_PORTAL}/${path}`, {
+      method: 'POST',
+      headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expiresIn })
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.signedURL ? `${SB_URL}/storage/v1${d.signedURL}` : null;
+  } catch { return null; }
+}
+
 // Tabelas permitidas — whitelist explícita de segurança
 const TABELAS_PERMITIDAS = new Set([
   'usuarios', 'clientes', 'leads', 'leads_contatos', 'leads_interacoes',
@@ -47,6 +104,12 @@ module.exports = async (req, res) => {
       fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=eq.${projeto.id}&order=criado_em.asc`, { headers: SHP }).then(r=>r.json()).catch(()=>[]),
       fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=eq.${projeto.id}&order=criado_em.asc`, { headers: SHP }).then(r=>r.json()).catch(()=>[])
     ]);
+    // Gerar link temporário para arquivos já enviados pelo cliente
+    if (Array.isArray(docs)) {
+      await Promise.all(docs.map(async d => {
+        if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
+      }));
+    }
     return res.status(200).json({ projeto, etapas, docs, logs });
   }
 
@@ -59,6 +122,15 @@ module.exports = async (req, res) => {
     const vArr = rV.ok ? await rV.json() : [];
     if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
     await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHP, body: JSON.stringify({ projeto_id, texto, autor, tipo: tipo||'cliente' }) });
+    // Avisar a responsável no WhatsApp quando o cliente escreve
+    if ((tipo || 'cliente') === 'cliente') {
+      const proj = vArr[0];
+      const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
+      if (telResp) {
+        await enviarWhatsApp(telResp,
+          `💬 *Portal CP* — ${proj.cliente_nome} enviou uma mensagem no projeto "${proj.nome}":\n\n"${String(texto).slice(0, 300)}"\n\nResponda pelo colaborativo.`);
+      }
+    }
     return res.status(200).json({ ok: true });
   }
 
@@ -67,13 +139,84 @@ module.exports = async (req, res) => {
     if (!token || !doc_id) return res.status(400).json({ erro: 'Dados incompletos.' });
     const SHP = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
     // SEGURANÇA: verificar que o doc pertence a um projeto com esse token
-    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id,titulo`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
     const dArr = rD.ok ? await rD.json() : [];
     if (!dArr.length) return res.status(404).json({ erro: 'Documento não encontrado.' });
     const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${dArr[0].projeto_id}&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
     const vArr = rV.ok ? await rV.json() : [];
     if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
     await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}`, { method: 'PATCH', headers: SHP, body: JSON.stringify({ status }) });
+    // Avisar a responsável quando o cliente confirma envio por e-mail
+    if (status === 'recebido') {
+      const proj = vArr[0];
+      const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
+      if (telResp) {
+        await enviarWhatsApp(telResp,
+          `📥 *Portal CP* — ${proj.cliente_nome} confirmou o envio do documento "${dArr[0].titulo}" (projeto "${proj.nome}"). Verifique o e-mail.`);
+      }
+    }
+    return res.status(200).json({ ok: true });
+  }
+
+  // ── Upload de documento pelo cliente (Supabase Storage) ────────────
+  // 1º passo: gerar URL assinada de upload
+  if (body.action === 'portal_upload') {
+    const { token, doc_id, nome_arquivo } = body;
+    if (!token || !doc_id || !nome_arquivo) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id,titulo`, { headers: SHK });
+    const dArr = rD.ok ? await rD.json() : [];
+    if (!dArr.length) return res.status(404).json({ erro: 'Documento não encontrado.' });
+    const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${dArr[0].projeto_id}&limit=1`, { headers: SHK });
+    const vArr = rV.ok ? await rV.json() : [];
+    if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
+    const limpo = String(nome_arquivo).normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80) || 'documento';
+    const path = `${dArr[0].projeto_id}/${doc_id}/${Date.now()}_${limpo}`;
+    const rU = await fetch(`${SB_URL}/storage/v1/object/upload/sign/${BUCKET_PORTAL}/${path}`, {
+      method: 'POST',
+      headers: { ...SHK, 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    if (!rU.ok) return res.status(502).json({ erro: 'Não foi possível preparar o upload. Verifique se o bucket portal-docs existe.' });
+    const dU = await rU.json();
+    return res.status(200).json({ upload_url: `${SB_URL}/storage/v1${dU.url}`, path });
+  }
+
+  // 2º passo: confirmar upload → marca recebido, registra log e avisa a equipe
+  if (body.action === 'portal_upload_done') {
+    const { token, doc_id, path, nome_arquivo } = body;
+    if (!token || !doc_id || !path) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW = { ...SHK, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id,titulo`, { headers: SHK });
+    const dArr = rD.ok ? await rD.json() : [];
+    if (!dArr.length) return res.status(404).json({ erro: 'Documento não encontrado.' });
+    const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${dArr[0].projeto_id}&limit=1`, { headers: SHK });
+    const vArr = rV.ok ? await rV.json() : [];
+    if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
+    // O path precisa pertencer a este documento
+    if (!String(path).startsWith(`${dArr[0].projeto_id}/${doc_id}/`)) {
+      return res.status(403).json({ erro: 'Caminho de arquivo inválido.' });
+    }
+    const proj = vArr[0];
+    await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}`, {
+      method: 'PATCH', headers: SHW,
+      body: JSON.stringify({ status: 'recebido', arquivo_path: path, arquivo_nome: nome_arquivo || null })
+    });
+    await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: SHW,
+      body: JSON.stringify({
+        projeto_id: proj.id,
+        texto: `📎 Documento enviado pelo portal: "${dArr[0].titulo}"`,
+        autor: proj.cliente_nome, tipo: 'cliente'
+      })
+    });
+    const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
+    if (telResp) {
+      await enviarWhatsApp(telResp,
+        `📎 *Portal CP* — ${proj.cliente_nome} anexou o documento "${dArr[0].titulo}" no projeto "${proj.nome}". O arquivo já está disponível no colaborativo.`);
+    }
     return res.status(200).json({ ok: true });
   }
 
@@ -219,6 +362,38 @@ module.exports = async (req, res) => {
   } catch {}
 
   if (!sessaoValida) return res.status(401).json({ erro: 'Sessão inválida.' });
+
+  // ── Ações autenticadas da equipe ──────────────────────────────────
+  // Link temporário para abrir arquivo enviado pelo cliente
+  if (body.action === 'arquivo_url') {
+    const url = await linkArquivo(SERVICE_KEY, body.path, 3600);
+    if (!url) return res.status(404).json({ erro: 'Arquivo não encontrado.' });
+    return res.status(200).json({ url });
+  }
+
+  // Avisar o cliente no WhatsApp (etapa concluída, doc solicitado, nova mensagem)
+  if (body.action === 'notificar_cliente') {
+    const { projeto_id, evento, detalhe } = body;
+    if (!projeto_id || !evento) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${projeto_id}&limit=1`,
+      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const pArr = rP.ok ? await rP.json() : [];
+    if (!pArr.length) return res.status(404).json({ erro: 'Projeto não encontrado.' });
+    const p = pArr[0];
+    if (!p.cliente_telefone) return res.status(200).json({ ok: false, motivo: 'sem_telefone' });
+    const link = `https://sistemacp.vercel.app/portal.html?token=${p.token_acesso}`;
+    const nome = (p.cliente_nome || '').split(' ')[0];
+    let msg;
+    if (evento === 'etapa_concluida') {
+      msg = `Olá, ${nome}! ✅\n\nBoa notícia: avançamos no seu projeto *${p.nome}*. A etapa *${detalhe}* foi concluída.\n\nAcompanhe tudo em tempo real no seu portal exclusivo:\n${link}\n\n_Cavalcante Pinheiro Advocacia_`;
+    } else if (evento === 'documento_solicitado') {
+      msg = `Olá, ${nome}! 📄\n\nPara avançarmos no seu projeto *${p.nome}*, precisamos de um documento: *${detalhe}*.\n\nVocê pode enviá-lo com segurança, em poucos cliques, pelo seu portal:\n${link}\n\n_Cavalcante Pinheiro Advocacia_`;
+    } else {
+      msg = `Olá, ${nome}! 💬\n\nVocê tem uma nova atualização da equipe no portal do seu projeto *${p.nome}*.\n\nConfira:\n${link}\n\n_Cavalcante Pinheiro Advocacia_`;
+    }
+    const enviado = await enviarWhatsApp(p.cliente_telefone, msg);
+    return res.status(200).json({ ok: enviado });
+  }
 
   // ── 2. Validar tabela e operação ─────────────────────────────────
   const { tabela, filtros = '', dados } = body;

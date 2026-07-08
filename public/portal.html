@@ -209,7 +209,13 @@ function renderPortal({projeto,etapas,docs,logs}){
             <div class="text-xs mt-2 ${d.status==='solicitado'?'text-secondary':d.status==='recebido'?'text-primary':'text-emerald-400'} font-semibold">
               ${d.status==='solicitado'?'📤 Aguardando envio':d.status==='recebido'?'📥 Recebido pela equipe':'✅ Aprovado'}
             </div>
-            ${d.status==='solicitado'?`<button class="doc-btn mt-2" onclick="confirmarDocEnviado('${d.id}')">Já enviei por e-mail →</button>`:''}
+            ${d.arquivo_url?`<div class="text-xs mt-2"><a href="${d.arquivo_url}" target="_blank" rel="noopener" style="color:#a9cfbe;text-decoration:underline">📎 ${d.arquivo_nome||'Ver arquivo enviado'}</a></div>`:''}
+            ${d.status==='solicitado'?`
+            <div class="mt-3 flex flex-wrap gap-2 items-center">
+              <input type="file" id="file-${d.id}" style="display:none" onchange="enviarArquivo('${d.id}')">
+              <button class="doc-btn" id="btn-up-${d.id}" onclick="document.getElementById('file-${d.id}').click()">📎 Anexar documento</button>
+              <button class="doc-btn" style="background:none;border-color:rgba(228,192,153,.15);opacity:.65" onclick="confirmarDocEnviado('${d.id}')">Enviei por e-mail</button>
+            </div>`:''}
           </div>
         </div>`).join('')}
     </div>`:''}
@@ -244,26 +250,59 @@ function renderPortal({projeto,etapas,docs,logs}){
   </div>`;
 }
 
+function toast(msg,err=false){
+  const t=document.createElement('div');t.textContent=msg;
+  t.style.cssText=`position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:${err?'rgba(147,0,10,.95)':'rgba(14,47,39,.97)'};color:${err?'#ffb4ab':'#c7eadd'};border:1px solid ${err?'rgba(255,180,171,.3)':'rgba(169,207,190,.3)'};padding:13px 24px;border-radius:12px;font-size:13px;z-index:9999;font-family:'Manrope',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5);max-width:90vw;text-align:center;`;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3800);
+}
+
+async function enviarArquivo(docId){
+  const input=document.getElementById('file-'+docId);
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>25*1024*1024){toast('Arquivo muito grande. O limite é 25 MB.',true);input.value='';return;}
+  const btn=document.getElementById('btn-up-'+docId);
+  const txtOriginal=btn.textContent;
+  btn.textContent='⏳ Enviando...';btn.disabled=true;
+  try{
+    const r1=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal_upload',token,doc_id:docId,nome_arquivo:file.name})});
+    const d1=await r1.json();
+    if(!r1.ok||!d1.upload_url)throw new Error(d1.erro||'Falha ao preparar o envio.');
+    const r2=await fetch(d1.upload_url,{method:'PUT',
+      headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
+    if(!r2.ok)throw new Error('Falha no envio do arquivo. Tente novamente.');
+    await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'portal_upload_done',token,doc_id:docId,path:d1.path,nome_arquivo:file.name})});
+    toast('Documento enviado com sucesso! Nossa equipe já foi avisada. ✓');
+    carregar();
+  }catch(e){
+    toast(e.message||'Erro ao enviar. Tente novamente.',true);
+    btn.textContent=txtOriginal;btn.disabled=false;
+  }
+}
+
 async function confirmarDocEnviado(docId){
   try{
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'portal_doc',token,doc_id:docId,status:'recebido'})});
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto:`Documento confirmado como enviado pelo cliente por e-mail.`,autor:nomeCliente,tipo:'cliente'})});
-    alert('Registrado! Nossa equipe vai confirmar o recebimento.');
+    toast('Registrado! Nossa equipe vai confirmar o recebimento. ✓');
     carregar();
-  }catch(e){alert('Erro. Tente novamente.');}
+  }catch(e){toast('Erro. Tente novamente.',true);}
 }
 
 async function enviarMensagem(){
   const texto=document.getElementById('msg-texto').value.trim();
-  if(!texto){alert('Escreva uma mensagem.');return;}
+  if(!texto){toast('Escreva uma mensagem.',true);return;}
   try{
     await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'portal_log',token,projeto_id:projetoId,texto,autor:nomeCliente,tipo:'cliente'})});
     document.getElementById('msg-texto').value='';
+    toast('Mensagem enviada à equipe. ✓');
     carregar();
-  }catch(e){alert('Erro ao enviar. Tente novamente.');}
+  }catch(e){toast('Erro ao enviar. Tente novamente.',true);}
 }
 
 carregar();
