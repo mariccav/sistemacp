@@ -19,7 +19,11 @@ async function enviarWhatsApp(telefone, mensagem) {
   const TK   = process.env.TWILIO_AUTH_TOKEN;
   const FROM = process.env.TWILIO_WHATSAPP_FROM;
   const para = fmtTelefone(telefone);
-  if (!SID || !TK || !FROM || !para) return false;
+  console.log('[WhatsApp] tentando enviar para:', para, '| SID?', !!SID, '| TOKEN?', !!TK, '| FROM?', FROM);
+  if (!SID || !TK || !FROM || !para) {
+    console.log('[WhatsApp] ABORTADO — variável ausente');
+    return false;
+  }
   try {
     const params = new URLSearchParams({ From: FROM, To: `whatsapp:${para}`, Body: mensagem });
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
@@ -30,8 +34,13 @@ async function enviarWhatsApp(telefone, mensagem) {
       },
       body: params.toString()
     });
+    const respBody = await r.text();
+    console.log('[WhatsApp] status:', r.status, '| resposta:', respBody.slice(0, 200));
     return r.ok;
-  } catch { return false; }
+  } catch(e) {
+    console.error('[WhatsApp] ERRO:', e.message);
+    return false;
+  }
 }
 
 // Telefone da colaboradora responsável (tabela usuarios, coluna telefone)
