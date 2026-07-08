@@ -43,19 +43,8 @@ async function enviarWhatsApp(ignorado, mensagem, emailPara) {
 
 // E-mail da colaboradora responsável
 async function telefoneDoUsuario(SERVICE_KEY, nome) {
-  // Retorna o e-mail da colaboradora (não mais telefone)
+  // Retorna o e-mail da colaboradora para notificações
   return EMAILS_EQUIPE[nome] || null;
-
-  // Linha abaixo desativada (coluna telefone não usada para notificações)
-  if (!nome) return null;
-  try {
-    const r = await fetch(
-      `${SB_URL}/rest/v1/usuarios?nome=eq.${encodeURIComponent(nome)}&select=telefone&limit=1`,
-      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
-    );
-    const u = r.ok ? await r.json() : [];
-    return u[0]?.telefone || null;
-  } catch { return null; }
 }
 
 // Link temporário (assinado) para arquivo no bucket privado
