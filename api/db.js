@@ -212,8 +212,7 @@ module.exports = async (req, res) => {
     });
     const emailResp3 = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || 'mariana@cavalcantepinheiroadv.com.br';
     await enviarEmail(emailResp3, `📎 Portal CP — arquivo enviado por ${proj.cliente_nome}`,
-        `📎 *Portal CP* — ${proj.cliente_nome} anexou o documento "${dArr[0].titulo}" no projeto "${proj.nome}". O arquivo já está disponível no colaborativo.`);
-    }
+        `📎 Portal CP — ${proj.cliente_nome} anexou o documento "${dArr[0].titulo}" no projeto "${proj.nome}". O arquivo já está disponível no colaborativo.`);
     return res.status(200).json({ ok: true });
   }
 
