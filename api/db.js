@@ -5,46 +5,48 @@
 
 const SB_URL = 'https://svwwmxapmppjkmbazhul.supabase.co';
 
-// ── Helpers: WhatsApp (Twilio) e arquivos (Supabase Storage) ────────
+// ── Helpers: E-mail (Gmail Apps Script) e arquivos (Supabase Storage) ──
 const BUCKET_PORTAL = 'portal-docs';
 
-function fmtTelefone(raw) {
-  const tel = (raw || '').replace(/\D/g, '');
-  if (tel.length < 10) return null;
-  return tel.startsWith('55') ? `+${tel}` : `+55${tel}`;
-}
+// Webhook do Gmail Apps Script (mesmo que usa para alertas de tarefas)
+const WEBHOOK_EMAIL_PORTAL = 'https://script.google.com/macros/s/AKfycbzf8-XI0ojhmNDWAMbOgWepyJdwltcXCdzAisfHqInu-6pop32NdmBRz906O5HMFN7W/exec';
 
-async function enviarWhatsApp(telefone, mensagem) {
-  const SID  = process.env.TWILIO_ACCOUNT_SID;
-  const TK   = process.env.TWILIO_AUTH_TOKEN;
-  const FROM = process.env.TWILIO_WHATSAPP_FROM;
-  const para = fmtTelefone(telefone);
-  console.log('[WhatsApp] tentando enviar para:', para, '| SID?', !!SID, '| TOKEN?', !!TK, '| FROM?', FROM);
-  if (!SID || !TK || !FROM || !para) {
-    console.log('[WhatsApp] ABORTADO — variável ausente');
-    return false;
-  }
+// E-mails fixos da equipe
+const EMAILS_EQUIPE = {
+  'Mariana Pinheiro': 'mariana@cavalcantepinheiroadv.com.br',
+  'Diana':            'diana@cavalcantepinheiroadv.com.br',
+  'Jade':             'juridico@cavalcantepinheiroadv.com.br',
+  'Mariana Barboza':  'comercial@cavalcantepinheiroadv.com.br',
+  'Laila Costa':      'lailabomfim01@gmail.com'
+};
+
+async function enviarEmail(para, assunto, corpo) {
+  if (!para) return false;
   try {
-    const params = new URLSearchParams({ From: FROM, To: `whatsapp:${para}`, Body: mensagem });
-    const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+    await fetch(WEBHOOK_EMAIL_PORTAL, {
       method: 'POST',
-      headers: {
-        Authorization: 'Basic ' + Buffer.from(`${SID}:${TK}`).toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: params.toString()
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: para, subject: assunto, body: corpo })
     });
-    const respBody = await r.text();
-    console.log('[WhatsApp] status:', r.status, '| resposta:', respBody.slice(0, 200));
-    return r.ok;
+    console.log('[Email] enviado para:', para, '| assunto:', assunto);
+    return true;
   } catch(e) {
-    console.error('[WhatsApp] ERRO:', e.message);
+    console.error('[Email] ERRO:', e.message);
     return false;
   }
 }
 
-// Telefone da colaboradora responsável (tabela usuarios, coluna telefone)
+// Mantém compatibilidade: chama enviarEmail em vez de WhatsApp
+async function enviarWhatsApp(ignorado, mensagem, emailPara) {
+  return enviarEmail(emailPara, '🔔 Portal CP — Notificação', mensagem);
+}
+
+// E-mail da colaboradora responsável
 async function telefoneDoUsuario(SERVICE_KEY, nome) {
+  // Retorna o e-mail da colaboradora (não mais telefone)
+  return EMAILS_EQUIPE[nome] || null;
+
+  // Linha abaixo desativada (coluna telefone não usada para notificações)
   if (!nome) return null;
   try {
     const r = await fetch(
@@ -134,11 +136,10 @@ module.exports = async (req, res) => {
     // Avisar a responsável no WhatsApp quando o cliente escreve
     if ((tipo || 'cliente') === 'cliente') {
       const proj = vArr[0];
-      const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
-      if (telResp) {
-        await enviarWhatsApp(telResp,
-          `💬 *Portal CP* — ${proj.cliente_nome} enviou uma mensagem no projeto "${proj.nome}":\n\n"${String(texto).slice(0, 300)}"\n\nResponda pelo colaborativo.`);
-      }
+      const emailResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || 'mariana@cavalcantepinheiroadv.com.br';
+      await enviarEmail(emailResp,
+        `💬 Portal CP — mensagem de ${proj.cliente_nome}`,
+        `O cliente ${proj.cliente_nome} enviou uma mensagem no projeto "${proj.nome}":\n\n${String(texto).slice(0, 500)}\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
     }
     return res.status(200).json({ ok: true });
   }
@@ -158,11 +159,10 @@ module.exports = async (req, res) => {
     // Avisar a responsável quando o cliente confirma envio por e-mail
     if (status === 'recebido') {
       const proj = vArr[0];
-      const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
-      if (telResp) {
-        await enviarWhatsApp(telResp,
-          `📥 *Portal CP* — ${proj.cliente_nome} confirmou o envio do documento "${dArr[0].titulo}" (projeto "${proj.nome}"). Verifique o e-mail.`);
-      }
+      const emailResp2 = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || 'mariana@cavalcantepinheiroadv.com.br';
+      await enviarEmail(emailResp2,
+        `📥 Portal CP — documento confirmado por ${proj.cliente_nome}`,
+        `O cliente ${proj.cliente_nome} confirmou o envio do documento "${dArr[0].titulo}" no projeto "${proj.nome}".\n\nVerifique o e-mail do cliente e acesse:\nhttps://sistemacp.vercel.app/colaborativo.html`);
     }
     return res.status(200).json({ ok: true });
   }
@@ -221,9 +221,8 @@ module.exports = async (req, res) => {
         autor: proj.cliente_nome, tipo: 'cliente'
       })
     });
-    const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
-    if (telResp) {
-      await enviarWhatsApp(telResp,
+    const emailResp3 = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || 'mariana@cavalcantepinheiroadv.com.br';
+    await enviarEmail(emailResp3, `📎 Portal CP — arquivo enviado por ${proj.cliente_nome}`,
         `📎 *Portal CP* — ${proj.cliente_nome} anexou o documento "${dArr[0].titulo}" no projeto "${proj.nome}". O arquivo já está disponível no colaborativo.`);
     }
     return res.status(200).json({ ok: true });
