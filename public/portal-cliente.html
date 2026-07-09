@@ -237,6 +237,65 @@ body{
 }
 .btn-detalhes:hover{background:rgba(228,192,153,.18);}
 
+/* ── CARDS INTERATIVOS (etapas dentro do projeto) ── */
+.etapas-lista{padding:0 16px 12px;display:flex;flex-direction:column;gap:6px;}
+.etapa-card{
+  background:rgba(14,47,39,.5);border:1px solid var(--borda);border-radius:10px;
+  overflow:hidden;transition:border-color .2s;
+}
+.etapa-card.bloqueado{border-color:rgba(240,180,74,.3);}
+.etapa-card.concluido{opacity:.65;}
+.etapa-card-header{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  cursor:pointer;user-select:none;transition:background .15s;
+}
+.etapa-card-header:hover{background:rgba(169,207,190,.05);}
+.etapa-status-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+}
+.dot-pendente{background:rgba(199,234,221,.2);}
+.dot-em_andamento{background:var(--sucesso);box-shadow:0 0 0 3px rgba(110,220,176,.2);}
+.dot-bloqueado{background:var(--aviso);animation:pulse-gold 2s infinite;}
+.dot-concluido{background:var(--sucesso);}
+.etapa-card-titulo{flex:1;font-size:13px;font-weight:600;color:var(--texto);}
+.etapa-card.concluido .etapa-card-titulo{text-decoration:line-through;color:var(--texto3);}
+.etapa-card-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap;}
+.etapa-chevron{font-size:12px;color:var(--texto3);transition:transform .2s;flex-shrink:0;}
+.etapa-card-header.open .etapa-chevron{transform:rotate(90deg);}
+.etapa-card-corpo{display:none;border-top:1px solid var(--borda);padding:14px;}
+.etapa-card-corpo.show{display:block;}
+.etapa-descricao{font-size:12px;color:var(--texto2);line-height:1.6;margin-bottom:12px;}
+/* Checklist no portal */
+.checklist-item-cli{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(169,207,190,.06);}
+.checklist-check-cli{width:14px;height:14px;accent-color:var(--sucesso);flex-shrink:0;}
+.checklist-texto-cli{font-size:11px;color:var(--texto2);}
+.checklist-texto-cli.done{text-decoration:line-through;opacity:.5;}
+/* Comentários no card */
+.card-comentarios{margin-top:12px;}
+.card-com-titulo{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texto3);margin-bottom:8px;}
+.card-com-item{background:rgba(0,23,17,.4);border:1px solid var(--borda);border-radius:7px;padding:8px 10px;margin-bottom:6px;}
+.card-com-autor{font-size:10px;font-weight:700;color:var(--dourado2);margin-bottom:3px;}
+.card-com-texto{font-size:12px;color:var(--texto2);line-height:1.5;}
+.card-com-data{font-size:10px;color:var(--texto3);margin-top:3px;}
+.card-com-input{
+  width:100%;background:rgba(14,47,39,.6);border:1px solid var(--borda);border-radius:8px;
+  padding:9px 12px;font-family:'Manrope',sans-serif;font-size:12px;color:var(--texto);
+  outline:none;resize:none;min-height:64px;transition:border-color .2s;margin-top:8px;
+}
+.card-com-input:focus{border-color:var(--borda2);}
+.btn-com-enviar{
+  margin-top:6px;padding:7px 16px;background:rgba(228,192,153,.12);color:var(--dourado);
+  border:1px solid var(--borda2);border-radius:7px;font-family:'Manrope',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.btn-com-enviar:hover{background:rgba(228,192,153,.2);}
+/* Docs no card */
+.card-docs{margin-top:12px;}
+.card-doc-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(0,23,17,.4);border:1px solid var(--borda);border-radius:7px;margin-bottom:6px;}
+.card-doc-nome{flex:1;font-size:11px;color:var(--texto2);}
+.card-doc-status{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;}
+.card-sec-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texto3);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+
 /* ── CONCLUÍDOS ── */
 .secao-concluidos .proj-bloco-conc{border-top:1px solid var(--borda);}
 .proj-conc-header{
@@ -611,26 +670,30 @@ async function confirmarVerificacao() {
       erroEl.style.display = 'block';
       return;
     }
-    await carregarPortal(resp);
+    await carregarPortal(resp, val);
   } catch(e) {
     mostrarErro('Erro de conexão. Tente novamente.');
   }
 }
 
 // ── CARREGAR E RENDERIZAR PORTAL ─────────────────────────────────────────────
-async function carregarPortal(dados) {
-  dadosGlobais = dados;
-  const { cliente, projetos, etapas, docs, logs } = dados;
+let nomeCliente = '';
+let sessVerif = '';
 
-  const primeiroNome = (cliente.nome || '').split(' ')[0];
+async function carregarPortal(dados, verificacao) {
+  dadosGlobais = dados;
+  if (verificacao) sessVerif = verificacao;
+  const { cliente, projetos, etapas, docs, logs, checklist } = dados;
+
+  nomeCliente = (cliente.nome || '').split(' ')[0];
   document.getElementById('header-nome-cliente').textContent = esc(cliente.nome || '—');
   document.getElementById('portal-header').style.display = 'block';
-  document.title = 'Área do Cliente — ' + (primeiroNome || '') + ' | Cavalcante Pinheiro';
+  document.title = 'Área do Cliente — ' + (nomeCliente || '') + ' | Cavalcante Pinheiro';
 
   renderSaudacao(cliente, etapas);
   renderResumo(projetos, etapas, docs, logs);
   renderPendencias(projetos, etapas, docs);
-  renderProjetosAndamento(projetos, etapas);
+  renderProjetosAndamento(projetos, etapas, docs, logs, checklist);
   renderProjetosConcluidos(projetos, etapas);
   renderTimeline(logs, projetos);
 
@@ -850,71 +913,155 @@ async function marcarEnviado(docId, btn) {
 }
 
 // ── 5. PROJETOS EM ANDAMENTO ──────────────────────────────────────────────────
-function renderProjetosAndamento(projetos, etapas) {
+// Dados globais do portal para uso nas funções interativas
+let _dadosPortal = {};
+
+function renderProjetosAndamento(projetos, etapas, docs, logs, checklist) {
   const andamento = (projetos || []).filter(p => p.status !== 'concluido');
   const container = document.getElementById('sec-projetos-andamento');
   if (!andamento.length) { container.innerHTML = ''; return; }
 
+  const stMap = {
+    pendente:     { dot:'dot-pendente',    badge:'badge-preparacao', txt:'Próxima etapa' },
+    em_andamento: { dot:'dot-em_andamento',badge:'badge-andamento',  txt:'Em andamento' },
+    bloqueado:    { dot:'dot-bloqueado',   badge:'badge-aguardando', txt:'Aguardando você' },
+    concluido:    { dot:'dot-concluido',   badge:'badge-andamento',  txt:'Concluído' }
+  };
+
   container.innerHTML = andamento.map(p => {
-    const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
-    const total = etProj.length;
-    const conc = etProj.filter(e => e.status === 'concluido').length;
-    const pct = total > 0 ? Math.round((conc / total) * 100) : 0;
-
-    const etapaAtual = etProj.find(e => e.status === 'em_andamento' || e.status === 'bloqueado');
-    const proxima = etProj.find(e => e.status === 'pendente' && (!etapaAtual || etProj.indexOf(e) > etProj.indexOf(etapaAtual)));
-
-    const prevEtapa = etProj.filter(e => e.data_conclusao).sort((a, b) => new Date(a.data_conclusao) - new Date(b.data_conclusao))[0];
-    const previsaoTxt = prevEtapa ? humanizarData(prevEtapa.data_conclusao) : '';
-
-    const badgeMap = {
-      pendente: { cls: 'badge-preparacao', txt: 'Em preparação' },
-      ativo: { cls: 'badge-andamento', txt: 'Em andamento' },
-      em_andamento: { cls: 'badge-andamento', txt: 'Em andamento' },
-      bloqueado: { cls: 'badge-aguardando', txt: 'Aguardando você' },
-    };
-    const badge = badgeMap[p.status] || badgeMap.ativo;
-
-    const respNome = p.responsavel || 'Equipe CP';
-    const respIni = respNome.charAt(0).toUpperCase();
-    const cores = ['#2d6e5a','#5b4224','#2e4f7a','#5a2d6e','#1e5c3e'];
-    const corAvatar = cores[respIni.charCodeAt(0) % cores.length];
+    const etProj = (etapas||[]).filter(e => e.projeto_id === p.id);
+    const total = etProj.length, conc = etProj.filter(e=>e.status==='concluido').length;
+    const pct = total > 0 ? Math.round(conc/total*100) : 0;
     const pid = esc(p.id);
-    const tokenProj = p.token_acesso ? esc(p.token_acesso) : '';
 
-    return '<div class="projeto-bloco" id="proj-' + pid + '">' +
-      '<div class="proj-topo">' +
-        '<div class="proj-nome">' + esc(p.nome) + '</div>' +
-        '<span class="proj-badge ' + badge.cls + '">' + badge.txt + '</span>' +
-      '</div>' +
-      '<div class="prog-bar-wrap" style="padding-top:12px;">' +
-        '<div class="prog-bar-label"><span>Progresso</span><span>' + conc + ' de ' + total + ' etapas</span></div>' +
-        '<div class="prog-bar"><div class="fill" id="pb-' + pid + '"></div></div>' +
-      '</div>' +
-      '<div class="proj-detalhes">' +
-        (etapaAtual ? '<div class="proj-etapa-atual">Etapa atual</div><div class="proj-etapa-nome">' + esc(etapaAtual.titulo) + '</div>' : '') +
-        (proxima ? '<div class="proj-proxima">Próximo passo: ' + esc(proxima.titulo) + '</div>' : '') +
-        (previsaoTxt ? '<div class="proj-previsao">Previsto para ' + previsaoTxt + '</div>' : '') +
-        '<div class="proj-resp">' +
-          '<div class="resp-avatar" style="background:' + corAvatar + ';">' + esc(respIni) + '</div>' +
-          '<span class="resp-nome">' + esc(respNome) + '</span>' +
-        '</div>' +
-        (tokenProj ? '<a href="/portal.html?token=' + tokenProj + '" class="btn-detalhes">Ver detalhes ›</a>' : '') +
-      '</div>' +
-    '</div>';
+    const etapasHtml = etProj.map(e => {
+      const st = stMap[e.status] || stMap.pendente;
+      const eid = esc(e.id);
+      const docsCard = (docs||[]).filter(d => d.etapa_id === e.id);
+      const chkCard  = (checklist||[]).filter(c => c.etapa_id === e.id);
+      const logsCard = (logs||[]).filter(l => l.etapa_id === e.id);
+
+      const chkHtml = chkCard.length ? `
+        <div style="margin-bottom:10px">
+          <div class="card-sec-label">☑ Checklist <span style="margin-left:auto;font-weight:400">${chkCard.filter(c=>c.concluido).length}/${chkCard.length}</span></div>
+          ${chkCard.map(c=>`<div class="checklist-item-cli">
+            <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid ${c.concluido?'var(--sucesso)':'rgba(169,207,190,.3)'};background:${c.concluido?'var(--sucesso)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:#001711">${c.concluido?'✓':''}</div>
+            <span class="checklist-texto-cli${c.concluido?' done':''}">${esc(c.texto)}</span>
+          </div>`).join('')}
+        </div>` : '';
+
+      const docsHtml = docsCard.length ? `
+        <div class="card-docs">
+          <div class="card-sec-label">📎 Documentos solicitados</div>
+          ${docsCard.map(d => {
+            const stDoc = d.status==='aprovado'?'✅ Aprovado':d.status==='recebido'?'📥 Recebido':'📤 Aguardando';
+            const btnEnvio = d.status==='solicitado' ? `
+              <label style="cursor:pointer;background:rgba(228,192,153,.1);color:var(--dourado);border:1px solid var(--borda2);border-radius:5px;padding:3px 8px;font-size:10px;font-weight:700">
+                ⬆ Enviar
+                <input type="file" style="display:none" onchange="uploadParaCard('${esc(d.id)}',this)">
+              </label>` : '';
+            return `<div class="card-doc-item">
+              <span class="card-doc-nome">${esc(d.titulo)}</span>
+              <span class="card-doc-status">${stDoc}</span>
+              ${btnEnvio}
+            </div>`;
+          }).join('')}
+        </div>` : '';
+
+      const logsHtml = logsCard.length ? logsCard.map(l=>`
+        <div class="card-com-item">
+          <div class="card-com-autor">${esc(l.autor||'Equipe CP')}</div>
+          <div class="card-com-texto">${esc(l.texto)}</div>
+          <div class="card-com-data">${humanizarData(l.criado_em)}</div>
+        </div>`).join('') : '<div style="font-size:11px;color:var(--texto3);margin-bottom:8px">Nenhuma atualização ainda.</div>';
+
+      return `<div class="etapa-card ${e.status}" id="ec-${eid}">
+        <div class="etapa-card-header" onclick="toggleCard('${eid}')">
+          <div class="etapa-status-dot ${st.dot}"></div>
+          <div class="etapa-card-titulo">${esc(e.titulo)}</div>
+          <span class="etapa-card-badge ${st.badge}" style="font-size:9px">${st.txt}</span>
+          <span class="etapa-chevron">›</span>
+        </div>
+        <div class="etapa-card-corpo" id="ecb-${eid}">
+          ${e.descricao ? `<div class="etapa-descricao">${esc(e.descricao)}</div>` : ''}
+          ${chkHtml}
+          ${docsHtml}
+          <div class="card-comentarios">
+            <div class="card-com-titulo">💬 Atualizações</div>
+            <div id="coms-${eid}">${logsHtml}</div>
+            <textarea class="card-com-input" id="cin-${eid}" placeholder="Escreva um comentário ou pergunta..."></textarea>
+            <button class="btn-com-enviar" onclick="comentarCard('${pid}','${eid}')">Enviar →</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="projeto-bloco" id="proj-${pid}">
+      <div class="proj-topo">
+        <div class="proj-nome">${esc(p.nome)}</div>
+        <span class="proj-badge badge-andamento" style="font-size:9px">${conc} de ${total} etapas</span>
+      </div>
+      <div class="prog-bar-wrap" style="padding-top:12px">
+        <div class="prog-bar-label"><span>Progresso</span><span>${pct}%</span></div>
+        <div class="prog-bar"><div class="fill" id="pb-${pid}"></div></div>
+      </div>
+      <div class="etapas-lista">${etapasHtml || '<div style="font-size:12px;color:var(--texto3);padding:8px 0">Nenhuma etapa cadastrada ainda.</div>'}</div>
+    </div>`;
   }).join('');
 
-  // Animar barras com pequeno delay
   setTimeout(() => {
     andamento.forEach(p => {
-      const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
-      const total = etProj.length;
-      const conc = etProj.filter(e => e.status === 'concluido').length;
-      const pct = total > 0 ? Math.round((conc / total) * 100) : 0;
-      const bar = document.getElementById('pb-' + p.id);
+      const etProj = (etapas||[]).filter(e=>e.projeto_id===p.id);
+      const total = etProj.length, conc = etProj.filter(e=>e.status==='concluido').length;
+      const pct = total>0?Math.round(conc/total*100):0;
+      const bar = document.getElementById('pb-'+p.id);
       if (bar) bar.style.width = pct + '%';
     });
   }, 300);
+}
+
+function toggleCard(eid) {
+  const header = document.querySelector(`#ec-${eid} .etapa-card-header`);
+  const corpo  = document.getElementById('ecb-'+eid);
+  if (!header || !corpo) return;
+  header.classList.toggle('open');
+  corpo.classList.toggle('show');
+}
+
+async function comentarCard(projetoId, etapaId) {
+  const ta = document.getElementById('cin-'+etapaId);
+  const texto = ta ? ta.value.trim() : '';
+  if (!texto) return;
+  const token = new URLSearchParams(location.search).get('t');
+  try {
+    ta.disabled = true;
+    await chamarAPI({ action:'portal_log', token, projeto_id:projetoId, etapa_id:etapaId, texto, autor:nomeCliente||'Cliente', tipo:'cliente' });
+    ta.value = '';
+    // Recarregar comentários do card
+    const r = await chamarAPI({ action:'portal_cliente', token, verificacao:sessVerif });
+    if (r && r.logs) {
+      const logsCard = r.logs.filter(l=>l.etapa_id===etapaId);
+      const cont = document.getElementById('coms-'+etapaId);
+      if (cont) cont.innerHTML = logsCard.length
+        ? logsCard.map(l=>`<div class="card-com-item"><div class="card-com-autor">${esc(l.autor||'Equipe CP')}</div><div class="card-com-texto">${esc(l.texto)}</div><div class="card-com-data">${humanizarData(l.criado_em)}</div></div>`).join('')
+        : '<div style="font-size:11px;color:var(--texto3)">Nenhuma atualização ainda.</div>';
+    }
+  } catch(e) { alert('Erro ao enviar comentário.'); }
+  finally { if(ta) ta.disabled = false; }
+}
+
+async function uploadParaCard(docId, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const token = new URLSearchParams(location.search).get('t');
+  try {
+    const r1 = await chamarAPI({ action:'portal_upload', token, doc_id:docId, nome_arquivo:file.name });
+    if (!r1 || !r1.url) { alert('Erro ao iniciar upload.'); return; }
+    await fetch(r1.url, { method:'PUT', body:file, headers:{'Content-Type':file.type||'application/octet-stream'} });
+    await chamarAPI({ action:'portal_upload_done', token, doc_id:docId, path:r1.path, nome_arquivo:file.name });
+    alert('Arquivo enviado com sucesso!');
+    location.reload();
+  } catch(e) { alert('Erro ao enviar arquivo: '+e.message); }
 }
 
 // ── 6. PROJETOS CONCLUÍDOS ────────────────────────────────────────────────────

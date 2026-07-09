@@ -366,6 +366,15 @@ textarea.campo-input{resize:vertical;min-height:70px;}
     </div>
 
     <div class="divider"></div>
+    <div class="secao-titulo">&#9989; Checklist</div>
+    <div id="d-checklist-lista" style="margin-bottom:6px"></div>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <input id="novo-checklist-item" class="campo-input" placeholder="Adicionar item..." style="flex:1;padding:7px 10px;font-size:12px"
+        onkeydown="if(event.key==='Enter'){adicionarChecklistItem();event.preventDefault()}">
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="adicionarChecklistItem()">+</button>
+    </div>
+
+    <div class="divider"></div>
     <div class="secao-titulo">&#128204; Documentos</div>
     <div id="d-docs-lista"></div>
     <button class="btn btn-ghost" style="font-size:11px;margin-top:4px;" onclick="abrirModalDoc()">+ Solicitar documento</button>
@@ -807,6 +816,7 @@ async function abrirDrawer(id) {
 
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('open');
+  carregarChecklist();
 
   carregarDocs();
   carregarComentarios();
@@ -1104,6 +1114,55 @@ function esc(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CHECKLIST ──────────────────────────────────────────────────────
+async function carregarChecklist() {
+  const lista = document.getElementById('d-checklist-lista');
+  if (!cardAtual) return;
+  try {
+    const items = await DB.get('projetos_checklist', `etapa_id=eq.${cardAtual.id}&order=ordem.asc`);
+    if (!items.length) { lista.innerHTML = '<div style="font-size:12px;color:var(--texto-muito-suave)">Nenhum item.</div>'; return; }
+    const total = items.length, conc = items.filter(i => i.concluido).length;
+    const pct = Math.round(conc / total * 100);
+    lista.innerHTML = `
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--texto-muito-suave);margin-bottom:3px">
+          <span>${conc} de ${total}</span><span>${pct}%</span>
+        </div>
+        <div style="height:4px;background:var(--bege-fundo);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--verde-claro);border-radius:99px;transition:.3s"></div>
+        </div>
+      </div>
+      ${items.map(item => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(31,62,60,.05)">
+          <input type="checkbox" ${item.concluido ? 'checked' : ''} onchange="toggleChecklist('${item.id}',this.checked)"
+            style="width:15px;height:15px;accent-color:var(--verde);cursor:pointer;flex-shrink:0">
+          <span style="flex:1;font-size:12px;color:var(--texto);${item.concluido ? 'text-decoration:line-through;opacity:.5' : ''}">${esc(item.texto)}</span>
+          <button onclick="excluirChecklistItem('${item.id}')" style="background:none;border:none;color:var(--texto-muito-suave);cursor:pointer;font-size:14px;line-height:1;padding:0 2px" title="Remover">×</button>
+        </div>`).join('')}`;
+  } catch(e) { lista.innerHTML = '<div style="color:var(--erro);font-size:12px">Erro ao carregar.</div>'; }
+}
+
+async function adicionarChecklistItem() {
+  const input = document.getElementById('novo-checklist-item');
+  const texto = input.value.trim();
+  if (!texto || !cardAtual) return;
+  try {
+    await DB.insert('projetos_checklist', { etapa_id: cardAtual.id, texto, concluido: false, ordem: 99 });
+    input.value = '';
+    await carregarChecklist();
+  } catch(e) { alert('Erro ao adicionar item.'); }
+}
+
+async function toggleChecklist(id, concluido) {
+  try { await DB.update('projetos_checklist', `id=eq.${id}`, { concluido }); await carregarChecklist(); }
+  catch(e) { console.error(e); }
+}
+
+async function excluirChecklistItem(id) {
+  try { await DB.delete('projetos_checklist', `id=eq.${id}`); await carregarChecklist(); }
+  catch(e) { console.error(e); }
 }
 
 document.addEventListener('click', e => {

@@ -71,7 +71,7 @@ const TABELAS_PERMITIDAS = new Set([
   'mural', 'elogios', 'redes_posts',
   'processos', 'processos_historico',
   'projetos_cp', 'projetos_etapas', 'projetos_docs', 'projetos_logs',
-  'projetos_avaliacoes'
+  'projetos_avaliacoes', 'projetos_checklist'
 ]);
 
 // Operações permitidas
@@ -326,17 +326,23 @@ module.exports = async (req, res) => {
       return res.status(200).json({ cliente: { nome: cli.nome }, projetos: [], etapas: [], docs: [], logs: [] });
     }
     const ids = projetos.map(p => p.id).join(',');
-    const [etapas, docs, logs] = await Promise.all([
+    const [etapas, docs, logs, checklist] = await Promise.all([
       fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=in.(${ids})&order=ordem.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
       fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=in.(${ids})&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
-      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids})&or=(tipo.eq.publico,tipo.eq.cliente)&order=criado_em.desc&limit=40`, { headers: SHK }).then(r => r.json()).catch(() => [])
+      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids})&or=(tipo.eq.publico,tipo.eq.cliente)&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_checklist?etapa_id=in.(select id from projetos_etapas where projeto_id=in.(${ids}))&order=ordem.asc`, { headers: SHK }).then(r => r.ok ? r.json() : []).catch(() => [])
     ]);
+    // Buscar checklist de outra forma (join manual)
+    const etapaIds = Array.isArray(etapas) ? etapas.map(e => e.id).join(',') : '';
+    const checklistReal = etapaIds
+      ? await fetch(`${SB_URL}/rest/v1/projetos_checklist?etapa_id=in.(${etapaIds})&order=ordem.asc`, { headers: SHK }).then(r => r.ok ? r.json() : []).catch(() => [])
+      : [];
     if (Array.isArray(docs)) {
       await Promise.all(docs.map(async d => {
         if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
       }));
     }
-    return res.status(200).json({ cliente: { nome: cli.nome }, projetos, etapas, docs, logs });
+    return res.status(200).json({ cliente: { nome: cli.nome }, projetos, etapas, docs, logs, checklist: checklistReal });
   }
 
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
