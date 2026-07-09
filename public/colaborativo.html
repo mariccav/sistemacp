@@ -306,7 +306,8 @@ textarea.campo-input{resize:vertical;min-height:70px;}
         <div class="board-actions">
           <span id="board-badge" class="badge"></span>
           <button class="btn btn-outline" onclick="abrirModalProjeto(true)">&#9998; Editar</button>
-          <button class="btn btn-ghost" onclick="copiarLinkCliente()">&#128203; Link do cliente</button>
+          <button class="btn btn-ghost" onclick="copiarLinkCliente()">&#128203; Link do projeto</button>
+          <button class="btn btn-ghost" onclick="copiarLinkAreaCliente()">&#127968; Área do Cliente</button>
           <button class="btn btn-danger" onclick="confirmarExcluirProjetoAtual()">&#128465;</button>
         </div>
       </div>
@@ -400,12 +401,18 @@ textarea.campo-input{resize:vertical;min-height:70px;}
       <div class="campo-row">
         <div class="campo-grupo">
           <label class="campo-label">Cliente *</label>
-          <input type="text" id="mp-cliente" class="campo-input" placeholder="Nome do cliente">
+          <input type="text" id="mp-cliente" class="campo-input" list="lista-clientes-cp" placeholder="Digite para buscar no cadastro..." oninput="autofillCliente()">
+          <datalist id="lista-clientes-cp"></datalist>
+          <div id="mp-cliente-status" style="font-size:10px;margin-top:3px;color:var(--texto-muito-suave);"></div>
         </div>
         <div class="campo-grupo">
           <label class="campo-label">E-mail do cliente</label>
           <input type="email" id="mp-email" class="campo-input" placeholder="cliente@email.com">
         </div>
+      </div>
+      <div class="campo-grupo">
+        <label class="campo-label">WhatsApp do cliente</label>
+        <input type="tel" id="mp-tel" class="campo-input" placeholder="(71) 99999-9999 — para avisos automáticos de andamento">
       </div>
       <div class="campo-grupo">
         <label class="campo-label">Responsável</label>
@@ -601,6 +608,8 @@ async function renderizarLista() {
       <div class="card-resp">👤 ${esc(p.responsavel||'Sem responsável')}</div>
       <div class="progress-bar"><div class="fill" style="width:${prog}%"></div></div>
       <div class="progress-text"><span>${prog}% concluído</span><span class="${badgeClass(p.status)}">${labelStatus(p.status)}</span></div>
+      ${p._avaliacao && p._avaliacao.nota ? `<div style="font-size:11px;margin-top:6px;color:#d4870a;" title="Avaliação do cliente">${'⭐'.repeat(Math.min(5,p._avaliacao.nota))} Avaliação do cliente</div>` : ''}
+      ${p._avaliacao_nota ? `<div style="font-size:11px;margin-top:6px;color:#d4870a;">${'⭐'.repeat(Math.min(5,p._avaliacao_nota))}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -628,15 +637,20 @@ function fecharMenus() {
 function abrirModalProjeto(edicao = false) {
   modoEdicaoProjeto = edicao;
   document.getElementById('modal-projeto-titulo').textContent = edicao ? 'Editar Projeto' : 'Novo Projeto';
+  _clienteSelecionadoId = null;
   if (edicao && projetoAtual) {
-    document.getElementById('mp-nome').value       = projetoAtual.nome||'';
-    document.getElementById('mp-cliente').value    = projetoAtual.cliente_nome||'';
-    document.getElementById('mp-email').value      = projetoAtual.cliente_email||'';
-    document.getElementById('mp-responsavel').value= projetoAtual.responsavel||'Mariana Pinheiro';
-    document.getElementById('mp-descricao').value  = projetoAtual.descricao||'';
+    document.getElementById('mp-nome').value        = projetoAtual.nome||'';
+    document.getElementById('mp-cliente').value     = projetoAtual.cliente_nome||'';
+    document.getElementById('mp-email').value       = projetoAtual.cliente_email||'';
+    document.getElementById('mp-tel').value         = projetoAtual.cliente_telefone||'';
+    document.getElementById('mp-responsavel').value = projetoAtual.responsavel||'Mariana Pinheiro';
+    document.getElementById('mp-descricao').value   = projetoAtual.descricao||'';
+    if (projetoAtual.cliente_id) _clienteSelecionadoId = projetoAtual.cliente_id;
   } else {
-    ['mp-nome','mp-cliente','mp-email','mp-descricao'].forEach(id=>document.getElementById(id).value='');
+    ['mp-nome','mp-cliente','mp-email','mp-tel','mp-descricao'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('mp-responsavel').value='Mariana Pinheiro';
+    const st = document.getElementById('mp-cliente-status');
+    if (st) st.textContent = '';
   }
   abrirModal('modal-projeto');
 }
@@ -648,11 +662,13 @@ async function salvarProjeto() {
 
   const dados = {
     nome,
-    cliente_nome:  cliente,
-    cliente_email: document.getElementById('mp-email').value.trim(),
-    responsavel:   document.getElementById('mp-responsavel').value,
-    descricao:     document.getElementById('mp-descricao').value.trim(),
+    cliente_nome:     cliente,
+    cliente_email:    document.getElementById('mp-email').value.trim(),
+    cliente_telefone: document.getElementById('mp-tel').value.trim(),
+    responsavel:      document.getElementById('mp-responsavel').value,
+    descricao:        document.getElementById('mp-descricao').value.trim(),
   };
+  if (_clienteSelecionadoId) dados.cliente_id = _clienteSelecionadoId;
 
   try {
     if (modoEdicaoProjeto && projetoAtual) {
@@ -825,6 +841,7 @@ async function carregarDocs() {
         <div class="doc-info">
           <div class="doc-titulo">${esc(d.titulo)}</div>
           <div class="doc-status" style="color:${corStatus[d.status]||'var(--bege)'}">${esc(d.status||'pendente')}</div>
+          ${d.arquivo_path ? `<button onclick="verArquivo('${esc(d.arquivo_path)}')" style="margin-top:4px;font-size:10px;font-weight:600;color:var(--verde-claro);background:none;border:none;cursor:pointer;padding:0;font-family:'Nunito',sans-serif;">Ver arquivo ↗</button>` : ''}
         </div>
       </div>`).join('');
   } catch(e) { lista.innerHTML='<div style="color:var(--erro);font-size:12px;">Erro ao carregar.</div>'; }
@@ -970,6 +987,116 @@ function copiarLinkClienteDe(token) {
   const url = `${location.origin}/portal.html?token=${token}`;
   navigator.clipboard.writeText(url).then(()=>toast('Link copiado!')).catch(()=>toast('Erro ao copiar','erro'));
 }
+
+// ── CHAMADA AUTENTICADA GENÉRICA (action) ────────────────────────────────────
+async function dbAction(payload) {
+  const raw = sessionStorage.getItem('cp_user');
+  const user = raw ? JSON.parse(raw) : null;
+  const r = await fetch('/api/db', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(user && user.session_token ? { 'x-session-token': user.session_token } : {})
+    },
+    body: JSON.stringify(payload)
+  });
+  return r.json();
+}
+
+// ── ÁREA DO CLIENTE — gerar link e copiar ─────────────────────────────────────
+async function copiarLinkAreaCliente() {
+  if (!projetoAtual) return;
+  const clienteId = projetoAtual.cliente_id;
+  if (!clienteId) {
+    toast('Projeto sem cliente vinculado. Edite o projeto e selecione o cliente pelo autocomplete.','erro');
+    return;
+  }
+  try {
+    const r = await dbAction({ action: 'portal_cliente_link', cliente_id: clienteId });
+    if (r.erro) throw new Error(r.erro);
+    navigator.clipboard.writeText(r.link)
+      .then(()=>toast('Link da Área do Cliente copiado!'))
+      .catch(()=>{ prompt('Copie o link:', r.link); });
+  } catch(e) {
+    toast('Erro: ' + (e.message||'tente novamente'),'erro');
+  }
+}
+
+// ── VER ARQUIVO DO CLIENTE ────────────────────────────────────────────────────
+async function verArquivo(path) {
+  if (!path) return;
+  try {
+    const r = await dbAction({ action: 'arquivo_url', path });
+    if (r.erro) throw new Error(r.erro);
+    if (r.url) window.open(r.url, '_blank');
+  } catch(e) {
+    toast('Erro ao gerar link do arquivo: ' + (e.message||''),'erro');
+  }
+}
+
+// ── AUTOCOMPLETE DE CLIENTES NO MODAL PROJETO ─────────────────────────────────
+let _clienteDebounce = null;
+let _clienteSelecionadoId = null;
+
+async function autofillCliente() {
+  const input = document.getElementById('mp-cliente');
+  const datalist = document.getElementById('lista-clientes-cp');
+  const status = document.getElementById('mp-cliente-status');
+  const q = input.value.trim();
+
+  // Limpar seleção se o usuário apagou
+  _clienteSelecionadoId = null;
+  if (status) status.textContent = '';
+
+  clearTimeout(_clienteDebounce);
+  if (q.length < 2) { datalist.innerHTML = ''; return; }
+
+  _clienteDebounce = setTimeout(async () => {
+    try {
+      const clientes = await DB.get('clientes', `nome=ilike.*${encodeURIComponent(q)}*&select=id,nome,contato,email&limit=10&order=nome.asc`);
+      datalist.innerHTML = clientes.map(c =>
+        `<option value="${esc(c.nome)}" data-id="${c.id}" data-tel="${esc(c.contato||'')}" data-email="${esc(c.email||'')}">`
+      ).join('');
+      // Checar se o valor digitado bate exatamente com algum resultado
+      verificarSelecaoCliente(clientes);
+    } catch(e) { /* silencioso */ }
+  }, 300);
+}
+
+function verificarSelecaoCliente(clientes) {
+  const input = document.getElementById('mp-cliente');
+  const val = input.value.trim();
+  const match = (clientes||[]).find(c => c.nome === val);
+  if (match) selecionarClienteMatch(match);
+}
+
+function selecionarClienteMatch(c) {
+  _clienteSelecionadoId = c.id;
+  const status = document.getElementById('mp-cliente-status');
+  if (status) status.textContent = 'Cliente vinculado ao cadastro.';
+
+  // Preencher telefone e e-mail se estiverem vazios
+  const telInput = document.getElementById('mp-tel');
+  const emailInput = document.getElementById('mp-email');
+  if (telInput && !telInput.value && c.contato) telInput.value = c.contato;
+  if (emailInput && !emailInput.value && c.email) emailInput.value = c.email;
+}
+
+// Detectar seleção via datalist (change no input)
+document.addEventListener('DOMContentLoaded', () => {
+  const mpCliente = document.getElementById('mp-cliente');
+  if (mpCliente) {
+    mpCliente.addEventListener('change', async () => {
+      const val = mpCliente.value.trim();
+      if (!val) return;
+      // Buscar pelo nome exato para obter o id
+      try {
+        const r = await DB.get('clientes', `nome=eq.${encodeURIComponent(val)}&select=id,nome,contato,email&limit=1`);
+        if (r && r.length) selecionarClienteMatch(r[0]);
+      } catch(e) {}
+    });
+  }
+});
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function esc(str) {

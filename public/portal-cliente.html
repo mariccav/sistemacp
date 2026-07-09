@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Área do Cliente | Cavalcante Pinheiro Advocacia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --fundo:#001711;--fundo2:#002019;
+  --glass:rgba(0,23,17,.82);--glass2:rgba(14,47,39,.7);
+  --verde:#a9cfbe;--verde-escuro:#1f3f36;
+  --dourado:#e4c099;--dourado2:#c9a87a;
+  --texto:#c7eadd;--texto2:rgba(199,234,221,.7);--texto3:rgba(199,234,221,.45);
+  --borda:rgba(169,207,190,.12);--borda2:rgba(228,192,153,.2);
+  --erro:#ff6b6b;--aviso:#f0b44a;--sucesso:#6edcb0;
+  --radius:12px;--radius-lg:18px;
+}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Manrope',sans-serif;background:var(--fundo);color:var(--texto);
+  min-height:100vh;overflow-x:hidden;position:relative;
+}
+
+/* ── DNA WebGL ── */
+#dna-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;
+  opacity:.35;mix-blend-mode:screen;pointer-events:none;
+}
+
+/* ── LOADING ── */
+#loading-screen{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;background:var(--fundo);transition:opacity .5s;
+}
+#loading-screen.fade{opacity:0;pointer-events:none;}
+.dna-spinner{
+  width:40px;height:40px;border:3px solid rgba(228,192,153,.2);
+  border-top-color:var(--dourado);border-radius:50%;animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-texto{
+  font-family:'Playfair Display',serif;font-size:16px;color:var(--texto2);
+  letter-spacing:.1em;font-style:italic;text-align:center;
+}
+
+/* ── VERIFICAÇÃO ── */
+#verif-screen{
+  position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;
+  background:rgba(0,23,17,.95);padding:20px;
+}
+#verif-screen.show{display:flex;}
+.verif-card{
+  background:rgba(2,37,29,.98);border:1px solid var(--borda2);border-radius:var(--radius-lg);
+  padding:36px 32px;width:100%;max-width:400px;text-align:center;
+}
+.verif-card h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--dourado);margin-bottom:8px;}
+.verif-card p{font-size:13px;color:var(--texto2);margin-bottom:24px;line-height:1.6;}
+.verif-input{
+  width:100%;background:rgba(14,47,39,.8);border:1px solid var(--borda);border-radius:8px;
+  padding:13px;font-family:'Manrope',sans-serif;font-size:20px;color:var(--texto);
+  outline:none;text-align:center;letter-spacing:.3em;transition:.2s;margin-bottom:14px;
+}
+.verif-input:focus{border-color:var(--borda2);}
+.verif-btn{
+  width:100%;background:var(--dourado);color:#422c10;border:none;border-radius:8px;
+  padding:13px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:.2s;
+}
+.verif-btn:hover{filter:brightness(1.08);}
+.verif-erro{font-size:12px;color:var(--erro);margin-top:10px;display:none;}
+
+/* ── ERRO ── */
+#erro-screen{
+  position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;background:var(--fundo);padding:20px;text-align:center;
+}
+#erro-screen h2{font-family:'Playfair Display',serif;font-size:24px;color:var(--dourado);}
+#erro-screen p{font-size:14px;color:var(--texto2);max-width:360px;line-height:1.6;}
+
+/* ── HEADER ── */
+#portal-header{
+  position:relative;z-index:10;
+  background:linear-gradient(180deg,rgba(0,23,17,.9) 60%,transparent);
+  padding:28px 20px 40px;text-align:center;
+}
+.header-logo{height:42px;object-fit:contain;margin:0 auto 16px;display:block;filter:brightness(0) invert(1);opacity:.85;}
+.header-label{
+  font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--texto3);margin-bottom:6px;
+}
+.header-titulo{
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:500;
+  color:var(--texto2);margin-bottom:4px;
+}
+.header-nome{
+  font-family:'Playfair Display',serif;font-size:26px;font-weight:600;
+  color:var(--dourado);line-height:1.2;
+}
+
+/* ── CONTEÚDO PRINCIPAL ── */
+#portal-conteudo{
+  position:relative;z-index:1;max-width:720px;margin:0 auto;
+  padding:0 16px 80px;display:none;
+}
+#portal-conteudo.show{display:block;}
+
+/* ── SAUDAÇÃO ── */
+.saudacao-bloco{
+  background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--borda);border-radius:var(--radius-lg);
+  padding:24px 22px;margin-bottom:16px;
+}
+.saudacao-hora{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:600;
+  color:var(--dourado);margin-bottom:6px;
+}
+.saudacao-sub{font-size:13px;color:var(--texto2);line-height:1.6;}
+.saudacao-parceria{
+  margin-top:12px;padding:10px 14px;background:rgba(228,192,153,.07);
+  border:1px solid var(--borda2);border-radius:8px;
+  font-size:12px;color:var(--dourado);line-height:1.5;
+}
+
+/* ── CARDS NUMÉRICOS ── */
+.resumo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.resumo-card{
+  background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--borda);
+  border-radius:var(--radius);padding:16px 14px;text-align:center;
+}
+.resumo-num{
+  font-family:'Playfair Display',serif;font-size:28px;font-weight:700;
+  color:var(--dourado);line-height:1;margin-bottom:4px;
+}
+.resumo-label{font-size:10px;color:var(--texto3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;line-height:1.4;}
+.resumo-badge-equipe{
+  margin-bottom:14px;padding:11px 16px;background:rgba(169,207,190,.07);
+  border:1px solid var(--borda);border-radius:var(--radius);
+  font-size:12px;color:var(--verde);text-align:center;
+}
+
+/* ── SEÇÃO BASE ── */
+.secao{
+  background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--borda);border-radius:var(--radius-lg);
+  margin-bottom:16px;overflow:hidden;
+}
+.secao-header{
+  padding:18px 20px 14px;border-bottom:1px solid var(--borda);
+  display:flex;align-items:center;gap:10px;
+}
+.secao-header .icon{font-size:18px;flex-shrink:0;}
+.secao-header h2{
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--dourado);
+}
+.secao-header .sub{font-size:11px;color:var(--texto3);margin-top:1px;}
+.secao-body{padding:16px 20px;}
+
+/* ── PENDÊNCIAS ── */
+.pendencia-item{
+  background:rgba(228,192,153,.05);border:1px solid var(--borda2);border-radius:10px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.pendencia-item:last-child{margin-bottom:0;}
+.pend-tag{
+  display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  background:rgba(169,207,190,.12);color:var(--verde);border-radius:99px;
+  padding:2px 8px;margin-bottom:8px;
+}
+.pend-titulo{font-size:13px;font-weight:700;color:var(--dourado);margin-bottom:4px;}
+.pend-desc{font-size:12px;color:var(--texto2);line-height:1.5;margin-bottom:10px;}
+.pend-acoes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.pend-empat{
+  margin-top:10px;padding:10px;background:rgba(240,180,74,.05);border:1px solid rgba(240,180,74,.15);
+  border-radius:8px;font-size:11px;color:var(--aviso);line-height:1.5;
+}
+.pend-vazio{
+  text-align:center;padding:24px;font-size:13px;color:var(--sucesso);
+}
+
+/* Botões ação */
+.btn-acao{
+  display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:7px;
+  font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid var(--borda2);background:rgba(228,192,153,.1);color:var(--dourado);
+  transition:all .2s;
+}
+.btn-acao:hover{background:rgba(228,192,153,.18);}
+.btn-acao:disabled{opacity:.5;cursor:not-allowed;}
+.btn-acao-verde{border-color:rgba(169,207,190,.3);background:rgba(169,207,190,.08);color:var(--verde);}
+.btn-acao-verde:hover{background:rgba(169,207,190,.15);}
+.btn-acao-wa{border-color:rgba(37,211,102,.3);background:rgba(37,211,102,.07);color:#25d366;}
+.btn-acao-wa:hover{background:rgba(37,211,102,.14);}
+
+/* Input upload oculto */
+.upload-input{display:none;}
+
+/* ── PROJETOS ── */
+.projeto-bloco{
+  background:var(--glass);backdrop-filter:blur(16px);border:1px solid var(--borda);
+  border-radius:var(--radius-lg);margin-bottom:16px;overflow:hidden;
+}
+.proj-topo{padding:18px 20px 14px;border-bottom:1px solid var(--borda);}
+.proj-nome{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--dourado);margin-bottom:6px;}
+.proj-badge{
+  display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;
+}
+.badge-andamento{background:rgba(110,220,176,.12);color:var(--sucesso);}
+.badge-preparacao{background:rgba(228,192,153,.1);color:var(--dourado);}
+.badge-aguardando{background:rgba(240,180,74,.12);color:var(--aviso);animation:pulse-gold 2s infinite;}
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(228,192,153,.3)}50%{box-shadow:0 0 0 6px rgba(228,192,153,0)}}
+
+/* Progress bar */
+.prog-bar-wrap{padding:0 20px 6px;}
+.prog-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--texto3);margin-bottom:5px;}
+.prog-bar{height:5px;background:rgba(169,207,190,.1);border-radius:99px;overflow:hidden;}
+.prog-bar .fill{height:100%;background:linear-gradient(90deg,var(--verde),var(--dourado));border-radius:99px;width:0%;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+
+.proj-detalhes{padding:12px 20px 16px;}
+.proj-etapa-atual{font-size:12px;color:var(--texto3);margin-bottom:2px;}
+.proj-etapa-nome{font-size:13px;font-weight:600;color:var(--texto);margin-bottom:8px;}
+.proj-proxima{font-size:11px;color:var(--texto3);margin-bottom:6px;}
+.proj-previsao{font-size:11px;color:var(--dourado2);margin-bottom:10px;}
+.proj-resp{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.resp-avatar{
+  width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;flex-shrink:0;border:1.5px solid var(--borda);
+}
+.resp-nome{font-size:11px;color:var(--texto3);}
+.btn-detalhes{
+  display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:8px;
+  font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;
+  background:rgba(228,192,153,.1);color:var(--dourado);border:1px solid var(--borda2);
+  text-decoration:none;cursor:pointer;transition:all .2s;
+}
+.btn-detalhes:hover{background:rgba(228,192,153,.18);}
+
+/* ── CONCLUÍDOS ── */
+.secao-concluidos .proj-bloco-conc{border-top:1px solid var(--borda);}
+.proj-conc-header{
+  padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:background .15s;
+}
+.proj-conc-header:hover{background:rgba(169,207,190,.04);}
+.proj-conc-nome{font-size:13px;font-weight:600;color:var(--texto2);}
+.proj-conc-chevron{font-size:16px;color:var(--texto3);transition:transform .2s;}
+.proj-conc-header.open .proj-conc-chevron{transform:rotate(90deg);}
+.proj-conc-corpo{display:none;padding:0 20px 16px;}
+.proj-conc-corpo.show{display:block;}
+.proj-celeb{
+  text-align:center;padding:16px;background:rgba(228,192,153,.05);border-radius:10px;
+  margin-bottom:12px;border:1px solid var(--borda2);
+}
+.proj-celeb-emoji{font-size:24px;margin-bottom:6px;}
+.proj-celeb-texto{font-size:13px;color:var(--dourado);font-family:'Playfair Display',serif;font-style:italic;}
+
+/* Avaliação */
+.aval-bloco{margin-top:12px;padding:14px 16px;background:rgba(169,207,190,.05);border:1px solid var(--borda);border-radius:10px;}
+.aval-label{font-size:11px;color:var(--texto3);margin-bottom:8px;}
+.aval-estrelas{display:flex;gap:6px;margin-bottom:10px;}
+.estrela{font-size:22px;cursor:pointer;opacity:.3;transition:opacity .15s,transform .15s;}
+.estrela:hover,.estrela.ativa{opacity:1;transform:scale(1.1);}
+.aval-textarea{
+  width:100%;padding:8px 11px;background:rgba(14,47,39,.6);border:1px solid var(--borda);
+  border-radius:7px;font-family:'Manrope',sans-serif;font-size:12px;color:var(--texto);
+  outline:none;resize:none;min-height:56px;transition:border-color .15s;margin-bottom:8px;
+}
+.aval-textarea:focus{border-color:var(--borda2);}
+.aval-obrigado{font-size:12px;color:var(--sucesso);font-style:italic;margin-top:6px;}
+
+/* ── LINHA DO TEMPO ── */
+.timeline-item{
+  display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(169,207,190,.06);
+}
+.timeline-item:last-child{border-bottom:none;}
+.timeline-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--verde);flex-shrink:0;
+  margin-top:5px;border:2px solid rgba(169,207,190,.3);
+}
+.tl-proj-tag{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--verde);margin-bottom:2px;}
+.tl-texto{font-size:12px;color:var(--texto2);line-height:1.5;}
+.tl-meta{font-size:10px;color:var(--texto3);margin-top:3px;}
+
+/* ── FOOTER ── */
+.portal-footer{
+  text-align:center;padding:32px 20px;border-top:1px solid var(--borda);margin-top:8px;
+}
+.footer-logo{height:30px;object-fit:contain;filter:brightness(0) invert(1);opacity:.35;margin:0 auto 12px;display:block;}
+.footer-texto{font-size:11px;color:var(--texto3);line-height:1.8;}
+.footer-link{color:var(--verde);text-decoration:none;transition:color .2s;}
+.footer-link:hover{color:var(--dourado);}
+
+/* ── CELEBRAÇÃO 100% ── */
+#celeb-100{
+  position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+  background:rgba(0,23,17,.92);backdrop-filter:blur(8px);
+}
+#celeb-100.show{display:flex;}
+.celeb-card{
+  background:rgba(2,37,29,.98);border:1px solid var(--borda2);border-radius:var(--radius-lg);
+  padding:40px 32px;max-width:400px;text-align:center;
+  animation:celeb-in .6s cubic-bezier(.22,1,.36,1);
+}
+@keyframes celeb-in{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:none}}
+.celeb-emoji{font-size:40px;margin-bottom:16px;}
+.celeb-titulo{font-family:'Playfair Display',serif;font-size:20px;color:var(--dourado);margin-bottom:10px;}
+.celeb-texto{font-size:13px;color:var(--texto2);line-height:1.6;margin-bottom:20px;}
+.celeb-assinatura{font-family:'Playfair Display',serif;font-size:12px;font-style:italic;color:var(--dourado2);}
+.celeb-fechar{
+  margin-top:20px;padding:10px 24px;background:var(--dourado);color:#422c10;
+  border:none;border-radius:7px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;
+}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--borda2);
+  color:var(--dourado);padding:10px 20px;border-radius:99px;
+  font-size:13px;font-weight:600;z-index:300;opacity:0;transition:all .3s;pointer-events:none;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.erro{color:var(--erro);border-color:rgba(255,107,107,.3);}
+#toast.ok{color:var(--sucesso);border-color:rgba(110,220,176,.3);}
+
+/* ── RESPONSIVO ── */
+@media(max-width:480px){
+  .resumo-grid{gap:8px;}
+  .resumo-num{font-size:22px;}
+  .header-nome{font-size:22px;}
+  .pend-acoes{flex-direction:column;align-items:flex-start;}
+}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(169,207,190,.15);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<!-- Shader WebGL DNA — exato do login.html linhas 85-125 -->
+<canvas id="dna-canvas"></canvas>
+<script>
+(function(){
+  const canvas=document.getElementById('dna-canvas');
+  function syncSize(){const w=canvas.clientWidth||1280,h=canvas.clientHeight||720;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}}
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(syncSize).observe(canvas);
+  syncSize();
+  const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');if(!gl)return;
+  const vs=`attribute vec2 a_position;varying vec2 v_texCoord;void main(){v_texCoord=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
+  const fs=`precision highp float;uniform float u_time;uniform vec2 u_resolution;varying vec2 v_texCoord;
+void main(){
+  vec2 uv=v_texCoord;vec2 p=(uv-0.5)*2.0;p.x*=u_resolution.x/u_resolution.y;
+  float t=u_time*0.3;float s=sin(t*0.1);float c=cos(t*0.1);p=mat2(c,-s,s,c)*p;
+  float helix=0.0;
+  for(float i=0.0;i<2.0;i++){
+    float offset=i*3.14159;
+    float x=p.x+sin(p.y*2.5+u_time*0.8+offset)*0.35;
+    float line=smoothstep(0.06,0.0,abs(x));
+    float steps=smoothstep(0.04,0.0,abs(sin(p.y*10.0+u_time*0.4)))*step(abs(p.x),0.35);
+    helix+=line*0.7+steps*0.4;
+  }
+  vec3 color1=vec3(0.0,0.08,0.06);vec3 color2=vec3(0.89,0.75,0.60);
+  float mask=smoothstep(1.0,0.2,length(p*0.7));
+  vec3 finalColor=mix(color1,color2,helix*mask*0.5);
+  finalColor+=color2*(0.05*sin(u_time)+0.05)*helix*mask;
+  gl_FragColor=vec4(finalColor,1.0);
+}`;
+  function cs(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const prog=gl.createProgram();
+  gl.attachShader(prog,cs(gl.VERTEX_SHADER,vs));
+  gl.attachShader(prog,cs(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'a_position');
+  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const uTime=gl.getUniformLocation(prog,'u_time');
+  const uRes=gl.getUniformLocation(prog,'u_resolution');
+  function render(t){gl.viewport(0,0,canvas.width,canvas.height);if(uTime)gl.uniform1f(uTime,t*0.001);if(uRes)gl.uniform2f(uRes,canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(render);}
+  render(0);
+})();
+</script>
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="dna-spinner"></div>
+  <div class="loading-texto" id="loading-frase">Preparando sua visão geral...</div>
+</div>
+
+<!-- VERIFICAÇÃO CPF/CNPJ -->
+<div id="verif-screen">
+  <div class="verif-card">
+    <div style="margin-bottom:20px;">
+      <img src="/logo-cp.png" alt="CP" style="height:32px;filter:brightness(0) invert(1);opacity:.8;display:block;margin:0 auto 12px;">
+    </div>
+    <h2>Verificação de Segurança</h2>
+    <p id="verif-msg">Por segurança, confirme os 4 últimos dígitos do seu CPF ou CNPJ.</p>
+    <input type="tel" id="verif-input" class="verif-input" maxlength="4" placeholder="0000"
+      onkeydown="if(event.key==='Enter')confirmarVerificacao()">
+    <button class="verif-btn" onclick="confirmarVerificacao()">Confirmar</button>
+    <div class="verif-erro" id="verif-erro"></div>
+  </div>
+</div>
+
+<!-- ERRO -->
+<div id="erro-screen">
+  <img src="/logo-cp.png" alt="CP" style="height:36px;filter:brightness(0) invert(1);opacity:.6;margin-bottom:8px;">
+  <h2>Acesso não encontrado</h2>
+  <p id="erro-msg">Este link não é válido ou foi expirado. Entre em contato com o escritório.</p>
+  <div style="margin-top:16px;font-size:12px;color:rgba(199,234,221,.4);">
+    Cavalcante Pinheiro · OAB/BA 49.675<br>
+    <a href="https://wa.me/5571991292322" style="color:var(--verde);text-decoration:none;">Falar com o escritório</a>
+  </div>
+</div>
+
+<!-- CELEBRAÇÃO 100% -->
+<div id="celeb-100">
+  <div class="celeb-card">
+    <div class="celeb-emoji">✨</div>
+    <div class="celeb-titulo">Concluímos mais uma etapa da sua jornada.</div>
+    <div class="celeb-texto">Obrigada pela confiança e pela parceria. É uma honra conduzir o seu caso com a excelência que ele merece.</div>
+    <div class="celeb-assinatura">— Mariana Pinheiro</div>
+    <button class="celeb-fechar" onclick="document.getElementById('celeb-100').classList.remove('show')">Fechar</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="portal-header" style="display:none;">
+  <img src="/logo-cp.png" alt="Cavalcante Pinheiro" class="header-logo">
+  <div class="header-label">Área do Cliente</div>
+  <div class="header-titulo">Cavalcante Pinheiro Advocacia</div>
+  <div class="header-nome" id="header-nome-cliente">—</div>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div id="portal-conteudo">
+
+  <!-- 2. SAUDAÇÃO GUESTOLOGY -->
+  <div class="saudacao-bloco" id="sec-saudacao">
+    <div class="saudacao-hora" id="saud-hora">Bom dia.</div>
+    <div class="saudacao-sub" id="saud-sub"></div>
+    <div class="saudacao-parceria" id="saud-parceria" style="display:none;"></div>
+  </div>
+
+  <!-- 3. RESUMO NUMÉRICO -->
+  <div class="resumo-badge-equipe" id="resumo-badge-equipe" style="display:none;"></div>
+  <div class="resumo-grid">
+    <div class="resumo-card">
+      <div class="resumo-num" id="res-andamento">—</div>
+      <div class="resumo-label">Em andamento</div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-num" id="res-concluidos">—</div>
+      <div class="resumo-label">Concluídos</div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-num" id="res-aguardando">—</div>
+      <div class="resumo-label">Aguardando você</div>
+    </div>
+  </div>
+
+  <!-- 4. O QUE PRECISAMOS DE VOCÊ (seção mais importante) -->
+  <div class="secao" id="sec-pendencias">
+    <div class="secao-header">
+      <span class="icon">✋</span>
+      <div>
+        <h2>O que precisamos de você</h2>
+        <div class="sub" id="pend-sub">Itens que precisam da sua atenção</div>
+      </div>
+    </div>
+    <div class="secao-body" id="pend-lista">
+      <div class="pend-vazio">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- 5. ASSUNTOS EM ANDAMENTO -->
+  <div id="sec-projetos-andamento"></div>
+
+  <!-- 6. ASSUNTOS CONCLUÍDOS -->
+  <div class="secao secao-concluidos" id="sec-projetos-concluidos" style="display:none;">
+    <div class="secao-header" style="cursor:pointer;" onclick="toggleConcluidos(this)">
+      <span class="icon">✅</span>
+      <div style="flex:1;">
+        <h2>Assuntos concluídos</h2>
+        <div class="sub" id="sub-concluidos">Expandir para ver</div>
+      </div>
+      <span id="chevron-conc" style="font-size:16px;color:var(--texto3);transition:transform .2s;">›</span>
+    </div>
+    <div id="lista-concluidos" style="display:none;"></div>
+  </div>
+
+  <!-- 7. LINHA DO TEMPO -->
+  <div class="secao" id="sec-timeline">
+    <div class="secao-header">
+      <span class="icon">📅</span>
+      <div>
+        <h2>Linha do tempo</h2>
+        <div class="sub">Últimas atualizações dos seus assuntos</div>
+      </div>
+    </div>
+    <div class="secao-body" id="timeline-lista">
+      <div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- 8. FOOTER -->
+  <footer class="portal-footer">
+    <img src="/logo-cp.png" alt="CP" class="footer-logo">
+    <div class="footer-texto">
+      Cavalcante Pinheiro Advocacia · OAB/BA nº 49.675<br>
+      (71) 99129-2322 · mariana@cavalcantepinheiroadv.com.br<br><br>
+      <a href="https://wa.me/5571991292322" class="footer-link">Falar pelo WhatsApp</a>
+    </div>
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API = '/api/db';
+const token = new URLSearchParams(location.search).get('t');
+let dadosGlobais = null;
+const notasAval = {};
+
+// ── LOADING ROTATIVO ──────────────────────────────────────────────────────────
+const frasesLoad = [
+  'Preparando sua visão geral...',
+  'A excelência está no nosso DNA.',
+  'Reunindo seus assuntos...',
+  'Um momento...'
+];
+let fraseIdx = 0;
+const loadInterval = setInterval(() => {
+  fraseIdx = (fraseIdx + 1) % frasesLoad.length;
+  const el = document.getElementById('loading-frase');
+  if (el) el.textContent = frasesLoad[fraseIdx];
+}, 2200);
+
+// ── FETCH BASE ────────────────────────────────────────────────────────────────
+async function chamarAPI(payload) {
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return r.json();
+}
+
+// ── SEGURANÇA XSS ─────────────────────────────────────────────────────────────
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async function init() {
+  if (!token) {
+    mostrarErro('Nenhum token encontrado na URL. Verifique o link enviado pelo escritório.');
+    return;
+  }
+
+  try {
+    const resp = await chamarAPI({ action: 'portal_cliente', token });
+
+    if (resp.erro) { mostrarErro(resp.erro); return; }
+
+    if (resp.precisa_verificacao) {
+      const nome = resp.nome || 'cliente';
+      document.getElementById('verif-msg').textContent =
+        `Boa tarde, ${nome}. Por segurança, confirme os 4 últimos dígitos do seu CPF ou CNPJ.`;
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('verif-screen').classList.add('show');
+      setTimeout(() => document.getElementById('verif-input').focus(), 200);
+      return;
+    }
+
+    await carregarPortal(resp);
+
+  } catch(e) {
+    mostrarErro('Erro de conexão. Por favor, tente novamente em instantes.');
+  }
+})();
+
+// ── VERIFICAÇÃO ───────────────────────────────────────────────────────────────
+async function confirmarVerificacao() {
+  const val = document.getElementById('verif-input').value.replace(/\D/g, '');
+  const erroEl = document.getElementById('verif-erro');
+  erroEl.style.display = 'none';
+
+  if (val.length < 4) {
+    erroEl.textContent = 'Digite os 4 dígitos.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  document.getElementById('verif-screen').classList.remove('show');
+  document.getElementById('loading-screen').style.display = 'flex';
+
+  try {
+    const resp = await chamarAPI({ action: 'portal_cliente', token, verificacao: val });
+    if (resp.erro) {
+      document.getElementById('loading-screen').style.display = 'none';
+      document.getElementById('verif-screen').classList.add('show');
+      erroEl.textContent = resp.erro;
+      erroEl.style.display = 'block';
+      return;
+    }
+    await carregarPortal(resp);
+  } catch(e) {
+    mostrarErro('Erro de conexão. Tente novamente.');
+  }
+}
+
+// ── CARREGAR E RENDERIZAR PORTAL ─────────────────────────────────────────────
+async function carregarPortal(dados) {
+  dadosGlobais = dados;
+  const { cliente, projetos, etapas, docs, logs } = dados;
+
+  const primeiroNome = (cliente.nome || '').split(' ')[0];
+  document.getElementById('header-nome-cliente').textContent = esc(cliente.nome || '—');
+  document.getElementById('portal-header').style.display = 'block';
+  document.title = 'Área do Cliente — ' + (primeiroNome || '') + ' | Cavalcante Pinheiro';
+
+  renderSaudacao(cliente, etapas);
+  renderResumo(projetos, etapas, docs, logs);
+  renderPendencias(projetos, etapas, docs);
+  renderProjetosAndamento(projetos, etapas);
+  renderProjetosConcluidos(projetos, etapas);
+  renderTimeline(logs, projetos);
+
+  // Salvar timestamp da visita após carregar tudo
+  localStorage.setItem('cp_ultima_visita_' + token, Date.now().toString());
+
+  // Checar celebração 100%
+  const keyceleb = 'cp_celeb100_' + token;
+  if (!localStorage.getItem(keyceleb)) {
+    const algum100 = (projetos || []).some(p => {
+      if (p.status !== 'concluido') return false;
+      const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
+      return etProj.length > 0 && etProj.every(e => e.status === 'concluido');
+    });
+    if (algum100) {
+      localStorage.setItem(keyceleb, '1');
+      setTimeout(() => document.getElementById('celeb-100').classList.add('show'), 1200);
+    }
+  }
+
+  esconderLoading();
+  document.getElementById('portal-conteudo').classList.add('show');
+}
+
+// ── 2. SAUDAÇÃO ───────────────────────────────────────────────────────────────
+function renderSaudacao(cliente, etapas) {
+  const primeiroNome = (cliente.nome || '').split(' ')[0];
+  const hora = new Date().getHours();
+  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('saud-hora').textContent = saudacao + ', ' + esc(primeiroNome) + '.';
+
+  const ultimaVisita = localStorage.getItem('cp_ultima_visita_' + token);
+  let subTexto = '';
+
+  if (ultimaVisita) {
+    const diff = Date.now() - Number(ultimaVisita);
+    const dias = Math.floor(diff / 86400000);
+    const horas = Math.floor(diff / 3600000);
+
+    const avancadas = (etapas || []).filter(e => {
+      const dt = e.atualizado_em || e.criado_em;
+      if (!dt) return false;
+      return new Date(dt).getTime() > Number(ultimaVisita) && e.status !== 'pendente';
+    }).length;
+
+    if (avancadas > 0) {
+      subTexto = 'Desde sua última visita, ' + avancadas + ' etapa' + (avancadas > 1 ? 's avançaram' : ' avançou') + '.';
+    } else if (dias > 0) {
+      subTexto = 'Faz ' + dias + ' dia' + (dias > 1 ? 's' : '') + ' desde sua última visita. Bem-vinda de volta.';
+    } else if (horas > 0) {
+      subTexto = 'Faz ' + horas + ' hora' + (horas > 1 ? 's' : '') + ' desde sua última visita.';
+    } else {
+      subTexto = 'Bem-vinda à sua área exclusiva. Aqui você acompanha tudo o que conduzimos para você.';
+    }
+  } else {
+    subTexto = 'Bem-vinda à sua área exclusiva. Aqui você acompanha tudo o que conduzimos para você.';
+  }
+  document.getElementById('saud-sub').textContent = subTexto;
+
+  // Aniversário de parceria
+  if (cliente.criado_em) {
+    const criado = new Date(cliente.criado_em);
+    const agora = new Date();
+    if (agora.getMonth() === criado.getMonth() && agora.getFullYear() > criado.getFullYear()) {
+      const meses = (agora.getFullYear() - criado.getFullYear()) * 12 + (agora.getMonth() - criado.getMonth());
+      const el = document.getElementById('saud-parceria');
+      el.textContent = 'Este mês faz ' + meses + ' mese' + (meses !== 1 ? 's' : '') + ' da nossa parceria. Obrigada pela confiança.';
+      el.style.display = 'block';
+    }
+  }
+}
+
+// ── 3. RESUMO NUMÉRICO ────────────────────────────────────────────────────────
+function renderResumo(projetos, etapas, docs, logs) {
+  const andamento = (projetos || []).filter(p => p.status !== 'concluido').length;
+  const concluidos = (projetos || []).filter(p => p.status === 'concluido').length;
+  const etapasBloq = (etapas || []).filter(e => e.status === 'bloqueado').length;
+  const docsSolic = (docs || []).filter(d => d.status === 'solicitado').length;
+  const aguardando = etapasBloq + docsSolic;
+
+  document.getElementById('res-andamento').textContent = andamento;
+  document.getElementById('res-concluidos').textContent = concluidos;
+  document.getElementById('res-aguardando').textContent = aguardando;
+
+  const limite30 = Date.now() - 30 * 86400000;
+  const atualizacoes = (logs || []).filter(l => l.criado_em && new Date(l.criado_em).getTime() > limite30).length;
+  if (atualizacoes > 0) {
+    const badge = document.getElementById('resumo-badge-equipe');
+    badge.textContent = 'Nossa equipe registrou ' + atualizacoes + ' atualização' + (atualizacoes > 1 ? 'ões' : '') + ' nos seus assuntos nos últimos 30 dias.';
+    badge.style.display = 'block';
+  }
+}
+
+// ── 4. PENDÊNCIAS ─────────────────────────────────────────────────────────────
+function renderPendencias(projetos, etapas, docs) {
+  const lista = document.getElementById('pend-lista');
+  const itens = [];
+  const agora = Date.now();
+
+  (etapas || []).filter(e => e.status === 'bloqueado').forEach(e => {
+    const proj = (projetos || []).find(p => p.id === e.projeto_id);
+    const criado = e.criado_em ? new Date(e.criado_em).getTime() : agora;
+    const diasBloq = Math.floor((agora - criado) / 86400000);
+    itens.push({ tipo: 'etapa', etapa: e, projeto: proj, diasBloq });
+  });
+
+  (docs || []).filter(d => d.status === 'solicitado').forEach(d => {
+    const proj = (projetos || []).find(p => p.id === d.projeto_id);
+    itens.push({ tipo: 'doc', doc: d, projeto: proj });
+  });
+
+  document.getElementById('pend-sub').textContent =
+    itens.length > 0
+      ? itens.length + ' item' + (itens.length > 1 ? 'ns' : '') + ' aguardando sua atenção'
+      : 'Tudo em dia';
+
+  if (!itens.length) {
+    lista.innerHTML = '<div class="pend-vazio">Nenhuma pendência com você agora. Estamos cuidando de tudo.</div>';
+    return;
+  }
+
+  lista.innerHTML = itens.map(item => {
+    const projNome = esc(item.projeto ? item.projeto.nome : 'Projeto');
+    const resp = item.projeto ? (item.projeto.responsavel || '') : '';
+    const telWA = telResponsavel(resp);
+
+    if (item.tipo === 'etapa') {
+      const empatiaHtml = item.diasBloq >= 7
+        ? '<div class="pend-empat">Sabemos que a rotina é corrida. Se precisar de ajuda com esta etapa, fale com a responsável pelo seu processo.' +
+          (telWA ? ' <a href="https://wa.me/' + telWA + '" target="_blank" class="btn-acao btn-acao-wa" style="display:inline-flex;margin-top:8px;">Falar pelo WhatsApp</a>' : '') +
+          '</div>'
+        : '';
+      return '<div class="pendencia-item">' +
+        '<div class="pend-tag">' + projNome + '</div>' +
+        '<div class="pend-titulo">' + esc(item.etapa.titulo) + '</div>' +
+        (item.etapa.descricao ? '<div class="pend-desc">' + esc(item.etapa.descricao) + '</div>' : '') +
+        empatiaHtml +
+        '</div>';
+    }
+
+    // doc
+    const docId = esc(item.doc.id);
+    return '<div class="pendencia-item" id="pend-doc-' + docId + '">' +
+      '<div class="pend-tag">' + projNome + '</div>' +
+      '<div class="pend-titulo">📄 ' + esc(item.doc.titulo) + '</div>' +
+      (item.doc.descricao ? '<div class="pend-desc">' + esc(item.doc.descricao) + '</div>' : '') +
+      '<div class="pend-acoes">' +
+        '<label class="btn-acao">📎 Enviar arquivo<input type="file" class="upload-input" onchange="uploadDoc(\'' + docId + '\', this)"></label>' +
+        '<button class="btn-acao btn-acao-verde" onclick="marcarEnviado(\'' + docId + '\', this)">✉ Já enviei por e-mail</button>' +
+      '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function telResponsavel(nome) {
+  const map = {
+    'Mariana Pinheiro': '5571991292322',
+    'Diana': '5571999999999',
+    'Jade': '5571999999998',
+    'Mariana Barboza': '5571999999997',
+    'Laila Costa': '5571999999996',
+  };
+  return map[nome] || '5571991292322';
+}
+
+async function uploadDoc(docId, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const label = input.closest('label');
+  const origLabel = '📎 Enviar arquivo';
+  label.childNodes[0].textContent = '⏳ Enviando...';
+
+  try {
+    const resp1 = await chamarAPI({ action: 'portal_upload', token, doc_id: docId, nome_arquivo: file.name });
+    if (resp1.erro) throw new Error(resp1.erro);
+
+    const upResp = await fetch(resp1.upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file
+    });
+    if (!upResp.ok) throw new Error('Falha no upload');
+
+    await chamarAPI({ action: 'portal_upload_done', token, doc_id: docId, path: resp1.path, nome_arquivo: file.name });
+
+    const bloco = document.getElementById('pend-doc-' + docId);
+    if (bloco) {
+      const acoes = bloco.querySelector('.pend-acoes');
+      if (acoes) acoes.innerHTML = '<span style="color:var(--sucesso);font-size:12px;">Arquivo enviado com sucesso.</span>';
+    }
+    toast('Arquivo enviado!', 'ok');
+  } catch(e) {
+    label.childNodes[0].textContent = origLabel;
+    toast('Erro ao enviar: ' + (e.message || 'tente novamente'), 'erro');
+  }
+}
+
+async function marcarEnviado(docId, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Registrando...';
+  try {
+    await chamarAPI({ action: 'portal_doc_enviado', token, doc_id: docId });
+    btn.textContent = 'Registrado!';
+    toast('Aviso enviado ao escritório.', 'ok');
+    setTimeout(() => {
+      const bloco = document.getElementById('pend-doc-' + docId);
+      if (bloco) {
+        const acoes = bloco.querySelector('.pend-acoes');
+        if (acoes) acoes.innerHTML = '<span style="color:var(--sucesso);font-size:12px;">Confirmado. Obrigada.</span>';
+      }
+    }, 1500);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Já enviei por e-mail';
+    toast('Erro ao registrar.', 'erro');
+  }
+}
+
+// ── 5. PROJETOS EM ANDAMENTO ──────────────────────────────────────────────────
+function renderProjetosAndamento(projetos, etapas) {
+  const andamento = (projetos || []).filter(p => p.status !== 'concluido');
+  const container = document.getElementById('sec-projetos-andamento');
+  if (!andamento.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = andamento.map(p => {
+    const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
+    const total = etProj.length;
+    const conc = etProj.filter(e => e.status === 'concluido').length;
+    const pct = total > 0 ? Math.round((conc / total) * 100) : 0;
+
+    const etapaAtual = etProj.find(e => e.status === 'em_andamento' || e.status === 'bloqueado');
+    const proxima = etProj.find(e => e.status === 'pendente' && (!etapaAtual || etProj.indexOf(e) > etProj.indexOf(etapaAtual)));
+
+    const prevEtapa = etProj.filter(e => e.data_conclusao).sort((a, b) => new Date(a.data_conclusao) - new Date(b.data_conclusao))[0];
+    const previsaoTxt = prevEtapa ? humanizarData(prevEtapa.data_conclusao) : '';
+
+    const badgeMap = {
+      pendente: { cls: 'badge-preparacao', txt: 'Em preparação' },
+      ativo: { cls: 'badge-andamento', txt: 'Em andamento' },
+      em_andamento: { cls: 'badge-andamento', txt: 'Em andamento' },
+      bloqueado: { cls: 'badge-aguardando', txt: 'Aguardando você' },
+    };
+    const badge = badgeMap[p.status] || badgeMap.ativo;
+
+    const respNome = p.responsavel || 'Equipe CP';
+    const respIni = respNome.charAt(0).toUpperCase();
+    const cores = ['#2d6e5a','#5b4224','#2e4f7a','#5a2d6e','#1e5c3e'];
+    const corAvatar = cores[respIni.charCodeAt(0) % cores.length];
+    const pid = esc(p.id);
+    const tokenProj = p.token_acesso ? esc(p.token_acesso) : '';
+
+    return '<div class="projeto-bloco" id="proj-' + pid + '">' +
+      '<div class="proj-topo">' +
+        '<div class="proj-nome">' + esc(p.nome) + '</div>' +
+        '<span class="proj-badge ' + badge.cls + '">' + badge.txt + '</span>' +
+      '</div>' +
+      '<div class="prog-bar-wrap" style="padding-top:12px;">' +
+        '<div class="prog-bar-label"><span>Progresso</span><span>' + conc + ' de ' + total + ' etapas</span></div>' +
+        '<div class="prog-bar"><div class="fill" id="pb-' + pid + '"></div></div>' +
+      '</div>' +
+      '<div class="proj-detalhes">' +
+        (etapaAtual ? '<div class="proj-etapa-atual">Etapa atual</div><div class="proj-etapa-nome">' + esc(etapaAtual.titulo) + '</div>' : '') +
+        (proxima ? '<div class="proj-proxima">Próximo passo: ' + esc(proxima.titulo) + '</div>' : '') +
+        (previsaoTxt ? '<div class="proj-previsao">Previsto para ' + previsaoTxt + '</div>' : '') +
+        '<div class="proj-resp">' +
+          '<div class="resp-avatar" style="background:' + corAvatar + ';">' + esc(respIni) + '</div>' +
+          '<span class="resp-nome">' + esc(respNome) + '</span>' +
+        '</div>' +
+        (tokenProj ? '<a href="/portal.html?token=' + tokenProj + '" class="btn-detalhes">Ver detalhes ›</a>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Animar barras com pequeno delay
+  setTimeout(() => {
+    andamento.forEach(p => {
+      const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
+      const total = etProj.length;
+      const conc = etProj.filter(e => e.status === 'concluido').length;
+      const pct = total > 0 ? Math.round((conc / total) * 100) : 0;
+      const bar = document.getElementById('pb-' + p.id);
+      if (bar) bar.style.width = pct + '%';
+    });
+  }, 300);
+}
+
+// ── 6. PROJETOS CONCLUÍDOS ────────────────────────────────────────────────────
+function renderProjetosConcluidos(projetos, etapas) {
+  const concluidos = (projetos || []).filter(p => p.status === 'concluido');
+  const sec = document.getElementById('sec-projetos-concluidos');
+  if (!concluidos.length) return;
+
+  document.getElementById('sub-concluidos').textContent = concluidos.length + ' projeto' + (concluidos.length > 1 ? 's' : '');
+  sec.style.display = 'block';
+
+  const lista = document.getElementById('lista-concluidos');
+  lista.innerHTML = concluidos.map(p => {
+    const etProj = (etapas || []).filter(e => e.projeto_id === p.id);
+    const total = etProj.length;
+    const conc = etProj.filter(e => e.status === 'concluido').length;
+    const pct = total > 0 ? Math.round((conc / total) * 100) : 100;
+    const pid = esc(p.id);
+    const keyPrimeiro = 'cp_conc_open_' + p.id;
+
+    const avalExiste = p._avaliacao;
+    let avalHtml = '';
+    if (avalExiste) {
+      const estrelas = '⭐'.repeat(Math.min(5, avalExiste.nota || 0));
+      avalHtml = '<div class="aval-bloco">' +
+        '<div class="aval-label">Sua avaliação</div>' +
+        '<div style="font-size:18px;margin-bottom:6px;">' + estrelas + '</div>' +
+        (avalExiste.comentario ? '<div style="font-size:12px;color:var(--texto2);font-style:italic;">&ldquo;' + esc(avalExiste.comentario) + '&rdquo;</div>' : '') +
+        '<div class="aval-obrigado">Sua opinião constrói o nosso padrão de excelência. Obrigada.</div>' +
+      '</div>';
+    } else {
+      avalHtml = '<div class="aval-bloco" id="aval-bloco-' + pid + '">' +
+        '<div class="aval-label">Como foi a experiência? Avalie este projeto</div>' +
+        '<div class="aval-estrelas" id="aval-stars-' + pid + '">' +
+          [1,2,3,4,5].map(n => '<span class="estrela" onclick="selecionarNota(\'' + pid + '\',' + n + ')">⭐</span>').join('') +
+        '</div>' +
+        '<textarea class="aval-textarea" id="aval-text-' + pid + '" placeholder="Comentário opcional..."></textarea>' +
+        '<button class="btn-acao" onclick="enviarAvaliacao(\'' + pid + '\')">Enviar avaliação</button>' +
+      '</div>';
+    }
+
+    return '<div class="proj-bloco-conc">' +
+      '<div class="proj-conc-header" onclick="toggleConc(\'' + pid + '\',\'' + esc(keyPrimeiro) + '\',this)">' +
+        '<div class="proj-conc-nome">' + esc(p.nome) + '</div>' +
+        '<span class="proj-conc-chevron">›</span>' +
+      '</div>' +
+      '<div class="proj-conc-corpo" id="conc-corpo-' + pid + '">' +
+        '<div class="proj-celeb">' +
+          '<div class="proj-celeb-emoji">✨</div>' +
+          '<div class="proj-celeb-texto">' + pct + '% concluído · ' + conc + ' de ' + total + ' etapas</div>' +
+        '</div>' +
+        avalHtml +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleConcluidos(header) {
+  const lista = document.getElementById('lista-concluidos');
+  const chevron = document.getElementById('chevron-conc');
+  const aberto = lista.style.display === 'block';
+  lista.style.display = aberto ? 'none' : 'block';
+  if (chevron) chevron.style.transform = aberto ? '' : 'rotate(90deg)';
+}
+
+function toggleConc(projId, key, header) {
+  const corpo = document.getElementById('conc-corpo-' + projId);
+  const aberto = corpo.classList.contains('show');
+  corpo.classList.toggle('show', !aberto);
+  header.classList.toggle('open', !aberto);
+
+  if (!aberto && !localStorage.getItem(key)) {
+    localStorage.setItem(key, '1');
+    const emoji = corpo.querySelector('.proj-celeb-emoji');
+    if (emoji) { emoji.textContent = '🎉'; setTimeout(() => { if(emoji) emoji.textContent = '✨'; }, 2000); }
+  }
+}
+
+function selecionarNota(projId, nota) {
+  notasAval[projId] = nota;
+  const stars = document.querySelectorAll('#aval-stars-' + projId + ' .estrela');
+  stars.forEach((s, i) => s.classList.toggle('ativa', i < nota));
+}
+
+async function enviarAvaliacao(projId) {
+  const nota = notasAval[projId] || 0;
+  if (!nota) { toast('Selecione uma nota de 1 a 5 estrelas.', 'erro'); return; }
+  const textarea = document.getElementById('aval-text-' + projId);
+  const comentario = textarea ? textarea.value.trim() : '';
+  try {
+    const r = await chamarAPI({ action: 'avaliar_projeto', token, projeto_id: projId, nota, comentario });
+    if (r.erro) throw new Error(r.erro);
+    const bloco = document.getElementById('aval-bloco-' + projId);
+    if (bloco) bloco.innerHTML = '<div class="aval-obrigado">Sua opinião constrói o nosso padrão de excelência. Obrigada.</div>';
+    toast('Avaliação enviada!', 'ok');
+  } catch(e) {
+    toast('Erro ao enviar avaliação.', 'erro');
+  }
+}
+
+// ── 7. LINHA DO TEMPO ─────────────────────────────────────────────────────────
+function renderTimeline(logs, projetos) {
+  const lista = document.getElementById('timeline-lista');
+  const logsOrd = (logs || []).slice().sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+
+  if (!logsOrd.length) {
+    lista.innerHTML = '<div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Nenhuma atualização registrada ainda.</div>';
+    return;
+  }
+
+  lista.innerHTML = logsOrd.map(l => {
+    const proj = (projetos || []).find(p => p.id === l.projeto_id);
+    const projNome = proj ? esc(proj.nome) : '';
+    const dataHum = humanizarRelativa(l.criado_em);
+    const autor = esc(l.autor || 'Equipe CP');
+    return '<div class="timeline-item">' +
+      '<div class="timeline-dot"></div>' +
+      '<div style="flex:1;min-width:0;">' +
+        (projNome ? '<div class="tl-proj-tag">' + projNome + '</div>' : '') +
+        '<div class="tl-texto">' + esc(l.texto) + '</div>' +
+        '<div class="tl-meta">' + autor + ' · ' + dataHum + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function humanizarData(dataStr) {
+  if (!dataStr) return '';
+  try {
+    const d = new Date(dataStr.includes('T') ? dataStr : dataStr + 'T12:00');
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch { return dataStr; }
+}
+
+function humanizarRelativa(dataStr) {
+  if (!dataStr) return '';
+  try {
+    const d = new Date(dataStr);
+    const diff = Date.now() - d.getTime();
+    const min = Math.floor(diff / 60000);
+    const horas = Math.floor(diff / 3600000);
+    const dias = Math.floor(diff / 86400000);
+    if (min < 2) return 'agora mesmo';
+    if (min < 60) return 'há ' + min + ' minuto' + (min > 1 ? 's' : '');
+    if (horas < 24) return 'há ' + horas + ' hora' + (horas > 1 ? 's' : '');
+    if (dias === 1) return 'ontem';
+    if (dias < 7) return 'há ' + dias + ' dias';
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  } catch { return dataStr; }
+}
+
+function esconderLoading() {
+  clearInterval(loadInterval);
+  const el = document.getElementById('loading-screen');
+  el.classList.add('fade');
+  setTimeout(() => { el.style.display = 'none'; }, 500);
+}
+
+function mostrarErro(msg) {
+  clearInterval(loadInterval);
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('erro-msg').textContent = msg;
+  document.getElementById('erro-screen').style.display = 'flex';
+}
+
+let toastTimer;
+function toast(msg, tipo) {
+  clearTimeout(toastTimer);
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (tipo ? ' ' + tipo : '');
+  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+}
+</script>
+</body>
+</html>

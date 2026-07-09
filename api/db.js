@@ -70,7 +70,8 @@ const TABELAS_PERMITIDAS = new Set([
   'transacoes', 'transacoes_historico', 'transacoes_prazos',
   'mural', 'elogios', 'redes_posts',
   'processos', 'processos_historico',
-  'projetos_cp', 'projetos_etapas', 'projetos_docs', 'projetos_logs'
+  'projetos_cp', 'projetos_etapas', 'projetos_docs', 'projetos_logs',
+  'projetos_avaliacoes'
 ]);
 
 // Operações permitidas
@@ -156,6 +157,38 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
 
+  // Cliente confirma que enviou o documento por e-mail (usado pelo portal)
+  if (body.action === 'portal_doc_enviado') {
+    const { token, doc_id } = body;
+    if (!token || !doc_id) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW = { ...SHK, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    const rD = await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}&select=projeto_id,titulo`, { headers: SHK });
+    const dArr = rD.ok ? await rD.json() : [];
+    if (!dArr.length) return res.status(404).json({ erro: 'Documento não encontrado.' });
+    const rV = await fetch(`${SB_URL}/rest/v1/projetos_cp?token_acesso=eq.${encodeURIComponent(token)}&id=eq.${dArr[0].projeto_id}&limit=1`, { headers: SHK });
+    const vArr = rV.ok ? await rV.json() : [];
+    if (!vArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
+    const proj = vArr[0];
+    await fetch(`${SB_URL}/rest/v1/projetos_docs?id=eq.${doc_id}`, {
+      method: 'PATCH', headers: SHW, body: JSON.stringify({ status: 'recebido' })
+    });
+    await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: SHW,
+      body: JSON.stringify({
+        projeto_id: proj.id,
+        texto: `Documento confirmado como enviado por e-mail: "${dArr[0].titulo}"`,
+        autor: proj.cliente_nome, tipo: 'cliente'
+      })
+    });
+    const telResp = await telefoneDoUsuario(SERVICE_KEY, proj.responsavel) || process.env.WHATSAPP_EQUIPE;
+    if (telResp) {
+      await enviarWhatsApp(telResp,
+        `📥 *Portal CP* — ${proj.cliente_nome} confirmou o envio do documento "${dArr[0].titulo}" por e-mail (projeto "${proj.nome}"). Verifique a caixa de entrada.`);
+    }
+    return res.status(200).json({ ok: true });
+  }
+
   // ── Upload de documento pelo cliente (Supabase Storage) ────────────
   // 1º passo: gerar URL assinada de upload
   if (body.action === 'portal_upload') {
@@ -214,6 +247,96 @@ module.exports = async (req, res) => {
     await enviarEmail(emailResp3, `📎 Portal CP — arquivo enviado por ${proj.cliente_nome}`,
         `📎 Portal CP — ${proj.cliente_nome} anexou o documento "${dArr[0].titulo}" no projeto "${proj.nome}". O arquivo já está disponível no colaborativo.`);
     return res.status(200).json({ ok: true });
+  }
+
+  // ── Avaliação de projeto pelo cliente (sem sessão — acesso por token) ──
+  if (body.action === 'avaliar_projeto') {
+    const { token: tkAval, projeto_id, nota, comentario } = body;
+    if (!tkAval || !projeto_id || !nota) return res.status(400).json({ erro: 'Dados incompletos.' });
+    if (nota < 1 || nota > 5) return res.status(400).json({ erro: 'Nota deve ser entre 1 e 5.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW = { ...SHK, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+
+    // Verificar que o token do cliente tem acesso ao projeto
+    const rC = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(tkAval)}&select=id,nome&limit=1`, { headers: SHK });
+    const cArr = rC.ok ? await rC.json() : [];
+    if (!cArr.length) return res.status(403).json({ erro: 'Token inválido.' });
+    const cli = cArr[0];
+
+    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${projeto_id}&cliente_id=eq.${cli.id}&limit=1`, { headers: SHK });
+    const pArr = rP.ok ? await rP.json() : [];
+    if (!pArr.length) return res.status(403).json({ erro: 'Acesso negado a este projeto.' });
+
+    // Criar tabela graciosamente: tenta inserir; se falhar por tabela inexistente, retorna ok parcial
+    // (a tabela projetos_avaliacoes deve ser criada na migração do Supabase)
+    try {
+      // Upsert: uma avaliação por cliente por projeto
+      const rAval = await fetch(`${SB_URL}/rest/v1/projetos_avaliacoes`, {
+        method: 'POST',
+        headers: { ...SHW, Prefer: 'return=minimal,resolution=merge-duplicates' },
+        body: JSON.stringify({
+          projeto_id,
+          cliente_id: cli.id,
+          nota: Number(nota),
+          comentario: comentario || null,
+          criado_em: new Date().toISOString()
+        })
+      });
+      // Marcar projeto com flag de avaliação
+      await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${projeto_id}`, {
+        method: 'PATCH',
+        headers: SHW,
+        body: JSON.stringify({ _avaliacao_nota: Number(nota) })
+      });
+      return res.status(200).json({ ok: true });
+    } catch(e) {
+      // Tabela ainda não existe — retorna ok para não quebrar o frontend
+      console.warn('[avaliar_projeto] tabela projetos_avaliacoes não encontrada:', e.message);
+      return res.status(200).json({ ok: true, aviso: 'Tabela de avaliações não configurada.' });
+    }
+  }
+
+  // ── ÁREA DO CLIENTE: visão consolidada de todos os assuntos ────────
+  // Acesso por token único do cliente + verificação leve (4 últimos
+  // dígitos do CPF/CNPJ, quando cadastrado).
+  if (body.action === 'portal_cliente') {
+    const { token, verificacao } = body;
+    if (!token) return res.status(400).json({ erro: 'Token obrigatório.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rC = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(token)}&limit=1`, { headers: SHK });
+    const cArr = rC.ok ? await rC.json() : [];
+    if (!cArr.length) return res.status(404).json({ erro: 'Link inválido ou expirado.' });
+    const cli = cArr[0];
+
+    // Verificação leve
+    const doc = (cli.cpf_cnpj || '').replace(/\D/g, '');
+    if (doc.length >= 4) {
+      if (!verificacao) {
+        return res.status(200).json({ precisa_verificacao: true, nome: (cli.nome || '').split(' ')[0] });
+      }
+      if (String(verificacao).replace(/\D/g, '') !== doc.slice(-4)) {
+        return res.status(403).json({ erro: 'Código não confere. Use os 4 últimos dígitos do seu CPF ou CNPJ.' });
+      }
+    }
+
+    // Todos os assuntos do cliente
+    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?cliente_id=eq.${cli.id}&order=atualizado_em.desc`, { headers: SHK });
+    const projetos = rP.ok ? await rP.json() : [];
+    if (!projetos.length) {
+      return res.status(200).json({ cliente: { nome: cli.nome }, projetos: [], etapas: [], docs: [], logs: [] });
+    }
+    const ids = projetos.map(p => p.id).join(',');
+    const [etapas, docs, logs] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=in.(${ids})&order=ordem.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=in.(${ids})&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids})&or=(tipo.eq.publico,tipo.eq.cliente)&order=criado_em.desc&limit=40`, { headers: SHK }).then(r => r.json()).catch(() => [])
+    ]);
+    if (Array.isArray(docs)) {
+      await Promise.all(docs.map(async d => {
+        if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
+      }));
+    }
+    return res.status(200).json({ cliente: { nome: cli.nome }, projetos, etapas, docs, logs });
   }
 
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
@@ -367,17 +490,51 @@ module.exports = async (req, res) => {
     return res.status(200).json({ url });
   }
 
+  // Gerar (ou recuperar) o link único da Área do Cliente
+  if (body.action === 'portal_cliente_link') {
+    const { cliente_id } = body;
+    if (!cliente_id) return res.status(400).json({ erro: 'cliente_id obrigatório.' });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rC = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${cliente_id}&select=id,portal_token&limit=1`, { headers: SHK });
+    const cArr = rC.ok ? await rC.json() : [];
+    if (!cArr.length) return res.status(404).json({ erro: 'Cliente não encontrado.' });
+    let tk = cArr[0].portal_token;
+    if (!tk) {
+      tk = require('crypto').randomBytes(24).toString('hex');
+      const rU = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${cliente_id}`, {
+        method: 'PATCH',
+        headers: { ...SHK, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ portal_token: tk })
+      });
+      if (!rU.ok) return res.status(502).json({ erro: 'Não foi possível gerar o link. Rode a migração da Área do Cliente no Supabase.' });
+    }
+    return res.status(200).json({ link: `https://sistemacp.vercel.app/portal-cliente.html?t=${tk}` });
+  }
+
   // Avisar o cliente no WhatsApp (etapa concluída, doc solicitado, nova mensagem)
   if (body.action === 'notificar_cliente') {
     const { projeto_id, evento, detalhe } = body;
     if (!projeto_id || !evento) return res.status(400).json({ erro: 'Dados incompletos.' });
-    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${projeto_id}&limit=1`,
-      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${projeto_id}&limit=1`, { headers: SHK });
     const pArr = rP.ok ? await rP.json() : [];
     if (!pArr.length) return res.status(404).json({ erro: 'Projeto não encontrado.' });
     const p = pArr[0];
-    if (!p.cliente_telefone) return res.status(200).json({ ok: false, motivo: 'sem_telefone' });
-    const link = `https://sistemacp.vercel.app/portal.html?token=${p.token_acesso}`;
+    // Telefone: o do projeto ou, se vinculado, o do cadastro do cliente.
+    // Link: prefere a Área do Cliente quando o vínculo existe.
+    let telefone = p.cliente_telefone || null;
+    let link = `https://sistemacp.vercel.app/portal.html?token=${p.token_acesso}`;
+    if (p.cliente_id) {
+      try {
+        const rC = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${p.cliente_id}&select=contato,portal_token&limit=1`, { headers: SHK });
+        const cArr = rC.ok ? await rC.json() : [];
+        if (cArr.length) {
+          if (!telefone) telefone = cArr[0].contato || null;
+          if (cArr[0].portal_token) link = `https://sistemacp.vercel.app/portal-cliente.html?t=${cArr[0].portal_token}`;
+        }
+      } catch {}
+    }
+    if (!telefone) return res.status(200).json({ ok: false, motivo: 'sem_telefone' });
     const nome = (p.cliente_nome || '').split(' ')[0];
     let msg;
     if (evento === 'etapa_concluida') {
@@ -387,7 +544,7 @@ module.exports = async (req, res) => {
     } else {
       msg = `Olá, ${nome}! 💬\n\nVocê tem uma nova atualização da equipe no portal do seu projeto *${p.nome}*.\n\nConfira:\n${link}\n\n_Cavalcante Pinheiro Advocacia_`;
     }
-    const enviado = await enviarWhatsApp(p.cliente_telefone, msg);
+    const enviado = await enviarWhatsApp(telefone, msg);
     return res.status(200).json({ ok: enviado });
   }
 
