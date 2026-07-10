@@ -250,6 +250,68 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
 
+  // ── portal_reply: cliente ou equipe responde a uma atualização ──────
+  if (body.action === 'portal_reply') {
+    const { token: tkR, projeto_id: pjR, texto: txR, autor: autR, resposta_para } = body;
+    if (!txR || !pjR) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHK2 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW2 = { ...SHK2, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+
+    // Aceita autenticação por token de cliente OU por sessão interna
+    let autorNome = autR || 'Anônimo';
+    let tipoAutor = 'cliente';
+    let projParaEmail = null;
+
+    if (tkR) {
+      // Validar token de cliente
+      const rV = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(tkR)}&select=id,nome,email&limit=1`, { headers: SHK2 });
+      const cArr = rV.ok ? await rV.json() : [];
+      if (!cArr.length) return res.status(403).json({ erro: 'Token inválido.' });
+      autorNome = cArr[0].nome || autorNome;
+      tipoAutor = 'cliente';
+      // Verificar que o projeto pertence a esse cliente
+      const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjR}&cliente_id=eq.${cArr[0].id}&limit=1`, { headers: SHK2 });
+      const pArr = rP.ok ? await rP.json() : [];
+      if (!pArr.length) return res.status(403).json({ erro: 'Acesso negado.' });
+      projParaEmail = pArr[0];
+    } else {
+      // Sessão interna — verificar x-session-token inline
+      const sessT = req.headers['x-session-token'];
+      if (!sessT) return res.status(401).json({ erro: 'Autenticação necessária.' });
+      try {
+        const dec = Buffer.from(sessT, 'base64').toString('utf8');
+        const [uname, uhash] = dec.split(':');
+        const rU = await fetch(`${SB_URL}/rest/v1/usuarios?username=eq.${encodeURIComponent(uname)}&senha_hash=eq.${uhash}&ativo=eq.true&limit=1`, { headers: SHK2 });
+        const uArr = rU.ok ? await rU.json() : [];
+        if (!uArr.length) return res.status(403).json({ erro: 'Sessão inválida.' });
+        autorNome = uArr[0].nome || uname;
+        tipoAutor = 'equipe';
+      } catch { return res.status(401).json({ erro: 'Token inválido.' }); }
+    }
+
+    const novoLog = {
+      projeto_id: pjR,
+      texto: txR,
+      autor: autorNome,
+      tipo: tipoAutor,
+      subtipo: 'resposta',
+      visivel_cliente: true,
+      resposta_para: resposta_para || null,
+      criado_em: new Date().toISOString()
+    };
+    const rLog = await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHW2, body: JSON.stringify(novoLog) });
+    const logArr = rLog.ok ? await rLog.json() : [];
+
+    // Notificar equipe se resposta do cliente
+    if (tipoAutor === 'cliente' && projParaEmail) {
+      const emailResp = await telefoneDoUsuario(SERVICE_KEY, projParaEmail.responsavel) || 'mariana@cavalcantepinheiroadv.com.br';
+      await enviarEmail(emailResp,
+        `💬 Portal CP — ${autorNome} respondeu`,
+        `O cliente ${autorNome} respondeu a uma atualização no projeto "${projParaEmail.nome}":\n\n"${String(txR).slice(0, 400)}"\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
+    }
+    return res.status(200).json({ ok: true, log: Array.isArray(logArr) ? logArr[0] : logArr });
+  }
+
   // ── Avaliação de projeto pelo cliente (sem sessão — acesso por token) ──
   if (body.action === 'avaliar_projeto') {
     const { token: tkAval, projeto_id, nota, comentario } = body;
@@ -324,13 +386,13 @@ module.exports = async (req, res) => {
     const rP = await fetch(`${SB_URL}/rest/v1/projetos_cp?cliente_id=eq.${cli.id}&order=atualizado_em.desc`, { headers: SHK });
     const projetos = rP.ok ? await rP.json() : [];
     if (!projetos.length) {
-      return res.status(200).json({ cliente: { nome: cli.nome }, projetos: [], etapas: [], docs: [], logs: [] });
+      return res.status(200).json({ cliente: { id: cli.id, nome: cli.nome }, projetos: [], etapas: [], docs: [], logs: [] });
     }
     const ids = projetos.map(p => p.id).join(',');
     const [etapas, docs, logs, checklist] = await Promise.all([
       fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=in.(${ids})&order=ordem.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
       fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=in.(${ids})&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
-      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids})&or=(tipo.eq.publico,tipo.eq.cliente)&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids})&or=(visivel_cliente.is.null,visivel_cliente.eq.true)&order=criado_em.asc`, { headers: SHK }).then(r => r.json()).catch(() => []),
       fetch(`${SB_URL}/rest/v1/projetos_checklist?etapa_id=in.(select id from projetos_etapas where projeto_id=in.(${ids}))&order=ordem.asc`, { headers: SHK }).then(r => r.ok ? r.json() : []).catch(() => [])
     ]);
     // Buscar checklist de outra forma (join manual)
@@ -343,7 +405,7 @@ module.exports = async (req, res) => {
         if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
       }));
     }
-    return res.status(200).json({ cliente: { nome: cli.nome }, projetos, etapas, docs, logs, checklist: checklistReal });
+    return res.status(200).json({ cliente: { id: cli.id, nome: cli.nome }, projetos, etapas, docs, logs, checklist: checklistReal });
   }
 
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
@@ -553,6 +615,172 @@ module.exports = async (req, res) => {
     }
     const enviado = await enviarWhatsApp(telefone, msg);
     return res.status(200).json({ ok: enviado });
+  }
+
+  // ── check_session — verificar se há sessão interna válida ───────────
+  if (body.action === 'check_session') {
+    return res.status(200).json({ ok: true, usuario: { nome: usuarioAtual.nome, cargo: usuarioAtual.cargo, ini: usuarioAtual.ini } });
+  }
+
+  // ── portal_criar_subprojeto — criar processo filho ───────────────────
+  if (body.action === 'portal_criar_subprojeto') {
+    const { parent_id, cliente_id, nome: nomeSub, numero_processo, tipo_acao, vara_tribunal,
+            comarca, parte_autora, parte_re, valor_causa, situacao_atual, descricao_longa,
+            responsavel: respSub, status: stSub } = body;
+    if (!cliente_id || !nomeSub) return res.status(400).json({ erro: 'cliente_id e nome são obrigatórios.' });
+    const SHK3 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW3 = { ...SHK3, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const dadosProc = {
+      cliente_id, nome: nomeSub, tipo: 'processo',
+      parent_id: parent_id || null,
+      numero_processo: numero_processo || null,
+      tipo_acao: tipo_acao || null,
+      vara_tribunal: vara_tribunal || null,
+      comarca: comarca || null,
+      parte_autora: parte_autora || null,
+      parte_re: parte_re || null,
+      valor_causa: valor_causa || null,
+      situacao_atual: situacao_atual || null,
+      descricao_longa: descricao_longa || null,
+      responsavel: respSub || usuarioAtual.nome,
+      status: stSub || 'em_andamento',
+      criado_em: new Date().toISOString(),
+      atualizado_em: new Date().toISOString()
+    };
+    // Buscar cliente_nome para preencher campo legado
+    try {
+      const rCli = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${cliente_id}&select=nome&limit=1`, { headers: SHK3 });
+      const cliArr = rCli.ok ? await rCli.json() : [];
+      if (cliArr.length) dadosProc.cliente_nome = cliArr[0].nome;
+    } catch {}
+    const rCria = await fetch(`${SB_URL}/rest/v1/projetos_cp`, { method: 'POST', headers: SHW3, body: JSON.stringify(dadosProc) });
+    if (!rCria.ok) return res.status(502).json({ erro: 'Erro ao criar processo.' });
+    const criado = await rCria.json();
+    const procId = Array.isArray(criado) ? criado[0]?.id : criado?.id;
+    // Log de sistema
+    if (procId) {
+      await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+        method: 'POST', headers: SHW3,
+        body: JSON.stringify({ projeto_id: procId, texto: `Processo criado por ${usuarioAtual.nome}.`, autor: usuarioAtual.nome, tipo: 'equipe', subtipo: 'sistema', visivel_cliente: false })
+      });
+    }
+    return res.status(200).json({ ok: true, processo: Array.isArray(criado) ? criado[0] : criado });
+  }
+
+  // ── portal_atualizar_projeto — editar campos de processo/projeto ─────
+  if (body.action === 'portal_atualizar_projeto') {
+    const { projeto_id: pjUp, campos } = body;
+    if (!pjUp || !campos) return res.status(400).json({ erro: 'projeto_id e campos são obrigatórios.' });
+    const SHK4 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW4 = { ...SHK4, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    const camposPermitidos = ['nome','status','situacao_atual','proximos_passos','descricao_longa',
+      'numero_processo','tipo_acao','vara_tribunal','comarca','parte_autora','parte_re','valor_causa','responsavel'];
+    const dadosUp = { atualizado_em: new Date().toISOString() };
+    const alterados = [];
+    for (const k of camposPermitidos) {
+      if (campos[k] !== undefined) { dadosUp[k] = campos[k]; alterados.push(k); }
+    }
+    await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjUp}`, { method: 'PATCH', headers: SHW4, body: JSON.stringify(dadosUp) });
+    await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: { ...SHK4, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ projeto_id: pjUp, texto: `Atualizado por ${usuarioAtual.nome}: ${alterados.join(', ')}.`, autor: usuarioAtual.nome, tipo: 'equipe', subtipo: 'sistema', visivel_cliente: false })
+    });
+    return res.status(200).json({ ok: true });
+  }
+
+  // ── portal_timeline_add — equipe adiciona marco cronológico ──────────
+  if (body.action === 'portal_timeline_add') {
+    const { projeto_id: pjTl, titulo: tituloTl, texto: textoTl, data_evento } = body;
+    if (!pjTl || !textoTl) return res.status(400).json({ erro: 'projeto_id e texto são obrigatórios.' });
+    const SHK5 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const dtEvento = data_evento || new Date().toISOString();
+    const rTl = await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: SHK5,
+      body: JSON.stringify({ projeto_id: pjTl, titulo: tituloTl || null, texto: textoTl, autor: usuarioAtual.nome, tipo: 'equipe', subtipo: 'timeline', visivel_cliente: true, criado_em: dtEvento })
+    });
+    const tlArr = rTl.ok ? await rTl.json() : [];
+    return res.status(200).json({ ok: true, log: Array.isArray(tlArr) ? tlArr[0] : tlArr });
+  }
+
+  // ── portal_update_pub — equipe publica atualização formal ao cliente ─
+  if (body.action === 'portal_update_pub') {
+    const { projeto_id: pjPub, titulo: tituloPub, texto: textoPub, enviar_email } = body;
+    if (!pjPub || !textoPub) return res.status(400).json({ erro: 'projeto_id e texto são obrigatórios.' });
+    const SHK6 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW6 = { ...SHK6, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    // Buscar projeto + cliente para email
+    const rProj = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjPub}&select=id,nome,cliente_id,cliente_nome,responsavel&limit=1`, { headers: SHK6 });
+    const projArr = rProj.ok ? await rProj.json() : [];
+    if (!projArr.length) return res.status(404).json({ erro: 'Projeto não encontrado.' });
+    const proj = projArr[0];
+    // Inserir log
+    const rPub = await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: SHW6,
+      body: JSON.stringify({ projeto_id: pjPub, titulo: tituloPub || 'Atualização', texto: textoPub, autor: usuarioAtual.nome, tipo: 'equipe', subtipo: 'atualizacao', visivel_cliente: true })
+    });
+    const pubArr = rPub.ok ? await rPub.json() : [];
+    const logId = Array.isArray(pubArr) ? pubArr[0]?.id : pubArr?.id;
+
+    // Email ao cliente (se solicitado ou por padrão)
+    if (enviar_email !== false) {
+      let emailCliente = null;
+      if (proj.cliente_id) {
+        try {
+          const rCli = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${proj.cliente_id}&select=email,contato,portal_token&limit=1`, { headers: SHK6 });
+          const cliArr = rCli.ok ? await rCli.json() : [];
+          if (cliArr.length) {
+            emailCliente = cliArr[0].email || cliArr[0].contato || null;
+            const portalUrl = cliArr[0].portal_token
+              ? `https://sistemacp.vercel.app/portal-cliente.html?t=${cliArr[0].portal_token}${logId ? '#update-' + logId : ''}`
+              : null;
+            if (emailCliente && portalUrl) {
+              await enviarEmail(emailCliente,
+                `📋 ${tituloPub || 'Nova atualização no seu processo'} — Cavalcante Pinheiro`,
+                `Olá,\n\nHá uma nova atualização sobre o seu assunto "${proj.nome}":\n\n"${String(textoPub).slice(0, 600)}${textoPub.length > 600 ? '...' : ''}"\n\nAcesse todos os detalhes e responda diretamente pelo portal:\n${portalUrl}\n\n_Cavalcante Pinheiro Advocacia_\nOAB/BA 49.675`);
+            }
+          }
+        } catch {}
+      }
+    }
+    return res.status(200).json({ ok: true, log: Array.isArray(pubArr) ? pubArr[0] : pubArr });
+  }
+
+  // ── portal_solicitar_doc — equipe solicita documento ao cliente ──────
+  if (body.action === 'portal_solicitar_doc') {
+    const { projeto_id: pjDoc, titulo: titDoc, categoria: catDoc, prazo_entrega, descricao: descDoc, enviar_email: envEmail2 } = body;
+    if (!pjDoc || !titDoc) return res.status(400).json({ erro: 'projeto_id e titulo são obrigatórios.' });
+    const SHK7 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const SHW7 = { ...SHK7, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const rProjD = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjDoc}&select=id,nome,cliente_id,responsavel&limit=1`, { headers: SHK7 });
+    const projDAr = rProjD.ok ? await rProjD.json() : [];
+    if (!projDAr.length) return res.status(404).json({ erro: 'Projeto não encontrado.' });
+    const projD = projDAr[0];
+    const rDocNew = await fetch(`${SB_URL}/rest/v1/projetos_docs`, {
+      method: 'POST', headers: SHW7,
+      body: JSON.stringify({ projeto_id: pjDoc, titulo: titDoc, descricao: descDoc || null, categoria: catDoc || 'Geral', prazo_entrega: prazo_entrega || null, status: 'solicitado', criado_em: new Date().toISOString() })
+    });
+    const docNew = rDocNew.ok ? await rDocNew.json() : [];
+    const docId = Array.isArray(docNew) ? docNew[0]?.id : docNew?.id;
+    // Email ao cliente
+    if (envEmail2 !== false && projD.cliente_id) {
+      try {
+        const rCli2 = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${projD.cliente_id}&select=email,contato,portal_token&limit=1`, { headers: SHK7 });
+        const cliArr2 = rCli2.ok ? await rCli2.json() : [];
+        if (cliArr2.length) {
+          const emailC = cliArr2[0].email || cliArr2[0].contato || null;
+          const portalU = cliArr2[0].portal_token
+            ? `https://sistemacp.vercel.app/portal-cliente.html?t=${cliArr2[0].portal_token}${docId ? '#doc-' + docId : ''}`
+            : null;
+          if (emailC && portalU) {
+            const prazoStr = prazo_entrega ? ` Prazo: ${prazo_entrega.split('-').reverse().join('/')}.` : '';
+            await enviarEmail(emailC,
+              `📄 Documento solicitado: ${titDoc} — Cavalcante Pinheiro`,
+              `Olá!\n\nO escritório solicitou o seguinte documento para o processo "${projD.nome}":\n\n*${titDoc}*${prazoStr}\n${descDoc ? '\n' + descDoc + '\n' : ''}\nVocê pode enviar diretamente pelo portal:\n${portalU}\n\n_Cavalcante Pinheiro Advocacia_`);
+          }
+        }
+      } catch {}
+    }
+    return res.status(200).json({ ok: true, doc: Array.isArray(docNew) ? docNew[0] : docNew });
   }
 
   // ── 2. Validar tabela e operação ─────────────────────────────────
