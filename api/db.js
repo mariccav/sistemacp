@@ -622,6 +622,61 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true, usuario: { nome: usuarioAtual.nome, cargo: usuarioAtual.cargo, ini: usuarioAtual.ini } });
   }
 
+  // ── portal_clientes_lista — equipe: lista todos os clientes com contagem de projetos ─
+  if (body.action === 'portal_clientes_lista') {
+    const SHK8 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const [rCli, rPro] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/clientes?select=id,nome,contato,email,portal_token&order=nome.asc`, { headers: SHK8 }),
+      fetch(`${SB_URL}/rest/v1/projetos_cp?select=id,cliente_id,status&status=neq.arquivado`, { headers: SHK8 })
+    ]);
+    const clientes = rCli.ok ? await rCli.json() : [];
+    const projArr = rPro.ok ? await rPro.json() : [];
+    // Contar projetos por cliente
+    const contagemAndamento = {}, contagemTotal = {};
+    (projArr || []).forEach(p => {
+      if (!p.cliente_id) return;
+      contagemTotal[p.cliente_id] = (contagemTotal[p.cliente_id] || 0) + 1;
+      if (p.status !== 'concluido') contagemAndamento[p.cliente_id] = (contagemAndamento[p.cliente_id] || 0) + 1;
+    });
+    const resultado = clientes.map(c => ({
+      id: c.id,
+      nome: c.nome,
+      email: c.email || c.contato || null,
+      portal_token: c.portal_token || null,
+      total_projetos: contagemTotal[c.id] || 0,
+      em_andamento: contagemAndamento[c.id] || 0
+    }));
+    return res.status(200).json(resultado);
+  }
+
+  // ── portal_cliente_equipe — equipe: carrega portal de um cliente por ID (sem token de cliente) ─
+  if (body.action === 'portal_cliente_equipe') {
+    const { cliente_id: cliId } = body;
+    if (!cliId) return res.status(400).json({ erro: 'cliente_id obrigatório.' });
+    const SHK9 = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rCli2 = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${cliId}&select=id,nome,criado_em,portal_token&limit=1`, { headers: SHK9 });
+    const cliArr2 = rCli2.ok ? await rCli2.json() : [];
+    if (!cliArr2.length) return res.status(404).json({ erro: 'Cliente não encontrado.' });
+    const cli2 = cliArr2[0];
+    const rP2 = await fetch(`${SB_URL}/rest/v1/projetos_cp?cliente_id=eq.${cli2.id}&order=atualizado_em.desc`, { headers: SHK9 });
+    const projetos2 = rP2.ok ? await rP2.json() : [];
+    if (!projetos2.length) {
+      return res.status(200).json({ cliente: { id: cli2.id, nome: cli2.nome, criado_em: cli2.criado_em, portal_token: cli2.portal_token }, projetos: [], etapas: [], docs: [], logs: [] });
+    }
+    const ids2 = projetos2.map(p => p.id).join(',');
+    const [etapas2, docs2, logs2] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=in.(${ids2})&order=ordem.asc`, { headers: SHK9 }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_docs?projeto_id=in.(${ids2})&order=criado_em.asc`, { headers: SHK9 }).then(r => r.json()).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/projetos_logs?projeto_id=in.(${ids2})&order=criado_em.asc`, { headers: SHK9 }).then(r => r.json()).catch(() => [])
+    ]);
+    if (Array.isArray(docs2)) {
+      await Promise.all(docs2.map(async d => {
+        if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
+      }));
+    }
+    return res.status(200).json({ cliente: { id: cli2.id, nome: cli2.nome, criado_em: cli2.criado_em, portal_token: cli2.portal_token }, projetos: projetos2, etapas: etapas2, docs: docs2, logs: logs2 });
+  }
+
   // ── portal_criar_subprojeto — criar processo filho ───────────────────
   if (body.action === 'portal_criar_subprojeto') {
     const { parent_id, cliente_id, nome: nomeSub, numero_processo, tipo_acao, vara_tribunal,
