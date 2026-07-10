@@ -134,8 +134,9 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
     <button class="tv-btn active" id="btn-kanban" onclick="setView('kanban')">⊞ Kanban</button>
     <button class="tv-btn" id="btn-lista" onclick="setView('lista')">☰ Lista</button>
     <button class="tv-btn" id="btn-cal" onclick="setView('calendario')">📅 Calendário</button>
+    <button class="tv-btn" id="btn-dil" onclick="setView('diligencias')">🏛️ Diligências</button>
   </div>
-  <button class="btn-novo" onclick="abrirNova()">+ Nova Tarefa</button>
+  <button class="btn-novo" id="btn-nova-acao" onclick="acaoNova()">+ Nova Tarefa</button>
 </div>
 
 <!-- KPIs -->
@@ -160,6 +161,113 @@ header p{font-size:11px;color:var(--bege);margin-top:1px;}
     <span>🔴 Prazo fatal vencido</span>
     <span>🟡 Prazo fatal em 3 dias</span>
     <span>🟢 Prazo fatal futuro</span>
+  </div>
+</div>
+
+<!-- DILIGÊNCIAS -->
+<div id="view-diligencias" style="display:none;padding:16px 20px;height:calc(100vh - 120px);overflow-y:auto;">
+  <!-- Filtros diligências -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+    <select id="dil-f-local" onchange="renderDiligencias()" style="padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;">
+      <option value="">Todos os fóruns</option>
+      <option>Interior</option><option>Imbuí</option><option>Ruy Barbosa</option>
+      <option>TRF-1</option><option>Juiz</option><option>Outro</option>
+    </select>
+    <select id="dil-f-resp" onchange="renderDiligencias()" style="padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;">
+      <option value="">Todas as responsáveis</option>
+      <option>Mariana Pinheiro</option><option>Diana</option><option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+    </select>
+    <select id="dil-f-status" onchange="renderDiligencias()" style="padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;color:var(--v1);background:#fff;outline:none;">
+      <option value="pendente">Pendentes</option>
+      <option value="realizada">Realizadas</option>
+      <option value="">Todas</option>
+    </select>
+    <input id="dil-busca" placeholder="Buscar parte ou processo..." oninput="renderDiligencias()"
+      style="flex:1;min-width:200px;padding:7px 12px;border:1px solid rgba(167,168,151,.3);border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;outline:none;">
+    <button onclick="abrirNovaDiligencia()" style="background:var(--v1);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">+ Nova Diligência</button>
+  </div>
+  <!-- Tabela -->
+  <div style="background:#fff;border-radius:12px;border:1px solid #e8f0f0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:var(--v1);color:#fff;">
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Parte</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Processo</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Vara</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Fórum</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Turno</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Diligência</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Resultado</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Responsável</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;">Data</th>
+          <th style="padding:10px 8px;text-align:center;font-weight:700;font-size:11px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="dil-tbody"></tbody>
+    </table>
+  </div>
+  <div id="dil-empty" style="text-align:center;padding:40px;color:var(--bege);font-size:13px;display:none;">Nenhuma diligência encontrada.</div>
+</div>
+
+<!-- MODAL DILIGÊNCIA -->
+<div class="modal-bg" id="modal-dil">
+  <div class="modal" style="max-width:600px">
+    <h2 id="modal-dil-titulo">Nova Diligência</h2>
+    <input type="hidden" id="dil-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="mfld" style="grid-column:span 2"><label>Nome da Parte *</label><input id="dil-parte" placeholder="Ex: João da Silva"></div>
+      <div class="mfld"><label>Número do Processo</label><input id="dil-processo" placeholder="0000000-00.0000.0.00.0000"></div>
+      <div class="mfld"><label>Local / Fórum *</label>
+        <select id="dil-local">
+          <option>Interior</option><option>Imbuí</option><option>Ruy Barbosa</option>
+          <option>TRF-1</option><option>Juiz</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="mfld" style="grid-column:span 2"><label>Vara</label><input id="dil-vara" placeholder="Ex: 1ª Vara do Juizado Especial"></div>
+      <div class="mfld"><label>Fórum (endereço)</label><input id="dil-forum" placeholder="Ex: Imbuí, Salvador"></div>
+      <div class="mfld"><label>Turno</label>
+        <select id="dil-turno">
+          <option value="">—</option><option>MANHÃ</option><option>TARDE</option><option>INTEGRAL</option>
+        </select>
+      </div>
+      <div class="mfld"><label>Sistema</label>
+        <select id="dil-sistema">
+          <option value="">—</option><option>PJE</option><option>e-Proc</option><option>PROJUDI</option><option>Físico</option>
+        </select>
+      </div>
+      <div class="mfld"><label>Cartório</label><input id="dil-cartorio" placeholder="Se aplicável"></div>
+      <div class="mfld" style="grid-column:span 2"><label>Diligência a realizar *</label><textarea id="dil-diligencia" rows="3" placeholder="Descreva o que deve ser feito..."></textarea></div>
+      <div class="mfld"><label>Responsável</label>
+        <select id="dil-resp">
+          <option value="">— Selecione —</option>
+          <option>Mariana Pinheiro</option><option>Diana</option><option>Jade</option><option>Mariana Barboza</option><option>Laila Costa</option>
+        </select>
+      </div>
+      <div class="mfld"><label>Data Agendada</label><input type="date" id="dil-data"></div>
+      <div class="mfld"><label>Resultado</label>
+        <select id="dil-resultado">
+          <option value="">Pendente</option>
+          <option value="movimentada">✅ Movimentada</option>
+          <option value="nao_movimentada">❌ Não movimentada</option>
+          <option value="nao_se_aplica">— Não se aplica</option>
+          <option value="realizada">✓ Realizada</option>
+        </select>
+      </div>
+      <div class="mfld"><label>Status</label>
+        <select id="dil-status">
+          <option value="pendente">Pendente</option>
+          <option value="realizada">Realizada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="mfld" style="grid-column:span 2"><label>Observações / Resultado detalhado</label><textarea id="dil-obs" rows="2" placeholder="Anotações sobre a diligência..."></textarea></div>
+      <div class="mfld" style="grid-column:span 2"><label>Link (Drive, Processo, etc.)</label><input id="dil-link" placeholder="https://..."></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn-cancel" onclick="document.getElementById('modal-dil').classList.remove('show');editandoDilId=null">Cancelar</button>
+      <button class="btn-del" id="dil-btn-del" style="display:none" onclick="excluirDiligencia()">Excluir</button>
+      <button class="btn-save" onclick="salvarDiligencia()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -502,14 +610,28 @@ function renderLista() {
 // ── TOGGLE VIEW ────────────────────────────────────────────────────
 function setView(v) {
   viewAtual = v;
-  document.getElementById('view-kanban').style.display    = v==='kanban'     ? 'flex'  : 'none';
-  document.getElementById('view-lista').style.display     = v==='lista'      ? 'flex'  : 'none';
-  document.getElementById('view-calendario').style.display= v==='calendario' ? 'block' : 'none';
+  document.getElementById('view-kanban').style.display      = v==='kanban'      ? 'flex'  : 'none';
+  document.getElementById('view-lista').style.display       = v==='lista'       ? 'flex'  : 'none';
+  document.getElementById('view-calendario').style.display  = v==='calendario'  ? 'block' : 'none';
+  document.getElementById('view-diligencias').style.display = v==='diligencias' ? 'block' : 'none';
   document.getElementById('btn-kanban').classList.toggle('active', v==='kanban');
   document.getElementById('btn-lista').classList.toggle('active',  v==='lista');
   document.getElementById('btn-cal').classList.toggle('active',    v==='calendario');
+  document.getElementById('btn-dil').classList.toggle('active',    v==='diligencias');
+  const btnAcao = document.getElementById('btn-nova-acao');
+  if (v==='diligencias') {
+    btnAcao.textContent = '+ Nova Diligência';
+  } else {
+    btnAcao.textContent = '+ Nova Tarefa';
+  }
   if (v==='calendario') renderCalendario();
+  else if (v==='diligencias') carregarDiligencias();
   else renderView();
+}
+
+function acaoNova() {
+  if (viewAtual === 'diligencias') abrirNovaDiligencia();
+  else abrirNova();
 }
 
 // ── MODAL ──────────────────────────────────────────────────────────
@@ -585,6 +707,188 @@ async function excluirTarefa() {
   await sbDelete('tarefas_astrea', id);
   todas = todas.filter(t=>t.id!==id);
   fecharModal(); renderView(); renderKPIs();
+}
+
+// ── DILIGÊNCIAS ────────────────────────────────────────────────────
+let todasDil = [];
+let editandoDilId = null;
+
+async function carregarDiligencias() {
+  try {
+    const token = localStorage.getItem('token');
+    const resp = await fetch('/api/db?tabela=diligencias&orderBy=data_agendada&orderDir=asc', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!resp.ok) return;
+    todasDil = await resp.json();
+    renderDiligencias();
+  } catch(e) { console.error('Erro diligências:', e); }
+}
+
+function renderDiligencias() {
+  const local   = document.getElementById('dil-f-local').value;
+  const resp    = document.getElementById('dil-f-resp').value;
+  const status  = document.getElementById('dil-f-status').value;
+  const busca   = (document.getElementById('dil-busca').value || '').toLowerCase();
+
+  let lista = todasDil.filter(d => {
+    if (local  && d.local_dil   !== local)  return false;
+    if (resp   && d.responsavel !== resp)   return false;
+    if (status && d.status      !== status) return false;
+    if (busca  && !(
+      (d.nome_parte      || '').toLowerCase().includes(busca) ||
+      (d.numero_processo || '').toLowerCase().includes(busca) ||
+      (d.diligencia      || '').toLowerCase().includes(busca)
+    )) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('dil-tbody');
+  const empty = document.getElementById('dil-empty');
+  if (!lista.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  const resultadoLabel = {
+    'movimentada':    '✅ Movimentada',
+    'nao_movimentada':'❌ Não movimentada',
+    'nao_se_aplica':  '— Não se aplica',
+    'realizada':      '✓ Realizada',
+    '':               '—'
+  };
+  const statusColor = { 'pendente':'#f59e0b', 'realizada':'#10b981', 'cancelada':'#ef4444' };
+
+  tbody.innerHTML = lista.map((d, i) => {
+    const bg = i%2===0 ? '#fff' : '#f9fbfb';
+    const dataBR = d.data_agendada ? d.data_agendada.split('T')[0].split('-').reverse().join('/') : '—';
+    const res = resultadoLabel[d.resultado||''] || d.resultado || '—';
+    const sc  = statusColor[d.status] || '#a7a897';
+    return `<tr style="background:${bg};border-bottom:1px solid #f0f4f4;cursor:pointer" onclick="abrirEditarDiligencia('${d.id}')">
+      <td style="padding:9px 12px;font-weight:600;color:var(--v1);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.nome_parte||''}">${d.nome_parte||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555;font-family:monospace">${d.numero_processo||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.vara||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555">${d.forum||d.local_dil||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555">${d.turno||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:var(--v1);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.diligencia||''}">${d.diligencia||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555">${res}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555">${d.responsavel||'—'}</td>
+      <td style="padding:9px 12px;font-size:11px;color:#555;white-space:nowrap">${dataBR}</td>
+      <td style="padding:9px 8px;text-align:center">
+        <span style="background:${sc};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">${d.status||'pendente'}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirNovaDiligencia() {
+  editandoDilId = null;
+  document.getElementById('modal-dil-titulo').textContent = 'Nova Diligência';
+  document.getElementById('dil-id').value = '';
+  ['dil-parte','dil-processo','dil-vara','dil-forum','dil-cartorio','dil-diligencia','dil-obs','dil-link'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('dil-local').value    = 'Interior';
+  document.getElementById('dil-turno').value    = '';
+  document.getElementById('dil-sistema').value  = '';
+  document.getElementById('dil-resp').value     = '';
+  document.getElementById('dil-data').value     = '';
+  document.getElementById('dil-resultado').value= '';
+  document.getElementById('dil-status').value   = 'pendente';
+  document.getElementById('dil-btn-del').style.display = 'none';
+  document.getElementById('modal-dil').classList.add('show');
+}
+
+function abrirEditarDiligencia(id) {
+  const d = todasDil.find(x=>x.id===id);
+  if (!d) return;
+  editandoDilId = id;
+  document.getElementById('modal-dil-titulo').textContent = 'Editar Diligência';
+  document.getElementById('dil-id').value               = d.id;
+  document.getElementById('dil-parte').value            = d.nome_parte||'';
+  document.getElementById('dil-processo').value         = d.numero_processo||'';
+  document.getElementById('dil-vara').value             = d.vara||'';
+  document.getElementById('dil-forum').value            = d.forum||'';
+  document.getElementById('dil-local').value            = d.local_dil||'Interior';
+  document.getElementById('dil-turno').value            = d.turno||'';
+  document.getElementById('dil-sistema').value          = d.sistema||'';
+  document.getElementById('dil-cartorio').value         = d.cartorio||'';
+  document.getElementById('dil-diligencia').value       = d.diligencia||'';
+  document.getElementById('dil-resultado').value        = d.resultado||'';
+  document.getElementById('dil-resp').value             = d.responsavel||'';
+  document.getElementById('dil-data').value             = d.data_agendada ? d.data_agendada.split('T')[0] : '';
+  document.getElementById('dil-obs').value              = d.resultado_obs||d.obs||'';
+  document.getElementById('dil-link').value             = d.link||'';
+  document.getElementById('dil-status').value           = d.status||'pendente';
+  document.getElementById('dil-btn-del').style.display  = 'inline-block';
+  document.getElementById('modal-dil').classList.add('show');
+}
+
+async function salvarDiligencia() {
+  const parte = document.getElementById('dil-parte').value.trim();
+  const dil   = document.getElementById('dil-diligencia').value.trim();
+  if (!parte) { alert('Informe o nome da parte.'); return; }
+  if (!dil)   { alert('Descreva a diligência a realizar.'); return; }
+
+  const token = localStorage.getItem('token');
+  const dados = {
+    nome_parte:      parte,
+    numero_processo: document.getElementById('dil-processo').value.trim()||null,
+    vara:            document.getElementById('dil-vara').value.trim()||null,
+    forum:           document.getElementById('dil-forum').value.trim()||null,
+    local_dil:       document.getElementById('dil-local').value||'Salvador',
+    turno:           document.getElementById('dil-turno').value||null,
+    sistema:         document.getElementById('dil-sistema').value||null,
+    cartorio:        document.getElementById('dil-cartorio').value.trim()||null,
+    diligencia:      dil,
+    resultado:       document.getElementById('dil-resultado').value||null,
+    resultado_obs:   document.getElementById('dil-obs').value.trim()||null,
+    responsavel:     document.getElementById('dil-resp').value||null,
+    data_agendada:   document.getElementById('dil-data').value||null,
+    obs:             document.getElementById('dil-obs').value.trim()||null,
+    link:            document.getElementById('dil-link').value.trim()||null,
+    status:          document.getElementById('dil-status').value||'pendente',
+    atualizado_em:   new Date().toISOString()
+  };
+
+  const id = document.getElementById('dil-id').value;
+  if (id) {
+    await fetch('/api/db', {
+      method: 'PATCH',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ tabela:'diligencias', id, dados })
+    });
+    const idx = todasDil.findIndex(x=>x.id===id);
+    if (idx>=0) Object.assign(todasDil[idx], dados);
+  } else {
+    const r = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ tabela:'diligencias', dados })
+    });
+    if (r.ok) {
+      const novo = await r.json();
+      const d = Array.isArray(novo) ? novo[0] : novo;
+      if (d) todasDil.unshift(d);
+    }
+  }
+  document.getElementById('modal-dil').classList.remove('show');
+  editandoDilId = null;
+  renderDiligencias();
+}
+
+async function excluirDiligencia() {
+  const id = document.getElementById('dil-id').value;
+  if (!id || !confirm('Excluir esta diligência?')) return;
+  const token = localStorage.getItem('token');
+  await fetch('/api/db', {
+    method: 'DELETE',
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+    body: JSON.stringify({ tabela:'diligencias', id })
+  });
+  todasDil = todasDil.filter(d=>d.id!==id);
+  document.getElementById('modal-dil').classList.remove('show');
+  editandoDilId = null;
+  renderDiligencias();
 }
 
 // ── INIT ───────────────────────────────────────────────────────────

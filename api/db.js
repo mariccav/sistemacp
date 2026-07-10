@@ -71,7 +71,8 @@ const TABELAS_PERMITIDAS = new Set([
   'mural', 'elogios', 'redes_posts',
   'processos', 'processos_historico',
   'projetos_cp', 'projetos_etapas', 'projetos_docs', 'projetos_logs',
-  'projetos_avaliacoes', 'projetos_checklist'
+  'projetos_avaliacoes', 'projetos_checklist',
+  'diligencias'
 ]);
 
 // Operações permitidas
