@@ -352,7 +352,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--v1);min-he
 
       <!-- TABELA DE SESSÕES -->
       <div style="background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden;border:1px solid rgba(167,168,151,.15);">
-        <table class="gtb"><thead><tr><th>Colaboradora</th><th>Início</th><th>Fim</th><th>Cliente</th><th>Tarefa</th><th>Tipo</th><th>Dur.</th></tr></thead><tbody id="g-body"></tbody></table>
+        <table class="gtb"><thead><tr><th>Colaboradora</th><th>Início</th><th>Fim</th><th>Cliente</th><th>Tarefa</th><th>Tipo</th><th>Dur.</th><th></th></tr></thead><tbody id="g-body"></tbody></table>
       </div>
     </div>
 
@@ -607,8 +607,10 @@ async function carregarHoje(){
   const agora=Date.now();
   const isAdmin=window.CP_USER?.is_admin||window.CP_USER?.cargo==='Sócia Fundadora'||window.CP_USER?.cargo==='Coordenação Jurídica';
   tb.innerHTML=rows.map(s=>{
-    const minutosDesde=s.criado_em?(agora-new Date(s.criado_em).getTime())/60000:999;
-    const podeEditar=isAdmin||(minutosDesde<=120&&s.colaboradora===ativa.nome); // 2h para a própria usuária
+    // Usa inicio como referência se criado_em for nulo
+    const ref = s.criado_em || s.inicio;
+    const minutosDesde = ref ? (agora - new Date(ref).getTime()) / 60000 : 0;
+    const podeEditar = isAdmin || (minutosDesde <= 1440 && s.colaboradora === ativa.nome); // 24h para a própria usuária
     const coment=s.comentario?`<div style="font-size:11px;color:#5a8080;margin-top:3px;word-break:break-all">${s.comentario.replace(/https?:\/\/\S+/g,url=>`<a href="${url}" target="_blank" style="color:var(--v2)">${url.length>40?url.slice(0,40)+'…':url}</a>`)}</div>`:'';
     const acoes=podeEditar?`<div style="display:flex;gap:4px"><button onclick="abrirEditarSessao('${s.id}')" style="background:none;border:1px solid #dde8e8;color:var(--v2);border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Editar</button><button onclick="excluirSessao('${s.id}')" style="background:none;border:1px solid #f4d0d0;color:#c25e5e;border-radius:5px;padding:2px 8px;font-size:11px;cursor:pointer">Excluir</button></div>`:'';
     return `<tr><td>${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:var(--verde);font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}${coment}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="tbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td><td>${acoes}</td></tr>`;
@@ -833,7 +835,13 @@ async function carregarGestao() {
     const c = COLS.find(x=>x.nome===s.colaboradora);
     const av = c ? `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:20px;height:20px;border-radius:50%;background:${c.cor};display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">${c.ini}</span>${s.colaboradora.split(' ')[0]}</span>` : s.colaboradora;
     const dataFmt = gestPer!=='hoje' ? `<span style="font-size:10px;color:var(--bege)">${new Date(s.inicio).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} </span>` : '';
-    return `<tr><td>${av}</td><td>${dataFmt}${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:#5edb9a;font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="gbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td></tr>`;
+    const U2=window.CP_USER;
+    const isAdm=U2?.is_admin||U2?.cargo==='Sócia Fundadora'||U2?.cargo==='Coordenação Jurídica';
+    const ref2=s.criado_em||s.inicio;
+    const minAgo=ref2?(Date.now()-new Date(ref2).getTime())/60000:0;
+    const podeEd=isAdm||(minAgo<=1440&&s.colaboradora===ativa?.nome);
+    const editBtn=podeEd?`<button onclick="abrirEditarSessao('${s.id}')" style="background:none;border:1px solid rgba(167,168,151,.4);color:var(--bege);border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer">Editar</button>`:'';
+    return `<tr><td>${av}</td><td>${dataFmt}${fmt2(s.inicio)}</td><td>${s.fim?fmt2(s.fim):'<span style="color:#5edb9a;font-weight:700">● Em curso</span>'}</td><td>${s.cliente||'—'}</td><td>${s.processo||'—'}</td><td>${s.tipo_atividade?`<span class="gbadge">${s.tipo_atividade}</span>`:'—'}</td><td>${s.fim?hmin(s.duracao_minutos):'—'}</td><td>${editBtn}</td></tr>`;
   }).join('');
 }
 
