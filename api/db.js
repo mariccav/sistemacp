@@ -521,33 +521,41 @@ module.exports = async (req, res) => {
     } catch (e) { return res.status(500).json({ erro: e.message }); }
   }
 
-  // ── 1. Verificar sessão ──────────────────────────────────────────
-  const sessionToken = req.headers['x-session-token'];
-  if (!sessionToken) return res.status(401).json({ erro: 'Sessão não autenticada.' });
-
-  // Decodificar token de sessão (base64: username:hash:timestamp)
+  // ── 1. Verificar sessão (equipe) OU portal_token (cliente colaborativo) ─
   let sessaoValida = false;
   let usuarioAtual = null;
-  try {
-    const decoded = Buffer.from(sessionToken, 'base64').toString('utf8');
-    const [username, senhaHash, timestamp] = decoded.split(':');
 
-    // Verificar se a sessão não expirou (12 horas)
-    if (Date.now() - Number(timestamp) > 12 * 3600 * 1000) {
-      return res.status(401).json({ erro: 'Sessão expirada.' });
-    }
+  // Opção A: portal_token no body — cliente com acesso colaborativo completo
+  if (body.portal_token) {
+    try {
+      const SHKpt = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+      const rCpt = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(body.portal_token)}&select=id,nome&limit=1`, { headers: SHKpt });
+      const cptArr = rCpt.ok ? await rCpt.json() : [];
+      if (cptArr.length) {
+        sessaoValida = true;
+        usuarioAtual = { id: cptArr[0].id, nome: cptArr[0].nome, cargo: 'cliente', is_admin: false, _cliente_id: cptArr[0].id };
+      }
+    } catch {}
+  }
 
-    // Verificar usuário no banco usando service role
-    const r = await fetch(
-      `${SB_URL}/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${senhaHash}&ativo=eq.true&limit=1`,
-      { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
-    );
-    const users = r.ok ? await r.json() : [];
-    if (users.length > 0) {
-      sessaoValida = true;
-      usuarioAtual = users[0];
-    }
-  } catch {}
+  // Opção B: x-session-token — colaboradora da equipe
+  if (!sessaoValida) {
+    const sessionToken = req.headers['x-session-token'];
+    if (!sessionToken) return res.status(401).json({ erro: 'Sessão não autenticada.' });
+    try {
+      const decoded = Buffer.from(sessionToken, 'base64').toString('utf8');
+      const [username, senhaHash, timestamp] = decoded.split(':');
+      if (Date.now() - Number(timestamp) > 12 * 3600 * 1000) {
+        return res.status(401).json({ erro: 'Sessão expirada.' });
+      }
+      const r = await fetch(
+        `${SB_URL}/rest/v1/usuarios?username=eq.${encodeURIComponent(username)}&senha_hash=eq.${senhaHash}&ativo=eq.true&limit=1`,
+        { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } }
+      );
+      const users = r.ok ? await r.json() : [];
+      if (users.length > 0) { sessaoValida = true; usuarioAtual = users[0]; }
+    } catch {}
+  }
 
   if (!sessaoValida) return res.status(401).json({ erro: 'Sessão inválida.' });
 
@@ -620,6 +628,54 @@ module.exports = async (req, res) => {
   // ── check_session — verificar se há sessão interna válida ───────────
   if (body.action === 'check_session') {
     return res.status(200).json({ ok: true, usuario: { nome: usuarioAtual.nome, cargo: usuarioAtual.cargo, ini: usuarioAtual.ini } });
+  }
+
+  // ── portal_etapa_add — adicionar atividade/etapa a um processo ────────
+  if (body.action === 'portal_etapa_add') {
+    const { projeto_id: pjEt, titulo: titEt, descricao: descEt, status: stEt } = body;
+    if (!pjEt || !titEt) return res.status(400).json({ erro: 'projeto_id e titulo são obrigatórios.' });
+    const SHKe = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const rMaxOrd = await fetch(`${SB_URL}/rest/v1/projetos_etapas?projeto_id=eq.${pjEt}&select=ordem&order=ordem.desc&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+    const ordArr = rMaxOrd.ok ? await rMaxOrd.json() : [];
+    const proxOrdem = ordArr.length ? (ordArr[0].ordem || 0) + 1 : 1;
+    const rEt = await fetch(`${SB_URL}/rest/v1/projetos_etapas`, {
+      method: 'POST', headers: SHKe,
+      body: JSON.stringify({ projeto_id: pjEt, titulo: titEt, descricao: descEt || null, status: stEt || 'pendente', ordem: proxOrdem, criado_em: new Date().toISOString(), atualizado_em: new Date().toISOString() })
+    });
+    const etArr = rEt.ok ? await rEt.json() : null;
+    await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHKe, body: JSON.stringify({ projeto_id: pjEt, texto: `Atividade adicionada: "${titEt}"`, autor: usuarioAtual.nome, tipo: usuarioAtual.cargo || 'equipe', subtipo: 'sistema', visivel_cliente: true }) });
+    return res.status(200).json({ ok: true, etapa: Array.isArray(etArr) ? etArr[0] : etArr });
+  }
+
+  // ── portal_etapa_update — atualizar etapa (status, titulo, desc) ──────
+  if (body.action === 'portal_etapa_update') {
+    const { etapa_id, campos: camposEt } = body;
+    if (!etapa_id || !camposEt) return res.status(400).json({ erro: 'etapa_id e campos são obrigatórios.' });
+    const SHKeu = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    const permEt = ['titulo','descricao','status','ordem'];
+    const dadosEt = { atualizado_em: new Date().toISOString() };
+    permEt.forEach(k => { if (camposEt[k] !== undefined) dadosEt[k] = camposEt[k]; });
+    await fetch(`${SB_URL}/rest/v1/projetos_etapas?id=eq.${etapa_id}`, { method: 'PATCH', headers: SHKeu, body: JSON.stringify(dadosEt) });
+    return res.status(200).json({ ok: true });
+  }
+
+  // ── portal_checklist_add — adicionar item de checklist ────────────────
+  if (body.action === 'portal_checklist_add') {
+    const { etapa_id: etCk, texto: txtCk } = body;
+    if (!etCk || !txtCk) return res.status(400).json({ erro: 'etapa_id e texto são obrigatórios.' });
+    const SHKck = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const rCk = await fetch(`${SB_URL}/rest/v1/projetos_checklist`, { method: 'POST', headers: SHKck, body: JSON.stringify({ etapa_id: etCk, texto: txtCk, concluido: false, criado_em: new Date().toISOString() }) });
+    const ckArr = rCk.ok ? await rCk.json() : null;
+    return res.status(200).json({ ok: true, item: Array.isArray(ckArr) ? ckArr[0] : ckArr });
+  }
+
+  // ── portal_checklist_toggle — marcar/desmarcar checklist ─────────────
+  if (body.action === 'portal_checklist_toggle') {
+    const { item_id, concluido } = body;
+    if (!item_id) return res.status(400).json({ erro: 'item_id obrigatório.' });
+    const SHKct = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/projetos_checklist?id=eq.${item_id}`, { method: 'PATCH', headers: SHKct, body: JSON.stringify({ concluido: !!concluido }) });
+    return res.status(200).json({ ok: true });
   }
 
   // ── portal_clientes_lista — equipe: lista todos os clientes com contagem de projetos ─
