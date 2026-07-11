@@ -47,26 +47,40 @@ main.show{display:block;}
 .view.on{display:block;}
 
 /* SAUDAÇÃO */
-.sauda{margin-bottom:16px;}
-.sauda-h{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--v1);margin-bottom:4px;}
-.sauda-s{font-size:12px;color:var(--texto2);line-height:1.5;}
-.sauda-p{margin-top:8px;padding:7px 12px;border-left:2px solid var(--borda2);background:rgba(184,149,90,.05);font-size:11px;color:var(--ouro);border-radius:0 6px 6px 0;display:none;}
+.sauda{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--borda);}
+.sauda-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin-bottom:6px;}
+.sauda-h{font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:var(--v1);margin-bottom:6px;line-height:1.15;}
+.sauda-s{font-size:13px;color:var(--texto2);line-height:1.6;}
+.sauda-p{margin-top:12px;padding:9px 14px;border-left:3px solid var(--borda2);background:rgba(184,149,90,.05);font-size:12px;color:var(--ouro);border-radius:0 7px 7px 0;line-height:1.5;display:none;}
 
-/* PENDÊNCIAS */
-.pend{background:rgba(192,122,32,.06);border:1px solid rgba(192,122,32,.18);border-radius:var(--r);padding:11px 13px;margin-bottom:12px;display:none;}
+/* PENDÊNCIAS — "O que depende de você?" */
+.pend{background:var(--card);border:1px solid rgba(192,122,32,.2);border-radius:var(--r);overflow:hidden;margin-bottom:14px;display:none;box-shadow:0 1px 5px rgba(192,122,32,.06);}
 .pend.show{display:block;}
-.pend-tit{font-size:10px;font-weight:700;color:var(--av);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px;}
-.pend-row{font-size:12px;color:var(--texto2);padding:4px 0;border-bottom:1px solid rgba(192,122,32,.07);}
+.pend-hdr{background:rgba(192,122,32,.06);padding:12px 16px;border-bottom:1px solid rgba(192,122,32,.12);}
+.pend-tit{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--av);margin-bottom:2px;}
+.pend-sub{font-size:11px;color:rgba(192,122,32,.7);}
+.pend-body{padding:4px 0;}
+.pend-row{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(192,122,32,.07);cursor:pointer;transition:background .12s;}
 .pend-row:last-child{border-bottom:none;}
+.pend-row:hover{background:rgba(192,122,32,.03);}
+.pend-ic{font-size:16px;flex-shrink:0;margin-top:1px;}
+.pend-info{flex:1;min-width:0;}
+.pend-nome{font-size:13px;font-weight:600;color:var(--v1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pend-meta{font-size:11px;color:var(--texto3);}
+.pend-prazo{font-size:10px;font-weight:700;color:var(--av);background:rgba(192,122,32,.08);padding:2px 7px;border-radius:99px;white-space:nowrap;flex-shrink:0;}
 
-/* HOJE */
-.hoje{background:var(--card);border:1px solid var(--borda2);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;box-shadow:0 1px 5px rgba(184,149,90,.06);display:none;}
+/* HOJE — "O que temos para hoje?" */
+.hoje{background:var(--card);border:1px solid var(--borda2);border-radius:var(--r);overflow:hidden;margin-bottom:14px;box-shadow:0 1px 5px rgba(184,149,90,.07);display:none;}
 .hoje.show{display:block;}
-.hoje-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ouro);margin-bottom:8px;}
-.hoje-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--borda);}
+.hoje-hdr{background:rgba(184,149,90,.06);padding:12px 16px;border-bottom:1px solid var(--borda2);}
+.hoje-lbl{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--ouro);margin-bottom:2px;}
+.hoje-sub-hdr{font-size:11px;color:rgba(184,149,90,.7);}
+.hoje-body{padding:4px 0;}
+.hoje-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid var(--borda);}
 .hoje-item:last-child{border-bottom:none;}
-.hoje-txt{font-size:12px;color:var(--texto);line-height:1.4;}
-.hoje-sub{font-size:10px;color:var(--texto3);}
+.hoje-ic{font-size:16px;flex-shrink:0;margin-top:1px;}
+.hoje-txt{font-size:13px;color:var(--texto);font-weight:500;line-height:1.4;margin-bottom:1px;}
+.hoje-sub{font-size:11px;color:var(--texto3);}
 
 /* KPIs */
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
@@ -290,30 +304,49 @@ main.show{display:block;}
 </header>
 <main id="main">
 
-  <!-- LISTA -->
+  <!-- LISTA / DASHBOARD -->
   <div class="view on" id="view-lista">
+
+    <!-- Saudação -->
     <div class="sauda">
+      <div class="sauda-label">Cavalcante Pinheiro Advocacia</div>
       <div class="sauda-h" id="sauda-h">—</div>
       <div class="sauda-s" id="sauda-s"></div>
       <div class="sauda-p" id="sauda-p"></div>
     </div>
+
+    <!-- O que depende de você? -->
     <div class="pend" id="pend-box">
-      <div class="pend-tit">✋ Precisamos de você</div>
-      <div id="pend-lista"></div>
+      <div class="pend-hdr">
+        <div class="pend-tit">O que depende de você?</div>
+        <div class="pend-sub" id="pend-sub-txt">Itens que precisam da sua atenção agora.</div>
+      </div>
+      <div class="pend-body" id="pend-lista"></div>
     </div>
+
+    <!-- O que temos para hoje? -->
     <div class="hoje" id="hoje-box">
-      <div class="hoje-lbl">📍 O que acontece hoje</div>
-      <div id="hoje-itens"></div>
+      <div class="hoje-hdr">
+        <div class="hoje-lbl">O que temos para hoje?</div>
+        <div class="hoje-sub-hdr">Novidades e compromissos do dia.</div>
+      </div>
+      <div class="hoje-body" id="hoje-itens"></div>
     </div>
+
+    <!-- KPIs -->
     <div class="kpis">
       <div class="kpi"><div class="kpi-n" id="kpi-and">—</div><div class="kpi-l">Em andamento</div></div>
       <div class="kpi"><div class="kpi-n" id="kpi-conc">—</div><div class="kpi-l">Concluídos</div></div>
-      <div class="kpi"><div class="kpi-n" id="kpi-ag">—</div><div class="kpi-l">Aguardando</div></div>
+      <div class="kpi"><div class="kpi-n" id="kpi-ag">—</div><div class="kpi-l">Aguardando você</div></div>
     </div>
+
+    <!-- Projetos -->
     <div id="proj-lista"></div>
+
     <div style="margin-top:14px;">
       <button class="btn-sec dest" onclick="abrirModalSub()">+ Adicionar projeto ou processo</button>
     </div>
+
     <div class="footer">
       <div class="footer-txt">
         Cavalcante Pinheiro Advocacia · OAB/BA 49.675<br>
@@ -559,54 +592,101 @@ function mostrarPortal() {
 function renderSaudacao() {
   const nome = (dados.cliente.nome||'').split(' ')[0];
   const h = new Date().getHours();
-  document.getElementById('sauda-h').textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + ', ' + esc(nome) + '.';
+  const sauda = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('sauda-h').textContent = sauda + ', ' + esc(nome) + '.';
+
   const ult = localStorage.getItem('cp_v_' + portalToken);
-  let sub = 'Bem-vinda à sua área exclusiva. Aqui você acompanha e colabora em tudo.';
+  let sub = 'Sua área exclusiva de acompanhamento. Aqui você vê tudo, colabora e interage com a equipe.';
   if (ult) {
-    const novas = (dados.logs||[]).filter(l=>l.criado_em&&new Date(l.criado_em).getTime()>Number(ult)&&l.subtipo==='atualizacao').length;
-    if (novas>0) sub = novas + ' nova' + (novas>1?'s atualizações':'  atualização') + ' desde sua última visita.';
-    else { const d=Math.floor((Date.now()-Number(ult))/86400000); sub = d>0?'Faz '+d+' dia'+(d>1?'s':'')+' desde sua última visita.':'Bem-vinda de volta.'; }
+    const novas = (dados.logs||[]).filter(l => l.criado_em && new Date(l.criado_em).getTime() > Number(ult) && l.subtipo === 'atualizacao').length;
+    const dias = Math.floor((Date.now() - Number(ult)) / 86400000);
+    if (novas > 0) {
+      sub = 'Sua equipe publicou ' + novas + ' nova' + (novas > 1 ? 's atualizações' : ' atualização') + ' desde a sua última visita.';
+    } else if (dias === 0) {
+      sub = 'Tudo em dia por aqui. Fique à vontade para explorar seus assuntos.';
+    } else if (dias === 1) {
+      sub = 'Bem-vinda de volta. Passamos ontem sem novidades — mas a equipe está trabalhando.';
+    } else {
+      sub = 'Faz ' + dias + ' dias desde sua última visita. Veja o que avançou por aqui.';
+    }
   }
   document.getElementById('sauda-s').textContent = sub;
+
   if (dados.cliente.criado_em) {
-    const cr=new Date(dados.cliente.criado_em),ag=new Date();
-    if (ag.getMonth()===cr.getMonth()&&ag.getFullYear()>cr.getFullYear()) {
-      const m=(ag.getFullYear()-cr.getFullYear())*12+(ag.getMonth()-cr.getMonth());
-      const el=document.getElementById('sauda-p');
-      el.textContent='Este mês faz '+m+' mese'+(m!==1?'s':'')+' da nossa parceria. Obrigada pela confiança.';
-      el.style.display='block';
+    const cr = new Date(dados.cliente.criado_em), ag = new Date();
+    if (ag.getMonth() === cr.getMonth() && ag.getFullYear() > cr.getFullYear()) {
+      const m = (ag.getFullYear() - cr.getFullYear()) * 12 + (ag.getMonth() - cr.getMonth());
+      const el = document.getElementById('sauda-p');
+      el.textContent = 'Este mês completamos ' + m + ' mese' + (m !== 1 ? 's' : '') + ' juntos. Obrigada pela confiança e pela parceria.';
+      el.style.display = 'block';
     }
   }
 }
 
 // ── PENDÊNCIAS ─────────────────────────────────────────────────────────
 function renderPendencias() {
-  const solic = (dados.docs||[]).filter(d=>d.status==='solicitado');
-  const box=document.getElementById('pend-box');
-  if (!solic.length){box.classList.remove('show');return;}
-  document.getElementById('pend-lista').innerHTML=solic.map(d=>{
-    const proj=(dados.projetos||[]).find(p=>p.id===d.projeto_id);
-    const prazo=d.prazo_entrega?' · até '+d.prazo_entrega.split('T')[0].split('-').reverse().join('/'):'';
-    return `<div class="pend-row">📄 ${esc(d.titulo)}${proj&&(dados.projetos||[]).length>1?' <em style="opacity:.6">· '+esc(proj.nome)+'</em>':''}${prazo}</div>`;
+  const solic = (dados.docs||[]).filter(d => d.status === 'solicitado');
+  const box = document.getElementById('pend-box');
+  if (!solic.length) { box.classList.remove('show'); return; }
+
+  const sub = solic.length === 1
+    ? '1 item aguarda a sua resposta.'
+    : solic.length + ' itens aguardam a sua resposta.';
+  document.getElementById('pend-sub-txt').textContent = sub;
+
+  document.getElementById('pend-lista').innerHTML = solic.map(d => {
+    const proj = (dados.projetos||[]).find(p => p.id === d.projeto_id);
+    const prazoStr = d.prazo_entrega
+      ? d.prazo_entrega.split('T')[0].split('-').reverse().join('/')
+      : null;
+    const projNome = proj ? proj.nome : '';
+    return `<div class="pend-row" onclick="${proj ? "abrirProcesso('" + proj.id + "')" : ''}">
+      <span class="pend-ic">📤</span>
+      <div class="pend-info">
+        <div class="pend-nome">${esc(d.titulo)}</div>
+        ${projNome ? '<div class="pend-meta">' + esc(projNome) + (d.descricao ? ' · ' + esc(d.descricao.slice(0, 50)) : '') + '</div>' : ''}
+      </div>
+      ${prazoStr ? '<span class="pend-prazo">até ' + prazoStr + '</span>' : '<span class="pend-prazo" style="background:rgba(192,122,32,.06);color:var(--av);">Pendente</span>'}
+    </div>`;
   }).join('');
   box.classList.add('show');
 }
 
 // ── HOJE ────────────────────────────────────────────────────────────
 function renderHoje() {
-  const hoje=new Date().toISOString().split('T')[0];
-  const itens=[];
-  (dados.docs||[]).filter(d=>d.status==='solicitado'&&d.prazo_entrega&&d.prazo_entrega<=hoje).forEach(d=>{
-    const proj=(dados.projetos||[]).find(p=>p.id===d.projeto_id);
-    itens.push({ic:'📄',txt:'Documento pendente: '+d.titulo,sub:proj?proj.nome:''});
+  const hoje = new Date().toISOString().split('T')[0];
+  const itens = [];
+
+  // Atualizações das últimas 24h
+  const lim = Date.now() - 86400000;
+  (dados.logs||[]).filter(l => l.subtipo === 'atualizacao' && l.criado_em && new Date(l.criado_em).getTime() > lim).forEach(l => {
+    const proj = (dados.projetos||[]).find(p => p.id === l.projeto_id);
+    itens.push({ ic: '💬', txt: l.titulo || 'Nova atualização da equipe', sub: proj ? proj.nome : '', projetoId: l.projeto_id });
   });
-  const lim=(Date.now()-86400000);
-  (dados.logs||[]).filter(l=>l.subtipo==='atualizacao'&&l.criado_em&&new Date(l.criado_em).getTime()>lim).forEach(l=>{
-    const proj=(dados.projetos||[]).find(p=>p.id===l.projeto_id);
-    itens.push({ic:'💬',txt:l.titulo||'Nova atualização',sub:proj?proj.nome:''});
+
+  // Docs com prazo hoje ou vencido
+  (dados.docs||[]).filter(d => d.status === 'solicitado' && d.prazo_entrega && d.prazo_entrega <= hoje).forEach(d => {
+    const proj = (dados.projetos||[]).find(p => p.id === d.projeto_id);
+    itens.push({ ic: '📋', txt: 'Documento com prazo: ' + d.titulo, sub: proj ? proj.nome : '', projetoId: d.projeto_id });
   });
+
+  // Etapas em andamento
+  (dados.etapas||[]).filter(e => e.status === 'em_andamento').slice(0, 2).forEach(e => {
+    const proj = (dados.projetos||[]).find(p => p.id === e.projeto_id);
+    itens.push({ ic: '⚡', txt: e.titulo, sub: proj ? proj.nome : '', projetoId: e.projeto_id });
+  });
+
   if (!itens.length) return;
-  document.getElementById('hoje-itens').innerHTML=itens.map(i=>`<div class="hoje-item"><span style="font-size:15px;flex-shrink:0">${i.ic}</span><div><div class="hoje-txt">${esc(i.txt)}</div>${i.sub?'<div class="hoje-sub">'+esc(i.sub)+'</div>':''}</div></div>`).join('');
+
+  document.getElementById('hoje-itens').innerHTML = itens.map(i =>
+    `<div class="hoje-item" ${i.projetoId ? 'onclick="abrirProcesso(\'' + i.projetoId + '\')" style="cursor:pointer"' : ''}>
+      <span class="hoje-ic">${i.ic}</span>
+      <div>
+        <div class="hoje-txt">${esc(i.txt)}</div>
+        ${i.sub ? '<div class="hoje-sub">' + esc(i.sub) + '</div>' : ''}
+      </div>
+    </div>`
+  ).join('');
   document.getElementById('hoje-box').classList.add('show');
 }
 
