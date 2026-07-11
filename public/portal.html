@@ -4,688 +4,813 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal do Cliente | Cavalcante Pinheiro Advocacia</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --fundo:#001711;--fundo2:#002019;
-  --glass:rgba(0,23,17,.82);--glass2:rgba(14,47,39,.7);
-  --verde:#a9cfbe;--verde-escuro:#1f3f36;
+  --bg:#001711;
+  --card:#021f18;
+  --verde:#a9cfbe;
   --dourado:#e4c099;--dourado2:#c9a87a;
-  --texto:#c7eadd;--texto2:rgba(199,234,221,.7);--texto3:rgba(199,234,221,.45);
-  --borda:rgba(169,207,190,.12);--borda2:rgba(228,192,153,.2);
-  --erro:#ff6b6b;--aviso:#f0b44a;--sucesso:#6edcb0;
-  --radius:12px;--radius-lg:18px;
+  --texto:#c7eadd;--texto2:rgba(199,234,221,.68);--texto3:rgba(199,234,221,.38);
+  --borda:rgba(169,207,190,.09);--borda2:rgba(228,192,153,.16);
+  --erro:#ff6b6b;--av:#f0b44a;--ok:#6edcb0;
+  --r:10px;
 }
 html{scroll-behavior:smooth;}
-body{
-  font-family:'Nunito',sans-serif;background:var(--fundo);color:var(--texto);
-  min-height:100vh;overflow-x:hidden;position:relative;
-}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;overflow-x:hidden;}
 
-/* ── SHADER DNA ── */
-#dna-canvas{
-  position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;
-  opacity:.35;mix-blend-mode:screen;pointer-events:none;
-}
+/* ── DNA — só no loading ── */
+#dna-canvas{position:fixed;inset:0;z-index:0;opacity:.32;mix-blend-mode:screen;pointer-events:none;transition:opacity 1s;}
+#dna-canvas.out{opacity:0;}
 
 /* ── LOADING ── */
-#loading-screen{
-  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-  flex-direction:column;gap:20px;background:var(--fundo);transition:opacity .5s;
-}
-#loading-screen.fade{opacity:0;pointer-events:none;}
-.dna-spinner{
-  width:40px;height:40px;border:3px solid rgba(228,192,153,.2);
-  border-top-color:var(--dourado);border-radius:50%;animation:spin .8s linear infinite;
-}
+#screen-load{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--bg);transition:opacity .5s;}
+#screen-load.fade{opacity:0;pointer-events:none;}
+.spin{width:36px;height:36px;border:2px solid rgba(228,192,153,.12);border-top-color:var(--dourado);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading-texto{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--texto2);letter-spacing:.1em;}
+.load-txt{font-family:'Playfair Display',serif;font-size:14px;color:var(--texto3);letter-spacing:.12em;font-style:italic;}
 
-/* ── ERRO SCREEN ── */
-#erro-screen{
-  position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
-  flex-direction:column;gap:16px;background:var(--fundo);padding:20px;text-align:center;
-}
-#erro-screen h2{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--dourado);}
-#erro-screen p{font-size:14px;color:var(--texto2);max-width:360px;line-height:1.6;}
+/* ── ERRO ── */
+#screen-erro{position:fixed;inset:0;z-index:99;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);padding:24px;text-align:center;}
+#screen-erro h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--dourado);}
+#screen-erro p{font-size:13px;color:var(--texto2);max-width:320px;line-height:1.6;}
 
-/* ── CONTEÚDO PRINCIPAL ── */
-#portal-conteudo{
-  position:relative;z-index:1;max-width:680px;margin:0 auto;
-  padding:0 16px 80px;display:none;
-}
-#portal-conteudo.show{display:block;}
+/* ── HEADER ── */
+header{position:sticky;top:0;z-index:50;background:rgba(0,23,17,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--borda);padding:10px 16px;display:none;align-items:center;gap:10px;}
+header.show{display:flex;}
+.logo{height:28px;object-fit:contain;filter:brightness(0) invert(1);opacity:.8;}
+.h-nome{flex:1;font-size:13px;font-weight:600;color:var(--dourado);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-vol{font-size:18px;color:var(--texto3);cursor:pointer;display:none;}
+.h-vol:hover{color:var(--verde);}
 
-/* ── HERO ── */
-.hero{
-  text-align:center;padding:60px 20px 40px;
-}
-.hero-logo{height:48px;object-fit:contain;margin:0 auto 28px;display:block;filter:brightness(0) invert(1);opacity:.85;}
-.hero-saudacao{
-  font-family:'Cormorant Garamond',serif;font-style:italic;
-  font-size:20px;color:var(--texto2);margin-bottom:6px;letter-spacing:.02em;
-}
-.hero-nome{
-  font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;
-  color:var(--dourado);margin-bottom:20px;line-height:1.2;
-}
-.hero-projeto{
-  font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--texto3);margin-bottom:10px;
-}
+/* ── MAIN ── */
+main{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:14px 12px 80px;display:none;}
+main.show{display:block;}
 
-/* Progresso circular */
-.progresso-wrapper{
-  display:flex;flex-direction:column;align-items:center;gap:8px;margin:24px auto 0;
-}
-.prog-circle{
-  width:120px;height:120px;position:relative;
-  display:flex;align-items:center;justify-content:center;
-}
-.prog-circle svg{position:absolute;top:0;left:0;transform:rotate(-90deg);}
-.prog-circle svg circle{stroke-dasharray:339.3;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);}
-.prog-track{stroke:rgba(169,207,190,.12);}
-.prog-fill{stroke:var(--dourado);stroke-dashoffset:339.3;}
-.prog-inner{z-index:1;text-align:center;}
-.prog-pct{font-size:28px;font-weight:800;color:var(--dourado);line-height:1;}
-.prog-label{font-size:10px;color:var(--texto3);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
-.prog-status{font-size:12px;color:var(--texto2);margin-top:4px;}
+/* ── VIEWS ── */
+.view{display:none;}
+.view.on{display:block;}
 
-/* ── CARDS DE SEÇÃO ── */
-.secao{
-  background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid var(--borda);border-radius:var(--radius-lg);
-  margin-bottom:16px;overflow:hidden;
-}
-.secao-header{
-  padding:18px 20px 14px;border-bottom:1px solid var(--borda);
-  display:flex;align-items:center;gap:10px;
-}
-.secao-header .icon{font-size:18px;}
-.secao-header h2{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--dourado);}
-.secao-header .sub{font-size:11px;color:var(--texto3);margin-top:1px;}
-.secao-body{padding:16px 20px;}
+/* ── SAUDAÇÃO ── */
+.sauda{margin-bottom:16px;}
+.sauda-h{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--dourado);margin-bottom:4px;}
+.sauda-s{font-size:12px;color:var(--texto2);line-height:1.5;}
+.sauda-p{margin-top:8px;padding:7px 12px;border-left:2px solid var(--borda2);font-size:11px;color:var(--dourado2);display:none;}
 
-/* ── ETAPAS ── */
-.etapa-item{
-  display:flex;align-items:flex-start;gap:14px;padding:12px 0;
-  border-bottom:1px solid rgba(169,207,190,.06);
-}
+/* ── PENDÊNCIAS ── */
+.pend{background:rgba(240,180,74,.06);border:1px solid rgba(240,180,74,.18);border-radius:var(--r);padding:11px 13px;margin-bottom:12px;display:none;}
+.pend.show{display:block;}
+.pend-tit{font-size:10px;font-weight:700;color:var(--av);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px;}
+.pend-item{font-size:12px;color:var(--texto2);padding:4px 0;border-bottom:1px solid rgba(240,180,74,.07);}
+.pend-item:last-child{border-bottom:none;}
+
+/* ── KPIs ── */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
+.kpi{background:var(--card);border:1px solid var(--borda);border-radius:var(--r);padding:13px 10px;text-align:center;}
+.kpi-n{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--dourado);line-height:1;margin-bottom:3px;}
+.kpi-l{font-size:9px;color:var(--texto3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+
+/* ── LISTA DE PROJETOS ── */
+.grp-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);margin:14px 0 7px 2px;}
+.proj-item{background:var(--card);border:1px solid var(--borda);border-radius:var(--r);margin-bottom:5px;overflow:hidden;}
+.proj-row{display:flex;align-items:center;gap:10px;padding:12px 13px;cursor:pointer;transition:background .12s;}
+.proj-row:hover{background:rgba(169,207,190,.03);}
+.p-icon{font-size:17px;flex-shrink:0;width:22px;text-align:center;}
+.p-nome{flex:1;font-size:13px;font-weight:600;color:var(--texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.p-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--ok);}
+.dot-av{background:var(--av);}
+.dot-off{background:rgba(169,207,190,.2);}
+.p-seta{color:var(--texto3);font-size:12px;}
+/* subprocessos */
+.subs{border-top:1px solid var(--borda);}
+.sub-row{display:flex;align-items:center;gap:9px;padding:9px 13px 9px 36px;cursor:pointer;border-bottom:1px solid var(--borda);transition:background .12s;}
+.sub-row:last-child{border-bottom:none;}
+.sub-row:hover{background:rgba(169,207,190,.03);}
+.sub-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.sub-nome{flex:1;font-size:12px;color:var(--texto2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sub-num{font-size:10px;color:var(--texto3);font-family:monospace;}
+.sub-seta{color:var(--texto3);font-size:11px;}
+
+/* ── DETALHE DO PROCESSO ── */
+.proc-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;margin-bottom:8px;}
+.pill-ok{background:rgba(110,220,176,.1);color:var(--ok);}
+.pill-av{background:rgba(240,180,74,.1);color:var(--av);}
+.pill-off{background:rgba(169,207,190,.07);color:var(--texto3);}
+.pill-d{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.proc-nome{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--dourado);line-height:1.2;margin-bottom:12px;}
+
+/* Situação */
+.situ{border-left:3px solid var(--ok);padding:11px 13px;margin-bottom:11px;background:rgba(110,220,176,.04);border-radius:0 var(--r) var(--r) 0;}
+.situ-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-bottom:4px;}
+.situ-txt{font-size:13px;color:var(--texto);line-height:1.5;}
+.situ-dt{font-size:10px;color:var(--texto3);margin-top:4px;}
+
+/* Próximos passos */
+.passos{border-left:3px solid var(--borda2);padding:11px 13px;margin-bottom:11px;background:rgba(228,192,153,.03);border-radius:0 var(--r) var(--r) 0;display:none;}
+.passos-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dourado2);margin-bottom:7px;}
+.passo-ln{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--texto2);padding:3px 0;line-height:1.4;}
+.passo-b{width:4px;height:4px;border-radius:50%;background:var(--dourado2);flex-shrink:0;margin-top:5px;}
+
+/* Info colapsável */
+.info-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--card);border:1px solid var(--borda);border-radius:var(--r);cursor:pointer;margin-bottom:3px;transition:background .12s;}
+.info-hdr:hover{background:rgba(14,47,39,.5);}
+.info-hdr-lbl{font-size:11px;font-weight:600;color:var(--texto2);}
+.info-chev{font-size:11px;color:var(--texto3);transition:transform .2s;}
+.info-chev.aberto{transform:rotate(90deg);}
+.info-body{display:none;background:var(--card);border:1px solid var(--borda);border-top:none;border-radius:0 0 var(--r) var(--r);margin-bottom:11px;}
+.info-body.show{display:block;}
+.info-campo{display:flex;gap:8px;padding:8px 13px;border-bottom:1px solid var(--borda);}
+.info-campo:last-child{border-bottom:none;}
+.info-l{font-size:9px;font-weight:700;color:var(--texto3);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;min-width:90px;flex-shrink:0;margin-top:1px;}
+.info-v{font-size:12px;color:var(--texto2);}
+.info-v.mono{font-family:monospace;}
+
+/* Descrição */
+.desc{padding:11px 13px;background:var(--card);border:1px solid var(--borda);border-radius:var(--r);margin-bottom:11px;display:none;}
+.desc-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto3);margin-bottom:5px;}
+.desc-txt{font-size:12px;color:var(--texto2);line-height:1.7;white-space:pre-wrap;}
+
+/* Etapas (andamento) */
+.etapas-sec{margin-bottom:14px;}
+.sec-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);margin-bottom:8px;}
+.etapa-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(169,207,190,.05);}
 .etapa-item:last-child{border-bottom:none;}
-.etapa-icone{
-  width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:15px;flex-shrink:0;margin-top:1px;border:1.5px solid transparent;
-}
-.etapa-icone.pendente{background:rgba(199,234,221,.06);border-color:rgba(199,234,221,.12);color:var(--texto3);}
-.etapa-icone.em_andamento{background:rgba(74,139,134,.15);border-color:rgba(74,139,134,.3);color:#6edcb0;}
-.etapa-icone.bloqueado{background:rgba(240,180,74,.12);border-color:rgba(240,180,74,.3);color:var(--aviso);}
-.etapa-icone.concluido{background:rgba(110,220,176,.1);border-color:rgba(110,220,176,.25);color:var(--sucesso);}
-.etapa-info{flex:1;min-width:0;}
-.etapa-titulo{font-size:14px;font-weight:600;color:var(--texto);line-height:1.3;margin-bottom:3px;}
-.etapa-titulo.concluido{color:var(--texto3);text-decoration:line-through;}
-.etapa-resp{font-size:11px;color:var(--texto3);}
-.etapa-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.etapa-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.etapa-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.et-ok{background:var(--ok);}
+.et-and{background:var(--dourado);box-shadow:0 0 0 3px rgba(228,192,153,.15);}
+.et-bl{background:var(--av);}
+.et-pd{background:rgba(169,207,190,.2);}
+.etapa-fio{flex:1;width:1px;background:rgba(169,207,190,.07);min-height:10px;margin-top:2px;}
+.etapa-body{flex:1;}
+.etapa-nome{font-size:13px;font-weight:600;color:var(--texto);margin-bottom:2px;}
+.etapa-nome.done{text-decoration:line-through;opacity:.45;}
+.etapa-desc{font-size:11px;color:var(--texto3);line-height:1.4;}
 
-/* Badge ação do cliente */
-.badge-cliente{
-  display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;
-  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  background:rgba(228,192,153,.15);color:var(--dourado);border:1px solid var(--borda2);
-  animation:pulse-gold 2s infinite;
-}
-@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(228,192,153,.3)}50%{box-shadow:0 0 0 6px rgba(228,192,153,0)}}
+/* Abas */
+.abas{display:flex;border-bottom:1px solid var(--borda);margin-bottom:14px;overflow-x:auto;}
+.aba{padding:8px 14px;font-size:11px;font-weight:600;color:var(--texto3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap;transition:color .15s;}
+.aba.on{color:var(--dourado);border-bottom-color:var(--dourado);}
+.aba-c{display:none;}
+.aba-c.on{display:block;}
 
-.badge-bloqueado{
-  display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;
-  font-size:10px;font-weight:700;text-transform:uppercase;
-  background:rgba(240,180,74,.12);color:var(--aviso);border:1px solid rgba(240,180,74,.25);
-}
+/* Timeline */
+.tl-item{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid rgba(169,207,190,.05);}
+.tl-item:last-child{border-bottom:none;}
+.tl-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--verde);border:1.5px solid rgba(169,207,190,.2);}
+.tl-fio{flex:1;width:1px;background:rgba(169,207,190,.07);min-height:12px;}
+.tl-body{flex:1;}
+.tl-dt{font-size:10px;color:var(--texto3);margin-bottom:2px;}
+.tl-tit{font-size:12px;font-weight:700;color:var(--dourado2);margin-bottom:2px;}
+.tl-txt{font-size:12px;color:var(--texto2);line-height:1.5;}
 
-/* Alerta aguardando cliente */
-.alerta-cliente{
-  background:rgba(228,192,153,.08);border:1px solid var(--borda2);border-radius:10px;
-  padding:14px 16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;
-}
-.alerta-cliente .alerta-icon{font-size:20px;flex-shrink:0;}
-.alerta-cliente .alerta-texto{font-size:13px;color:var(--dourado);line-height:1.5;}
-.alerta-cliente .alerta-texto strong{display:block;font-size:14px;margin-bottom:3px;}
+/* Atualizações */
+.upd-item{border:1px solid var(--borda);border-radius:var(--r);margin-bottom:9px;overflow:hidden;}
+.upd-hd{padding:11px 13px;border-bottom:1px solid var(--borda);}
+.upd-dt{font-size:10px;color:var(--texto3);margin-bottom:2px;}
+.upd-autor{font-size:11px;font-weight:700;color:var(--verde);margin-bottom:4px;}
+.upd-tit{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--dourado);margin-bottom:4px;}
+.upd-txt{font-size:12px;color:var(--texto2);line-height:1.6;white-space:pre-wrap;}
+.resps{padding:0 13px 3px;}
+.resp-i{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid rgba(169,207,190,.04);}
+.resp-i:last-child{border-bottom:none;}
+.resp-av{width:24px;height:24px;border-radius:50%;background:rgba(169,207,190,.07);border:1px solid var(--borda);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--texto3);flex-shrink:0;margin-top:1px;}
+.resp-b{flex:1;}
+.resp-m{font-size:10px;color:var(--texto3);margin-bottom:1px;}
+.resp-t{font-size:11px;color:var(--texto2);line-height:1.4;}
+.reply-a{padding:8px 13px;background:rgba(0,0,0,.12);border-top:1px solid var(--borda);}
+.reply-ta{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--borda);border-radius:7px;padding:7px 10px;font-family:'Manrope',sans-serif;font-size:12px;color:var(--texto);outline:none;resize:none;min-height:48px;transition:border-color .2s;margin-bottom:5px;}
+.reply-ta:focus{border-color:var(--borda2);}
+.btn-reply{padding:5px 12px;background:rgba(169,207,190,.07);border:1px solid var(--borda);border-radius:6px;color:var(--verde);font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;cursor:pointer;}
 
-/* ── DOCUMENTOS ── */
-.doc-item{
-  display:flex;align-items:center;gap:12px;padding:12px 0;
-  border-bottom:1px solid rgba(169,207,190,.06);
-}
-.doc-item:last-child{border-bottom:none;}
-.doc-icone{
-  width:36px;height:36px;border-radius:9px;background:var(--glass2);
-  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
-}
-.doc-info{flex:1;min-width:0;}
-.doc-titulo{font-size:13px;font-weight:600;color:var(--texto);margin-bottom:2px;}
-.doc-descricao{font-size:11px;color:var(--texto3);line-height:1.4;}
-.doc-status{
-  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  padding:2px 7px;border-radius:99px;flex-shrink:0;
-}
-.doc-status.solicitado{background:rgba(240,180,74,.15);color:var(--aviso);}
-.doc-status.recebido{background:rgba(110,220,176,.12);color:var(--sucesso);}
-.doc-status.pendente{background:rgba(199,234,221,.06);color:var(--texto3);}
-.btn-enviou{
-  display:inline-flex;align-items:center;gap:5px;padding:6px 12px;
-  background:rgba(228,192,153,.1);border:1px solid var(--borda2);border-radius:7px;
-  color:var(--dourado);font-size:11px;font-weight:600;font-family:'Nunito',sans-serif;
-  cursor:pointer;transition:all .2s;margin-top:6px;
-}
-.btn-enviou:hover{background:rgba(228,192,153,.18);}
-.btn-enviou:disabled{opacity:.5;cursor:not-allowed;}
+/* Documentos */
+.cat-g{margin-bottom:12px;}
+.cat-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto3);padding-bottom:5px;border-bottom:1px solid var(--borda);margin-bottom:6px;}
+.doc-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid rgba(169,207,190,.04);}
+.doc-row:last-child{border-bottom:none;}
+.doc-ic{font-size:15px;flex-shrink:0;}
+.doc-inf{flex:1;min-width:0;}
+.doc-n{font-size:12px;color:var(--texto);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.doc-m{font-size:10px;color:var(--texto3);}
+.doc-pr{font-size:10px;color:var(--av);}
+.doc-bdg{font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;flex-shrink:0;}
+.doc-act{display:flex;gap:5px;flex-shrink:0;}
+.btn-doc{padding:4px 8px;border-radius:5px;font-family:'Manrope',sans-serif;font-size:9px;font-weight:700;cursor:pointer;border:1px solid;}
+.btn-env{background:rgba(228,192,153,.07);border-color:var(--borda2);color:var(--dourado);}
+.btn-dl{background:rgba(169,207,190,.06);border-color:var(--borda);color:var(--verde);}
+.upl-inp{display:none;}
 
-/* ── MENSAGENS ── */
-.chat-lista{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;max-height:320px;overflow-y:auto;}
-.msg-item{display:flex;gap:10px;align-items:flex-start;}
-.msg-item.cliente{flex-direction:row-reverse;}
-.msg-avatar{
-  width:30px;height:30px;border-radius:50%;background:var(--glass2);
-  display:flex;align-items:center;justify-content:center;font-size:12px;
-  font-weight:700;color:var(--verde);flex-shrink:0;border:1px solid var(--borda);
-}
-.msg-item.cliente .msg-avatar{background:rgba(228,192,153,.12);color:var(--dourado);border-color:var(--borda2);}
-.msg-bubble{
-  max-width:75%;padding:10px 13px;border-radius:12px;
-  background:var(--glass2);border:1px solid var(--borda);
-}
-.msg-item.cliente .msg-bubble{background:rgba(228,192,153,.08);border-color:var(--borda2);}
-.msg-autor{font-size:10px;font-weight:700;color:var(--texto3);margin-bottom:3px;}
-.msg-texto{font-size:13px;color:var(--texto);line-height:1.5;}
-.msg-data{font-size:10px;color:var(--texto3);margin-top:4px;}
+/* Chat legado (mensagens livres) */
+.chat-area{display:flex;flex-direction:column;gap:8px;}
+.msg-it{display:flex;align-items:flex-end;gap:8px;}
+.msg-it.cli{flex-direction:row-reverse;}
+.msg-av{width:28px;height:28px;border-radius:50%;background:rgba(169,207,190,.1);border:1px solid var(--borda);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--dourado2);flex-shrink:0;}
+.msg-bbl{max-width:78%;padding:9px 12px;border-radius:10px;background:var(--card);border:1px solid var(--borda);}
+.msg-it.cli .msg-bbl{background:rgba(14,47,39,.7);border-color:var(--borda2);}
+.msg-autor{font-size:10px;font-weight:700;color:var(--verde);margin-bottom:3px;}
+.msg-it.cli .msg-autor{color:var(--dourado2);}
+.msg-txt{font-size:12px;color:var(--texto2);line-height:1.5;}
+.msg-dt{font-size:9px;color:var(--texto3);margin-top:3px;}
+.chat-input-wrap{display:flex;gap:6px;margin-top:10px;align-items:flex-end;}
+.chat-inp{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--borda);border-radius:8px;padding:9px 11px;font-family:'Manrope',sans-serif;font-size:12px;color:var(--texto);outline:none;resize:none;min-height:40px;transition:border-color .2s;}
+.chat-inp:focus{border-color:var(--borda2);}
+.btn-send{padding:9px 14px;background:var(--dourado);border:none;border-radius:8px;color:#2a1600;font-weight:700;font-size:12px;cursor:pointer;font-family:'Manrope',sans-serif;flex-shrink:0;}
 
-/* Chat input */
-.chat-form{display:flex;gap:8px;align-items:flex-end;}
-.chat-input{
-  flex:1;padding:10px 13px;background:var(--glass2);border:1px solid var(--borda);border-radius:10px;
-  font-family:'Nunito',sans-serif;font-size:13px;color:var(--texto);outline:none;
-  resize:none;min-height:42px;max-height:120px;transition:border-color .2s;
-}
-.chat-input::placeholder{color:var(--texto3);}
-.chat-input:focus{border-color:rgba(228,192,153,.3);}
-.btn-enviar{
-  width:42px;height:42px;border-radius:10px;border:none;
-  background:rgba(228,192,153,.15);color:var(--dourado);
-  cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;
-  transition:all .2s;flex-shrink:0;
-}
-.btn-enviar:hover{background:rgba(228,192,153,.25);}
-.btn-enviar:disabled{opacity:.4;cursor:not-allowed;}
-
-/* ── FOOTER ── */
-.portal-footer{
-  text-align:center;padding:32px 20px;border-top:1px solid var(--borda);margin-top:8px;
-}
-.footer-logo{height:32px;object-fit:contain;filter:brightness(0) invert(1);opacity:.4;margin:0 auto 12px;display:block;}
-.footer-texto{font-size:11px;color:var(--texto3);line-height:1.8;}
-.footer-link{color:var(--verde);text-decoration:none;transition:color .2s;}
-.footer-link:hover{color:var(--dourado);}
-
-/* ── TOAST ── */
-#toast{
-  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--borda2);
-  color:var(--dourado);padding:10px 20px;border-radius:99px;
-  font-size:13px;font-weight:600;z-index:200;opacity:0;transition:all .3s;pointer-events:none;
-  white-space:nowrap;
-}
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(14px);background:#011c14;border:1px solid var(--borda2);color:var(--dourado);padding:8px 16px;border-radius:99px;font-size:12px;font-weight:600;z-index:300;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-#toast.erro{color:var(--erro);border-color:rgba(255,107,107,.3);}
+#toast.ok{color:var(--ok);border-color:rgba(110,220,176,.2);}
+#toast.err{color:var(--erro);border-color:rgba(255,107,107,.2);}
 
-/* ── RESPONSIVO ── */
+/* Footer */
+.footer{text-align:center;padding:24px 14px;border-top:1px solid var(--borda);margin-top:4px;}
+.footer-logo{height:22px;object-fit:contain;filter:brightness(0) invert(1);opacity:.22;margin:0 auto 7px;display:block;}
+.footer-txt{font-size:10px;color:var(--texto3);line-height:1.8;}
+.footer-a{color:var(--verde);text-decoration:none;}
+
+.vazio{text-align:center;padding:24px;font-size:12px;color:var(--texto3);}
+
 @media(max-width:480px){
-  .hero-nome{font-size:26px;}
-  .prog-circle{width:100px;height:100px;}
-  .prog-pct{font-size:22px;}
+  .kpis{gap:5px;}.kpi-n{font-size:20px;}
+  .abas{overflow-x:auto;}
 }
-
-::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(169,207,190,.15);border-radius:99px;}
+::-webkit-scrollbar-thumb{background:rgba(169,207,190,.1);border-radius:99px;}
 </style>
 </head>
 <body>
 
-<!-- Shader WebGL DNA — exato do login.html -->
+<!-- DNA -->
 <canvas id="dna-canvas"></canvas>
 <script>
 (function(){
-  const canvas = document.getElementById('dna-canvas');
-  function syncSize(){
-    const w=canvas.clientWidth||window.innerWidth;
-    const h=canvas.clientHeight||window.innerHeight;
-    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-  }
-  if(typeof ResizeObserver!=='undefined') new ResizeObserver(syncSize).observe(canvas);
-  syncSize();
-  const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');
-  if(!gl)return;
-  const vs=`attribute vec2 a_position;varying vec2 v_texCoord;void main(){v_texCoord=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
-  const fs=`precision highp float;uniform float u_time;uniform vec2 u_resolution;varying vec2 v_texCoord;
-void main(){
-  vec2 uv=v_texCoord;vec2 p=(uv-0.5)*2.0;p.x*=u_resolution.x/u_resolution.y;
-  float t=u_time*0.3;float s=sin(t*0.1);float c=cos(t*0.1);p=mat2(c,-s,s,c)*p;
-  float helix=0.0;
-  for(float i=0.0;i<2.0;i++){
-    float offset=i*3.14159;
-    float x=p.x+sin(p.y*2.5+u_time*0.8+offset)*0.35;
-    float line=smoothstep(0.06,0.0,abs(x));
-    float steps=smoothstep(0.04,0.0,abs(sin(p.y*10.0+u_time*0.4)))*step(abs(p.x),0.35);
-    helix+=line*0.7+steps*0.4;
-  }
-  vec3 color1=vec3(0.0,0.08,0.06);vec3 color2=vec3(0.89,0.75,0.60);
-  float mask=smoothstep(1.0,0.2,length(p*0.7));
-  vec3 finalColor=mix(color1,color2,helix*mask*0.5);
-  finalColor+=color2*(0.05*sin(u_time)+0.05)*helix*mask;
-  gl_FragColor=vec4(finalColor,1.0);
-}`;
-  function cs(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
-  const prog=gl.createProgram();
-  gl.attachShader(prog,cs(gl.VERTEX_SHADER,vs));
-  gl.attachShader(prog,cs(gl.FRAGMENT_SHADER,fs));
-  gl.linkProgram(prog);gl.useProgram(prog);
+  const c=document.getElementById('dna-canvas');
+  function sz(){const w=c.clientWidth||window.innerWidth,h=c.clientHeight||window.innerHeight;if(c.width!==w||c.height!==h){c.width=w;c.height=h;}}
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(sz).observe(document.body);sz();
+  const gl=c.getContext('webgl')||c.getContext('experimental-webgl');if(!gl)return;
+  const vs=`attribute vec2 a;varying vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}`;
+  const fs=`precision highp float;uniform float t;uniform vec2 r;varying vec2 v;
+  void main(){vec2 p=(v-.5)*2.;p.x*=r.x/r.y;float s=sin(t*.1),cc=cos(t*.1);p=mat2(cc,-s,s,cc)*p;
+  float h=0.;for(float i=0.;i<2.;i++){float o=i*3.14159;float x=p.x+sin(p.y*2.5+t*.8+o)*.35;
+  h+=smoothstep(.06,0.,abs(x))*.7+smoothstep(.04,0.,abs(sin(p.y*10.+t*.4)))*step(abs(p.x),.35)*.4;}
+  vec3 c1=vec3(0.,.08,.06),c2=vec3(.89,.75,.60);
+  float m=smoothstep(1.,.2,length(p*.7));gl_FragColor=vec4(mix(c1,c2,h*m*.5)+c2*(.05*sin(t)+.05)*h*m,1.);}`;
+  function sh(tp,src){const s=gl.createShader(tp);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(pr);gl.useProgram(pr);
   const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-  const pos=gl.getAttribLocation(prog,'a_position');
-  gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
-  const uTime=gl.getUniformLocation(prog,'u_time');
-  const uRes=gl.getUniformLocation(prog,'u_resolution');
-  function render(t){
-    gl.viewport(0,0,canvas.width,canvas.height);
-    if(uTime)gl.uniform1f(uTime,t*0.001);
-    if(uRes)gl.uniform2f(uRes,canvas.width,canvas.height);
-    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-    requestAnimationFrame(render);
-  }
-  render(0);
+  const pa=gl.getAttribLocation(pr,'a');gl.enableVertexAttribArray(pa);gl.vertexAttribPointer(pa,2,gl.FLOAT,false,0,0);
+  const ut=gl.getUniformLocation(pr,'t'),ur=gl.getUniformLocation(pr,'r');
+  function draw(ts){gl.viewport(0,0,c.width,c.height);if(ut)gl.uniform1f(ut,ts*.001);if(ur)gl.uniform2f(ur,c.width,c.height);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(draw);}
+  draw(0);
 })();
 </script>
 
-<!-- LOADING -->
-<div id="loading-screen">
-  <div class="dna-spinner"></div>
-  <div class="loading-texto">Carregando seu portal...</div>
+<div id="screen-load">
+  <div class="spin"></div>
+  <div class="load-txt">Carregando seu portal...</div>
 </div>
 
-<!-- ERRO -->
-<div id="erro-screen">
-  <img src="/logo-cp.png" alt="CP" style="height:36px;filter:brightness(0) invert(1);opacity:.6;margin-bottom:8px;">
+<div id="screen-erro">
+  <img src="/logo-cp.png" alt="CP" style="height:30px;filter:brightness(0) invert(1);opacity:.5;">
   <h2>Acesso não encontrado</h2>
-  <p id="erro-msg">Este link não é válido ou foi expirado. Por favor, entre em contato com o escritório.</p>
-  <div style="margin-top:16px;font-size:12px;color:rgba(199,234,221,.4);">
-    Cavalcante Pinheiro · OAB/BA 49.675<br>
-    <a href="https://wa.me/5571999999999" style="color:var(--verde);text-decoration:none;">Falar com o escritório</a>
-  </div>
+  <p id="erro-msg">Este link não é válido ou expirou.</p>
+  <a href="https://wa.me/5571991292322" style="color:var(--verde);font-size:13px;">Falar com o escritório →</a>
 </div>
 
-<!-- CONTEÚDO PORTAL -->
-<div id="portal-conteudo">
+<header id="hdr">
+  <img src="/logo-cp.png" alt="CP" class="logo">
+  <span class="h-vol" id="h-vol" onclick="voltarLista()">←</span>
+  <div class="h-nome" id="h-nome">Cavalcante Pinheiro</div>
+</header>
 
-  <!-- SEÇÃO 1 — HERO -->
-  <div class="hero">
-    <img src="/logo-cp.png" alt="Cavalcante Pinheiro" class="hero-logo">
-    <div class="hero-projeto" id="h-projeto-label">Projeto</div>
-    <div class="hero-saudacao">Olá,</div>
-    <div class="hero-nome" id="h-cliente-nome">—</div>
+<main id="main">
 
-    <!-- Progresso circular -->
-    <div class="progresso-wrapper">
-      <div class="prog-circle">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <circle class="prog-track" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
-          <circle class="prog-fill" id="prog-fill-circle" cx="60" cy="60" r="54" fill="none" stroke-width="7"/>
-        </svg>
-        <div class="prog-inner">
-          <div class="prog-pct" id="prog-pct">0%</div>
-          <div class="prog-label">concluído</div>
-        </div>
-      </div>
-      <div class="prog-status" id="prog-status-texto">Carregando...</div>
+  <!-- LISTA DE PROJETOS -->
+  <div class="view on" id="view-lista">
+    <div class="sauda">
+      <div class="sauda-h" id="sauda-h">—</div>
+      <div class="sauda-s" id="sauda-s"></div>
+      <div class="sauda-p" id="sauda-p"></div>
     </div>
-  </div>
 
-  <!-- ALERTA se houver etapas bloqueadas (aguardando cliente) -->
-  <div id="alerta-aguardando" class="alerta-cliente" style="display:none;">
-    <div class="alerta-icon">✋</div>
-    <div class="alerta-texto">
-      <strong>Sua ação é necessária</strong>
-      Há etapas aguardando a sua participação. Verifique os itens marcados abaixo.
+    <div class="pend" id="pend-box">
+      <div class="pend-tit">✋ Precisamos de você</div>
+      <div id="pend-lista"></div>
     </div>
-  </div>
 
-  <!-- SEÇÃO 2 — ETAPAS -->
-  <div class="secao">
-    <div class="secao-header">
-      <span class="icon">📋</span>
-      <div>
-        <h2>Andamento do Projeto</h2>
-        <div class="sub">Acompanhe cada etapa do seu processo</div>
-      </div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-n" id="kpi-and">—</div><div class="kpi-l">Em andamento</div></div>
+      <div class="kpi"><div class="kpi-n" id="kpi-conc">—</div><div class="kpi-l">Concluídos</div></div>
+      <div class="kpi"><div class="kpi-n" id="kpi-ag">—</div><div class="kpi-l">Aguardando você</div></div>
     </div>
-    <div class="secao-body" id="etapas-lista">
-      <div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Carregando etapas...</div>
-    </div>
-  </div>
 
-  <!-- SEÇÃO 3 — DOCUMENTOS -->
-  <div class="secao" id="secao-docs">
-    <div class="secao-header">
-      <span class="icon">📎</span>
-      <div>
-        <h2>Documentos Solicitados</h2>
-        <div class="sub">Documentos que o escritório precisa de você</div>
-      </div>
-    </div>
-    <div class="secao-body" id="docs-lista">
-      <div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Nenhum documento solicitado.</div>
-    </div>
-  </div>
+    <div id="proj-lista"></div>
 
-  <!-- SEÇÃO 4 — MENSAGENS -->
-  <div class="secao">
-    <div class="secao-header">
-      <span class="icon">💬</span>
-      <div>
-        <h2>Canal de Comunicação</h2>
-        <div class="sub">Mensagens do escritório para você</div>
-      </div>
-    </div>
-    <div class="secao-body">
-      <div class="chat-lista" id="chat-lista">
-        <div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Nenhuma mensagem.</div>
-      </div>
-      <div class="chat-form">
-        <textarea id="chat-input" class="chat-input" placeholder="Escreva uma mensagem..." rows="1"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensagem();}"></textarea>
-        <button class="btn-enviar" onclick="enviarMensagem()" id="btn-enviar-msg" title="Enviar">&#10148;</button>
+    <div class="footer">
+      <img src="/logo-cp.png" alt="CP" class="footer-logo">
+      <div class="footer-txt">
+        Cavalcante Pinheiro Advocacia · OAB/BA 49.675<br>
+        <a href="tel:+5571991292322" class="footer-a">(71) 99129-2322</a> ·
+        <a href="mailto:mariana@cavalcantepinheiroadv.com.br" class="footer-a">mariana@cavalcantepinheiroadv.com.br</a>
       </div>
     </div>
   </div>
 
-  <!-- SEÇÃO 5 — FOOTER -->
-  <footer class="portal-footer">
-    <img src="/logo-cp.png" alt="CP" class="footer-logo">
-    <div class="footer-texto">
-      Cavalcante Pinheiro Sociedade Individual de Advocacia<br>
-      OAB/BA 49.675 · Mariana Pinheiro<br>
-      Salvador, Bahia<br><br>
-      <a href="https://wa.me/5571999999999" class="footer-link">Falar com o escritório pelo WhatsApp</a>
+  <!-- DETALHE DO PROCESSO -->
+  <div class="view" id="view-proc">
+    <div id="proc-pill-area" style="margin-bottom:6px;"></div>
+    <div class="proc-nome" id="proc-nome">—</div>
+
+    <!-- Situação Atual -->
+    <div class="situ" id="situ-card">
+      <div class="situ-lbl">Situação Atual</div>
+      <div class="situ-txt" id="situ-txt">—</div>
+      <div class="situ-dt" id="situ-dt"></div>
     </div>
-  </footer>
-</div>
+
+    <!-- Próximos Passos -->
+    <div class="passos" id="passos-card">
+      <div class="passos-lbl">Próximos Passos</div>
+      <div id="passos-lista"></div>
+    </div>
+
+    <!-- Info judicial -->
+    <div id="info-jud-wrap"></div>
+
+    <!-- Descrição -->
+    <div class="desc" id="desc-card">
+      <div class="desc-lbl">Sobre este assunto</div>
+      <div class="desc-txt" id="desc-txt"></div>
+    </div>
+
+    <!-- Abas -->
+    <div class="abas">
+      <button class="aba on" onclick="setAba('tl',this)">📅 Timeline</button>
+      <button class="aba" onclick="setAba('upd',this)">💬 Atualizações</button>
+      <button class="aba" onclick="setAba('docs',this)">📄 Documentos</button>
+      <button class="aba" onclick="setAba('chat',this)">✉ Mensagens</button>
+    </div>
+
+    <div class="aba-c on" id="aba-tl"><div id="tl-lista"></div></div>
+    <div class="aba-c" id="aba-upd"><div id="upd-lista"></div></div>
+    <div class="aba-c" id="aba-docs"><div id="docs-lista"></div></div>
+    <div class="aba-c" id="aba-chat">
+      <div class="chat-area" id="chat-lista"></div>
+      <div class="chat-input-wrap">
+        <textarea id="chat-inp" class="chat-inp" placeholder="Escreva uma mensagem..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensagem();}"></textarea>
+        <button class="btn-send" onclick="enviarMensagem()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+</main>
 
 <div id="toast"></div>
 
 <script>
-// ── ESTADO ────────────────────────────────────────────────────────────────────
-let portalToken = null;
-let portalData  = null;  // { projeto, etapas, docs, logs }
+const API = '/api/db';
+const portalToken = new URLSearchParams(location.search).get('token');
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-(async function init() {
-  const params = new URLSearchParams(location.search);
-  portalToken  = params.get('token');
+let dados = null;         // { cliente, projetos, docs, logs, etapas }
+let projetoAtual = null;
 
-  if (!portalToken) {
-    mostrarErro('Nenhum token encontrado na URL. Verifique o link enviado pelo escritório.');
-    return;
-  }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  try {
-    const r = await fetch('/api/db', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'portal', token: portalToken })
-    });
-
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      mostrarErro(err.erro || 'Link inválido ou expirado.');
-      return;
-    }
-
-    portalData = await r.json();
-    if (!portalData || !portalData.projeto) {
-      mostrarErro('Projeto não encontrado para este link.');
-      return;
-    }
-
-    renderizarPortal();
-    esconderLoading();
-    document.getElementById('portal-conteudo').classList.add('show');
-  } catch(e) {
-    mostrarErro('Erro de conexão. Por favor, tente novamente em instantes.');
-  }
-})();
-
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function renderizarPortal() {
-  const { projeto, etapas, docs, logs } = portalData;
-
-  // Hero
-  document.getElementById('h-projeto-label').textContent = projeto.nome || 'Seu Projeto';
-  document.getElementById('h-cliente-nome').textContent  = projeto.cliente_nome || 'Cliente';
-  document.title = `Portal — ${projeto.cliente_nome||'Cliente'} | Cavalcante Pinheiro`;
-
-  // Progresso
-  const total = etapas ? etapas.length : 0;
-  const conc  = etapas ? etapas.filter(e=>e.status==='concluido').length : 0;
-  const pct   = total > 0 ? Math.round((conc/total)*100) : 0;
-  animarProgresso(pct);
-
-  const statusTexto = { pendente:'Projeto iniciado', ativo:'Em andamento', em_andamento:'Em andamento', concluido:'Projeto concluído', cancelado:'Cancelado' };
-  document.getElementById('prog-status-texto').textContent = statusTexto[projeto.status] || 'Em andamento';
-
-  // Alerta aguardando cliente
-  const bloqueadas = etapas ? etapas.filter(e=>e.status==='bloqueado') : [];
-  if (bloqueadas.length > 0) {
-    document.getElementById('alerta-aguardando').style.display='flex';
-  }
-
-  // Etapas
-  renderizarEtapas(etapas||[]);
-
-  // Docs — apenas docs sem etapa específica ou todos os solicitados
-  const docsFiltrados = (docs||[]).filter(d=>d.status!=='arquivado');
-  renderizarDocs(docsFiltrados);
-  if (!docsFiltrados.length) {
-    document.getElementById('secao-docs').style.display='none';
-  }
-
-  // Mensagens
-  const logsPublicos = (logs||[]).filter(l=>l.tipo==='publico'||l.tipo==='cliente');
-  renderizarMensagens(logsPublicos);
-}
-
-function animarProgresso(pct) {
-  document.getElementById('prog-pct').textContent = pct + '%';
-  // strokeDashoffset: 339.3 = 0%, 0 = 100%
-  const offset = 339.3 * (1 - pct/100);
-  setTimeout(() => {
-    document.getElementById('prog-fill-circle').style.strokeDashoffset = offset;
-  }, 300);
-}
-
-// ── ETAPAS ────────────────────────────────────────────────────────────────────
-function renderizarEtapas(etapas) {
-  const lista = document.getElementById('etapas-lista');
-  if (!etapas.length) {
-    lista.innerHTML = '<div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Nenhuma etapa cadastrada.</div>';
-    return;
-  }
-
-  const icones   = { pendente:'○', em_andamento:'🔄', bloqueado:'⏳', concluido:'✅' };
-  const labels   = { pendente:'Aguardando início', em_andamento:'Em andamento', bloqueado:'Aguardando você', concluido:'Concluído' };
-
-  lista.innerHTML = etapas.map(e => {
-    const icone  = icones[e.status]  || '○';
-    const label  = labels[e.status]  || e.status;
-    const ehCliente   = e.atribuido_a === 'cliente';
-    const ehBloqueado = e.status === 'bloqueado';
-    const conc   = e.status === 'concluido';
-    const resp   = e.responsavel && !conc ? `<span>Responsável: ${esc(e.responsavel)}</span>` : '';
-
-    return `
-    <div class="etapa-item">
-      <div class="etapa-icone ${e.status}">${icone}</div>
-      <div class="etapa-info">
-        <div class="etapa-titulo ${conc?'concluido':''}">${esc(e.titulo)}</div>
-        <div class="etapa-resp">${resp}</div>
-        <div class="etapa-badges">
-          ${ehCliente && !conc ? '<span class="badge-cliente">✋ Sua ação</span>' : ''}
-          ${ehBloqueado ? '<span class="badge-bloqueado">⏳ '+label+'</span>' : ''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── DOCUMENTOS ────────────────────────────────────────────────────────────────
-function renderizarDocs(docs) {
-  const lista = document.getElementById('docs-lista');
-  if (!docs.length) {
-    lista.innerHTML = '<div style="font-size:13px;color:var(--texto3);text-align:center;padding:16px 0;">Nenhum documento solicitado.</div>';
-    return;
-  }
-  lista.innerHTML = docs.map(d => `
-    <div class="doc-item">
-      <div class="doc-icone">📄</div>
-      <div class="doc-info">
-        <div class="doc-titulo">${esc(d.titulo)}</div>
-        ${d.descricao?`<div class="doc-descricao">${esc(d.descricao)}</div>`:''}
-        ${d.status!=='recebido'?`<button class="btn-enviou" onclick="marcarDocEnviado('${d.id}',this)">✉ Já enviei por e-mail</button>`:''}
-      </div>
-      <span class="doc-status ${d.status||'pendente'}">${esc(d.status==='recebido'?'Recebido':d.status==='solicitado'?'Pendente':'Pendente')}</span>
-    </div>`).join('');
-}
-
-async function marcarDocEnviado(docId, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Registrando...';
-  try {
-    await fetch('/api/db', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'portal_doc_enviado', token: portalToken, doc_id: docId })
-    });
-    btn.textContent = '✓ Registrado!';
-    toast('Aviso enviado ao escritório.');
-    setTimeout(() => {
-      const statusEl = btn.closest('.doc-item').querySelector('.doc-status');
-      if (statusEl) { statusEl.textContent='Registrado'; statusEl.className='doc-status recebido'; }
-      btn.remove();
-    }, 1500);
-  } catch(e) {
-    btn.disabled=false;
-    btn.textContent='✉ Já enviei por e-mail';
-    toast('Erro ao registrar. Tente novamente.','erro');
-  }
-}
-
-// ── MENSAGENS ─────────────────────────────────────────────────────────────────
-function renderizarMensagens(logs) {
-  const lista = document.getElementById('chat-lista');
-  if (!logs.length) {
-    lista.innerHTML='<div style="font-size:13px;color:var(--texto3);text-align:center;padding:20px 0;">Nenhuma mensagem ainda.</div>';
-    return;
-  }
-  lista.innerHTML = logs.map(l => {
-    const ehCliente = l.tipo === 'cliente';
-    const data = l.criado_em
-      ? new Date(l.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
-      : '';
-    const inicial = (l.autor||'E').charAt(0).toUpperCase();
-    return `
-    <div class="msg-item ${ehCliente?'cliente':''}">
-      <div class="msg-avatar">${inicial}</div>
-      <div class="msg-bubble">
-        <div class="msg-autor">${esc(l.autor||'Escritório')}</div>
-        <div class="msg-texto">${esc(l.texto)}</div>
-        <div class="msg-data">${data}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Scroll para última mensagem
-  lista.scrollTop = lista.scrollHeight;
-}
-
-async function enviarMensagem() {
-  const input  = document.getElementById('chat-input');
-  const texto  = input.value.trim();
-  const btn    = document.getElementById('btn-enviar-msg');
-  if (!texto || !portalData) return;
-
-  btn.disabled = true;
-  input.disabled = true;
-
-  try {
-    const r = await fetch('/api/db', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'portal_log',
-        token: portalToken,
-        projeto_id: portalData.projeto.id,
-        texto,
-        autor: portalData.projeto.cliente_nome || 'Cliente',
-        tipo: 'cliente',
-      })
-    });
-
-    if (!r.ok) throw new Error('Erro ao enviar');
-
-    input.value = '';
-    toast('Mensagem enviada!');
-
-    // Adicionar localmente
-    const nova = { texto, autor: portalData.projeto.cliente_nome||'Cliente', tipo:'cliente', criado_em: new Date().toISOString() };
-    if (!portalData.logs) portalData.logs = [];
-    portalData.logs.push(nova);
-    const logsPublicos = portalData.logs.filter(l=>l.tipo==='publico'||l.tipo==='cliente');
-    renderizarMensagens(logsPublicos);
-  } catch(e) {
-    toast('Erro ao enviar mensagem.','erro');
-  } finally {
-    btn.disabled=false;
-    input.disabled=false;
-    input.focus();
-  }
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-function esconderLoading() {
-  const el = document.getElementById('loading-screen');
-  el.classList.add('fade');
-  setTimeout(()=>{ el.style.display='none'; }, 500);
-}
-
-function mostrarErro(msg) {
-  document.getElementById('loading-screen').style.display='none';
-  document.getElementById('erro-msg').textContent = msg;
-  document.getElementById('erro-screen').style.display='flex';
-}
-
-let toastTimer;
 function toast(msg, tipo) {
-  clearTimeout(toastTimer);
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'show' + (tipo ? ' ' + tipo : '');
-  toastTimer = setTimeout(()=>{ el.className=''; }, 3000);
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3000);
 }
 
-function esc(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function apiPub(body) {
+  return fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ...body, token: portalToken }) }).then(r => r.json());
 }
+
+// ── CARREGAR ────────────────────────────────────────────────────────
+async function iniciar() {
+  if (!portalToken) { mostrarErro('Link inválido. Copie o endereço completo do email.'); return; }
+
+  const r = await fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'portal', token: portalToken })
+  }).then(r => r.json()).catch(() => null);
+
+  if (!r || r.erro) { mostrarErro(r?.erro || 'Não foi possível carregar.'); return; }
+
+  // Adaptar estrutura: portal retorna { projeto, etapas, docs, logs }
+  // Construímos a estrutura uniforme { cliente, projetos, docs, logs, etapas }
+  const proj = r.projeto || {};
+  dados = {
+    cliente: { id: proj.cliente_id, nome: proj.cliente_nome || 'Cliente', criado_em: proj.criado_em },
+    projetos: [proj],
+    etapas:   r.etapas   || [],
+    docs:     r.docs     || [],
+    logs:     r.logs     || []
+  };
+
+  mostrarPortal();
+}
+
+function mostrarErro(msg) {
+  document.getElementById('screen-load').classList.add('fade');
+  document.getElementById('erro-msg').textContent = msg;
+  document.getElementById('screen-erro').style.display = 'flex';
+}
+
+// ── RENDER PORTAL ────────────────────────────────────────────────────
+function mostrarPortal() {
+  document.getElementById('screen-load').classList.add('fade');
+  document.getElementById('dna-canvas').classList.add('out');
+  document.getElementById('hdr').classList.add('show');
+  document.getElementById('main').classList.add('show');
+  document.getElementById('h-nome').textContent = esc(dados.cliente.nome);
+
+  renderSaudacao();
+  renderPendencias();
+  renderKPIs();
+  renderProjetos();
+
+  // Se só há um projeto, abre direto
+  if (dados.projetos.length === 1) {
+    abrirProcesso(dados.projetos[0].id);
+    document.getElementById('h-vol').style.display = 'none'; // sem volta se só tem um
+  }
+
+  localStorage.setItem('cp_v_' + portalToken, Date.now().toString());
+}
+
+// ── SAUDAÇÃO ─────────────────────────────────────────────────────────
+function renderSaudacao() {
+  const nome = (dados.cliente.nome || '').split(' ')[0];
+  const h = new Date().getHours();
+  document.getElementById('sauda-h').textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + ', ' + esc(nome) + '.';
+
+  const ult = localStorage.getItem('cp_v_' + portalToken);
+  let sub = '';
+  if (ult) {
+    const dias = Math.floor((Date.now() - Number(ult)) / 86400000);
+    const novas = (dados.logs||[]).filter(l => l.criado_em && new Date(l.criado_em).getTime() > Number(ult) && l.subtipo === 'atualizacao').length;
+    if (novas > 0) sub = novas + ' nova' + (novas > 1 ? 's atualizações' : ' atualização') + ' desde sua última visita.';
+    else sub = dias > 0 ? 'Faz ' + dias + ' dia' + (dias > 1 ? 's' : '') + ' desde sua última visita.' : 'Bem-vinda de volta.';
+  } else {
+    sub = 'Bem-vinda à sua área exclusiva. Aqui você acompanha tudo que conduzimos para você.';
+  }
+  document.getElementById('sauda-s').textContent = sub;
+
+  if (dados.cliente.criado_em) {
+    const cr = new Date(dados.cliente.criado_em), ag = new Date();
+    if (ag.getMonth() === cr.getMonth() && ag.getFullYear() > cr.getFullYear()) {
+      const m = (ag.getFullYear()-cr.getFullYear())*12 + (ag.getMonth()-cr.getMonth());
+      const el = document.getElementById('sauda-p');
+      el.textContent = 'Este mês faz ' + m + ' mese' + (m!==1?'s':'') + ' da nossa parceria. Obrigada pela confiança.';
+      el.style.display = 'block';
+    }
+  }
+}
+
+// ── PENDÊNCIAS ────────────────────────────────────────────────────────
+function renderPendencias() {
+  const solic = (dados.docs||[]).filter(d => d.status === 'solicitado');
+  const box = document.getElementById('pend-box');
+  if (!solic.length) return;
+  document.getElementById('pend-lista').innerHTML = solic.map(d => {
+    const proj = (dados.projetos||[]).find(p => p.id === d.projeto_id);
+    const prazo = d.prazo_entrega ? ' · até ' + d.prazo_entrega.split('T')[0].split('-').reverse().join('/') : '';
+    return `<div class="pend-item">📄 ${esc(d.titulo)}${proj && dados.projetos.length > 1 ? ' <em style="opacity:.6">· ' + esc(proj.nome) + '</em>' : ''}${prazo}</div>`;
+  }).join('');
+  box.classList.add('show');
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const raiz = (dados.projetos||[]).filter(p => !p.parent_id);
+  document.getElementById('kpi-and').textContent = raiz.filter(p => p.status !== 'concluido').length;
+  document.getElementById('kpi-conc').textContent = raiz.filter(p => p.status === 'concluido').length;
+  document.getElementById('kpi-ag').textContent = (dados.docs||[]).filter(d => d.status === 'solicitado').length;
+}
+
+// ── PROJETOS (lista) ──────────────────────────────────────────────────
+function renderProjetos() {
+  const cont = document.getElementById('proj-lista');
+  const raiz = (dados.projetos||[]).filter(p => !p.parent_id);
+  const ativos = raiz.filter(p => p.status !== 'concluido');
+  const concl = raiz.filter(p => p.status === 'concluido');
+  let html = '';
+  if (ativos.length) { html += '<div class="grp-lbl">Em andamento</div>'; ativos.forEach(p => { html += renderProjCard(p); }); }
+  if (concl.length) { html += '<div class="grp-lbl" style="color:var(--ok)">Concluídos</div>'; concl.forEach(p => { html += renderProjCard(p); }); }
+  if (!raiz.length) html = '<div class="vazio">Nenhum assunto cadastrado ainda.</div>';
+  cont.innerHTML = html;
+}
+
+function renderProjCard(proj) {
+  const filhos = (dados.projetos||[]).filter(p => p.parent_id === proj.id);
+  const docsPend = (dados.docs||[]).filter(d => d.projeto_id === proj.id && d.status === 'solicitado').length;
+  const dotCls = docsPend > 0 ? 'dot-av' : (proj.status === 'concluido' ? 'dot-off' : 'dot-ok');
+  const icon = proj.tipo === 'processo' ? '⚖️' : (filhos.length ? '📂' : '📁');
+  const subCount = filhos.length ? `<span style="font-size:9px;color:var(--texto3);font-weight:400;margin-left:5px;">${filhos.length} processo${filhos.length>1?'s':''}</span>` : '';
+  const clickFn = filhos.length ? `onclick="toggleSubs('subs-${proj.id.replace(/-/g,'')}')"` : `onclick="abrirProcesso('${proj.id}')"`;
+
+  let html = `<div class="proj-item">
+    <div class="proj-row" ${clickFn}>
+      <span class="p-icon">${icon}</span>
+      <span class="p-nome">${esc(proj.nome)}${subCount}</span>
+      <span class="p-dot ${dotCls}"></span>
+      <span class="p-seta">›</span>
+    </div>`;
+
+  if (filhos.length) {
+    html += `<div class="subs" id="subs-${proj.id.replace(/-/g,'')}" style="display:none;">`;
+    filhos.forEach(f => {
+      const fd = (dados.docs||[]).filter(d=>d.projeto_id===f.id&&d.status==='solicitado').length > 0 ? 'dot-av' : (f.status==='concluido'?'dot-off':'dot-ok');
+      html += `<div class="sub-row" onclick="abrirProcesso('${f.id}')">
+        <span class="sub-dot ${fd}"></span>
+        <span class="sub-nome">${esc(f.nome)}</span>
+        ${f.numero_processo ? '<span class="sub-num">' + esc(f.numero_processo) + '</span>' : ''}
+        <span class="sub-seta">›</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  return html + `</div>`;
+}
+
+function toggleSubs(id) { const el = document.getElementById(id); if (el) el.style.display = el.style.display === 'none' || !el.style.display ? 'block' : 'none'; }
+
+// ── PROCESSO DETALHE ──────────────────────────────────────────────────
+function abrirProcesso(projetoId) {
+  const proj = (dados.projetos||[]).find(p => p.id === projetoId);
+  if (!proj) return;
+  projetoAtual = proj;
+
+  setView('proc');
+  document.getElementById('h-nome').textContent = esc(proj.nome);
+  if (dados.projetos.length > 1) document.getElementById('h-vol').style.display = 'block';
+
+  // Pill
+  const pend = (dados.docs||[]).filter(d=>d.projeto_id===proj.id&&d.status==='solicitado').length;
+  const pillCls = proj.status==='concluido'?'pill-off':(pend>0?'pill-av':'pill-ok');
+  const pillTxt = proj.status==='concluido'?'Concluído':(pend>0?'Aguardando você':'Em andamento');
+  document.getElementById('proc-pill-area').innerHTML = `<div class="proc-pill ${pillCls}"><span class="pill-d"></span>${pillTxt}</div>`;
+  document.getElementById('proc-nome').textContent = proj.nome;
+
+  // Situação Atual
+  document.getElementById('situ-txt').textContent = proj.situacao_atual || 'Acompanhe as atualizações abaixo para ver os últimos andamentos.';
+  document.getElementById('situ-dt').textContent = proj.atualizado_em ? 'Última atualização: ' + formatarData(proj.atualizado_em) : '';
+
+  // Próximos Passos
+  if (proj.proximos_passos) {
+    const linhas = proj.proximos_passos.split('\n').filter(Boolean);
+    document.getElementById('passos-lista').innerHTML = linhas.map(l => `<div class="passo-ln"><span class="passo-b"></span><span>${esc(l)}</span></div>`).join('');
+    document.getElementById('passos-card').style.display = 'block';
+  } else { document.getElementById('passos-card').style.display = 'none'; }
+
+  // Info judicial
+  renderInfoJud(proj);
+
+  // Descrição
+  if (proj.descricao_longa) {
+    document.getElementById('desc-txt').textContent = proj.descricao_longa;
+    document.getElementById('desc-card').style.display = 'block';
+  } else { document.getElementById('desc-card').style.display = 'none'; }
+
+  setAba('tl', document.querySelector('.aba'));
+  renderTimeline(projetoId);
+  renderAtualizacoes(projetoId);
+  renderDocs(projetoId);
+  renderChat(projetoId);
+}
+
+function voltarLista() {
+  setView('lista');
+  document.getElementById('h-vol').style.display = 'none';
+  document.getElementById('h-nome').textContent = esc(dados.cliente.nome);
+  projetoAtual = null;
+}
+
+function renderInfoJud(proj) {
+  const campos = [
+    { l: 'Número', v: proj.numero_processo, mono: true },
+    { l: 'Tipo de ação', v: proj.tipo_acao },
+    { l: 'Vara / Tribunal', v: proj.vara_tribunal },
+    { l: 'Comarca', v: proj.comarca },
+    { l: 'Parte autora', v: proj.parte_autora },
+    { l: 'Parte ré', v: proj.parte_re },
+    { l: 'Valor da causa', v: proj.valor_causa ? 'R$ ' + Number(proj.valor_causa).toLocaleString('pt-BR', {minimumFractionDigits:2}) : null },
+    { l: 'Responsável', v: proj.responsavel }
+  ].filter(c => c.v);
+
+  const wrap = document.getElementById('info-jud-wrap');
+  if (!campos.length) { wrap.innerHTML = ''; return; }
+
+  wrap.innerHTML = `
+    <div class="info-hdr" onclick="toggleInfoJud()">
+      <span class="info-hdr-lbl">ℹ️ Informações do processo</span>
+      <span class="info-chev" id="info-chev">›</span>
+    </div>
+    <div class="info-body" id="info-body">
+      ${campos.map(c => `<div class="info-campo"><span class="info-l">${c.l}</span><span class="info-v${c.mono?' mono':''}">${esc(c.v)}</span></div>`).join('')}
+    </div>`;
+}
+
+function toggleInfoJud() {
+  document.getElementById('info-body')?.classList.toggle('show');
+  document.getElementById('info-chev')?.classList.toggle('aberto');
+}
+
+// ── TIMELINE ─────────────────────────────────────────────────────────
+function renderTimeline(pjId) {
+  const etapas = (dados.etapas||[]).filter(e => e.projeto_id === pjId);
+  const tlLogs = (dados.logs||[]).filter(l => l.projeto_id === pjId && l.subtipo === 'timeline');
+
+  // Combinar etapas + timeline logs, ordenados por data
+  const itens = [
+    ...etapas.map(e => ({ dt: e.atualizado_em || e.criado_em, titulo: e.titulo, txt: e.descricao || '', tipo: 'etapa', status: e.status })),
+    ...tlLogs.map(l => ({ dt: l.criado_em, titulo: l.titulo || '', txt: l.texto, tipo: 'log' }))
+  ].sort((a, b) => new Date(a.dt) - new Date(b.dt));
+
+  const el = document.getElementById('tl-lista');
+  if (!itens.length) { el.innerHTML = '<div class="vazio">Nenhum marco registrado ainda.</div>'; return; }
+
+  el.innerHTML = itens.map(i => {
+    const dotCls = i.tipo === 'etapa' ? (i.status === 'concluido' ? 'et-ok' : i.status === 'em_andamento' ? 'et-and' : i.status === 'bloqueado' ? 'et-bl' : 'et-pd') : 'tl-dot';
+    return `<div class="tl-item">
+      <div class="tl-col"><span class="${i.tipo==='log'?'tl-dot':('etapa-dot ' + dotCls)}"></span><span class="tl-fio"></span></div>
+      <div class="tl-body">
+        <div class="tl-dt">${formatarData(i.dt)}</div>
+        ${i.titulo ? '<div class="tl-tit">' + esc(i.titulo) + '</div>' : ''}
+        ${i.txt ? '<div class="tl-txt">' + esc(i.txt) + '</div>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ATUALIZAÇÕES ──────────────────────────────────────────────────────
+function renderAtualizacoes(pjId) {
+  const atualizacoes = (dados.logs||[]).filter(l => l.projeto_id === pjId && l.subtipo === 'atualizacao').sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em));
+  const respostas = (dados.logs||[]).filter(l => l.projeto_id === pjId && l.subtipo === 'resposta' && l.resposta_para);
+  const el = document.getElementById('upd-lista');
+
+  if (!atualizacoes.length) { el.innerHTML = '<div class="vazio">Nenhuma atualização formal ainda. Acompanhe também a aba Mensagens.</div>'; return; }
+
+  el.innerHTML = atualizacoes.map(u => {
+    const resps = respostas.filter(r => r.resposta_para === u.id).sort((a,b) => new Date(a.criado_em)-new Date(b.criado_em));
+    return `<div class="upd-item" id="update-${u.id}">
+      <div class="upd-hd">
+        <div class="upd-dt">${formatarData(u.criado_em)}</div>
+        <div class="upd-autor">${esc(u.autor)}</div>
+        ${u.titulo ? '<div class="upd-tit">' + esc(u.titulo) + '</div>' : ''}
+        <div class="upd-txt">${esc(u.texto)}</div>
+      </div>
+      ${resps.length ? '<div class="resps">' + resps.map(r => `<div class="resp-i"><div class="resp-av">${(r.autor||'?')[0].toUpperCase()}</div><div class="resp-b"><div class="resp-m">${esc(r.autor)} · ${formatarData(r.criado_em)}</div><div class="resp-t">${esc(r.texto)}</div></div></div>`).join('') + '</div>' : ''}
+      <div class="reply-a">
+        <textarea class="reply-ta" id="rt-${u.id}" placeholder="Escreva sua resposta..." rows="2"></textarea>
+        <button class="btn-reply" onclick="enviarReply('${u.id}')">Responder</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function enviarReply(updateId) {
+  const ta = document.getElementById('rt-' + updateId);
+  if (!ta || !ta.value.trim()) return;
+  const texto = ta.value.trim();
+  const r = await fetch(API, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ action: 'portal_reply', token: portalToken, projeto_id: projetoAtual.id, texto, resposta_para: updateId })
+  }).then(r => r.json()).catch(() => ({ erro: 'Erro de rede' }));
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  if (r.log) dados.logs.push(r.log);
+  ta.value = '';
+  renderAtualizacoes(projetoAtual.id);
+  toast('Resposta enviada!', 'ok');
+}
+
+// ── DOCUMENTOS ────────────────────────────────────────────────────────
+function renderDocs(pjId) {
+  const projDocs = (dados.docs||[]).filter(d => d.projeto_id === pjId);
+  const el = document.getElementById('docs-lista');
+
+  if (!projDocs.length) { el.innerHTML = '<div class="vazio">Nenhum documento neste processo.</div>'; return; }
+
+  const porCat = {};
+  projDocs.forEach(d => { const c = d.categoria || 'Geral'; if (!porCat[c]) porCat[c] = []; porCat[c].push(d); });
+
+  el.innerHTML = Object.keys(porCat).map(cat =>
+    `<div class="cat-g"><div class="cat-lbl">${esc(cat)}</div>${porCat[cat].map(d => renderDocRow(d)).join('')}</div>`
+  ).join('');
+}
+
+function renderDocRow(d) {
+  const sc = { solicitado:'rgba(240,180,74,.1)', recebido:'rgba(110,220,176,.1)', aprovado:'rgba(110,220,176,.1)' };
+  const sl = { solicitado:'Aguardando', recebido:'Recebido', aprovado:'Aprovado' };
+  const st = { solicitado:'var(--av)', recebido:'var(--ok)', aprovado:'var(--ok)' };
+  const id = esc(d.id);
+  const prazo = d.prazo_entrega && d.status === 'solicitado' ? `<div class="doc-pr">⏰ até ${d.prazo_entrega.split('T')[0].split('-').reverse().join('/')}</div>` : '';
+  let acao = '';
+  if (d.status === 'solicitado') acao = `<label class="btn-doc btn-env" style="cursor:pointer">📎 Enviar<input type="file" class="upl-inp" onchange="uploadDoc('${id}',this)"></label>`;
+  else if (d.arquivo_url) acao = `<a href="${esc(d.arquivo_url)}" target="_blank" class="btn-doc btn-dl" style="text-decoration:none">⬇ Baixar</a>`;
+  return `<div class="doc-row" id="doc-${id}">
+    <span class="doc-ic">${d.status==='solicitado'?'📤':'📄'}</span>
+    <div class="doc-inf"><div class="doc-n">${esc(d.titulo)}</div><div class="doc-m">${d.arquivo_nome?esc(d.arquivo_nome):(d.descricao?esc(d.descricao.slice(0,55)):'')||'—'}</div>${prazo}</div>
+    <span class="doc-bdg" style="background:${sc[d.status]||'transparent'};color:${st[d.status]||'var(--texto3)'}">${sl[d.status]||d.status}</span>
+    ${acao ? '<div class="doc-act">' + acao + '</div>' : ''}
+  </div>`;
+}
+
+async function uploadDoc(docId, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const lbl = input.closest('label');
+  lbl.textContent = '⏳';
+  try {
+    const r1 = await apiPub({ action: 'portal_upload', doc_id: docId, nome_arquivo: file.name });
+    if (r1.erro) throw new Error(r1.erro);
+    const up = await fetch(r1.upload_url, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+    if (!up.ok) throw new Error('Falha no upload');
+    await apiPub({ action: 'portal_upload_done', doc_id: docId, path: r1.path, nome_arquivo: file.name });
+    const docLocal = (dados.docs||[]).find(d => d.id === docId);
+    if (docLocal) { docLocal.status = 'recebido'; docLocal.arquivo_nome = file.name; }
+    renderDocs(projetoAtual.id); renderPendencias(); renderKPIs();
+    toast('Arquivo enviado!', 'ok');
+  } catch(e) { lbl.textContent = '📎 Enviar'; toast('Erro: ' + (e.message||'tente novamente'), 'err'); }
+}
+
+// ── CHAT (mensagens legado) ────────────────────────────────────────────
+function renderChat(pjId) {
+  const msgs = (dados.logs||[]).filter(l => l.projeto_id === pjId && (!l.subtipo || l.subtipo === 'comentario') && (l.tipo === 'cliente' || l.tipo === 'equipe' || l.tipo === 'publico')).sort((a,b) => new Date(a.criado_em)-new Date(b.criado_em));
+  const el = document.getElementById('chat-lista');
+  if (!msgs.length) { el.innerHTML = '<div class="vazio">Nenhuma mensagem ainda. Escreva abaixo para falar com a equipe.</div>'; return; }
+  el.innerHTML = msgs.map(l => {
+    const cli = l.tipo === 'cliente';
+    const ini = (l.autor||'E')[0].toUpperCase();
+    const dt = l.criado_em ? new Date(l.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="msg-it ${cli?'cli':''}">
+      <div class="msg-av">${ini}</div>
+      <div class="msg-bbl">
+        <div class="msg-autor">${esc(l.autor||'Escritório')}</div>
+        <div class="msg-txt">${esc(l.texto)}</div>
+        <div class="msg-dt">${dt}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function enviarMensagem() {
+  const inp = document.getElementById('chat-inp');
+  const texto = inp.value.trim();
+  if (!texto || !projetoAtual) return;
+  inp.disabled = true;
+
+  const r = await fetch(API, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ action: 'portal_log', token: portalToken, projeto_id: projetoAtual.id, texto, autor: dados.cliente.nome || 'Cliente', tipo: 'cliente' })
+  }).then(r => r.json()).catch(() => ({ erro: 'Erro de rede' }));
+
+  inp.disabled = false;
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  inp.value = '';
+  dados.logs.push({ projeto_id: projetoAtual.id, texto, autor: dados.cliente.nome, tipo: 'cliente', subtipo: 'comentario', criado_em: new Date().toISOString() });
+  renderChat(projetoAtual.id);
+  toast('Mensagem enviada!', 'ok');
+}
+
+// ── ABAS / NAVEGAÇÃO ─────────────────────────────────────────────────
+function setAba(nome, btn) {
+  document.querySelectorAll('.aba').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.aba-c').forEach(c => c.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  const el = document.getElementById('aba-' + nome);
+  if (el) el.classList.add('on');
+}
+
+function setView(nome) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  const el = document.getElementById('view-' + nome);
+  if (el) el.classList.add('on');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function formatarData(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const diff = Math.floor((Date.now() - d) / 60000);
+  if (diff < 60) return diff <= 1 ? 'agora' : `há ${diff} min`;
+  if (diff < 1440) return `há ${Math.floor(diff/60)}h`;
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+iniciar();
 </script>
 </body>
 </html>
