@@ -580,10 +580,8 @@ function mostrarPortal() {
   renderKPIs();
   renderProjetos();
 
-  if ((dados.projetos||[]).length === 1) {
-    abrirProcesso(dados.projetos[0].id);
-    document.getElementById('h-vol').style.display = 'none';
-  }
+  // Sempre mostra o dashboard primeiro
+  setView('lista');
 
   localStorage.setItem('cp_v_' + portalToken, Date.now().toString());
 }
