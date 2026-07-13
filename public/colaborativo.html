@@ -987,15 +987,13 @@ function excluirProjetoId(id) {
   });
 }
 
-// ── LINK CLIENTE ──────────────────────────────────────────────────────────────
+// ── LINK CLIENTE — gera sempre o novo formato ?t=TOKEN ────────────────────────
 function copiarLinkCliente() {
-  if (!projetoAtual) return;
-  copiarLinkClienteDe(projetoAtual.token_acesso);
+  copiarLinkAreaCliente();
 }
-function copiarLinkClienteDe(token) {
-  if (!token) { toast('Projeto sem token','erro'); return; }
-  const url = `${location.origin}/portal.html?token=${token}`;
-  navigator.clipboard.writeText(url).then(()=>toast('Link copiado!')).catch(()=>toast('Erro ao copiar','erro'));
+function copiarLinkClienteDe(tokenLegado) {
+  // Mantido por compatibilidade — redireciona para o novo fluxo
+  copiarLinkAreaCliente();
 }
 
 // ── CHAMADA AUTENTICADA GENÉRICA (action) ────────────────────────────────────
@@ -1018,15 +1016,15 @@ async function copiarLinkAreaCliente() {
   if (!projetoAtual) return;
   const clienteId = projetoAtual.cliente_id;
   if (!clienteId) {
-    toast('Projeto sem cliente vinculado. Edite o projeto e selecione o cliente pelo autocomplete.','erro');
+    toast('Projeto sem cliente vinculado. Edite o projeto e vincule um cliente primeiro.','erro');
     return;
   }
   try {
     const r = await dbAction({ action: 'portal_cliente_link', cliente_id: clienteId });
     if (r.erro) throw new Error(r.erro);
     navigator.clipboard.writeText(r.link)
-      .then(()=>toast('Link da Área do Cliente copiado!'))
-      .catch(()=>{ prompt('Copie o link:', r.link); });
+      .then(()=>toast('✅ Link do portal copiado! Cole e envie ao cliente.'))
+      .catch(()=>{ prompt('Copie o link abaixo e envie ao cliente:', r.link); });
   } catch(e) {
     toast('Erro: ' + (e.message||'tente novamente'),'erro');
   }

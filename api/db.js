@@ -585,7 +585,7 @@ module.exports = async (req, res) => {
       });
       if (!rU.ok) return res.status(502).json({ erro: 'Não foi possível gerar o link. Rode a migração da Área do Cliente no Supabase.' });
     }
-    return res.status(200).json({ link: `https://sistemacp.vercel.app/portal-cliente.html?t=${tk}` });
+    return res.status(200).json({ link: `https://sistemacp.vercel.app/portal.html?t=${tk}` });
   }
 
   // Avisar o cliente no WhatsApp (etapa concluída, doc solicitado, nova mensagem)
