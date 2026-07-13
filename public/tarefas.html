@@ -358,6 +358,7 @@ async function sbDelete(t,id) { await DB.delete(t,`id=eq.${id}`); }
 async function carregar() {
   todas = await sbGet('tarefas_astrea?order=prazo_fatal.asc.nullslast,prazo.asc.nullslast,criado_em.desc&limit=500');
   filtrar();
+  renderView();
   renderKPIs();
   verificarNotificacoes();
 }
