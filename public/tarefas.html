@@ -716,12 +716,8 @@ let editandoDilId = null;
 
 async function carregarDiligencias() {
   try {
-    const token = localStorage.getItem('token');
-    const resp = await fetch('/api/db?tabela=diligencias&orderBy=data_agendada&orderDir=asc', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (!resp.ok) return;
-    todasDil = await resp.json();
+    const resultado = await sbGet('diligencias?order=data_agendada.asc.nullslast,criado_em.desc');
+    todasDil = Array.isArray(resultado) ? resultado : [];
     renderDiligencias();
   } catch(e) { console.error('Erro diligências:', e); }
 }
@@ -830,7 +826,6 @@ async function salvarDiligencia() {
   if (!parte) { alert('Informe o nome da parte.'); return; }
   if (!dil)   { alert('Descreva a diligência a realizar.'); return; }
 
-  const token = localStorage.getItem('token');
   const dados = {
     nome_parte:      parte,
     numero_processo: document.getElementById('dil-processo').value.trim()||null,
@@ -853,24 +848,12 @@ async function salvarDiligencia() {
 
   const id = document.getElementById('dil-id').value;
   if (id) {
-    await fetch('/api/db', {
-      method: 'PATCH',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-      body: JSON.stringify({ tabela:'diligencias', id, dados })
-    });
+    await sbPatch('diligencias', id, dados);
     const idx = todasDil.findIndex(x=>x.id===id);
     if (idx>=0) Object.assign(todasDil[idx], dados);
   } else {
-    const r = await fetch('/api/db', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-      body: JSON.stringify({ tabela:'diligencias', dados })
-    });
-    if (r.ok) {
-      const novo = await r.json();
-      const d = Array.isArray(novo) ? novo[0] : novo;
-      if (d) todasDil.unshift(d);
-    }
+    const novo = await sbPost('diligencias', dados);
+    if (novo) { const d=Array.isArray(novo)?novo[0]:novo; if(d) todasDil.unshift(d); }
   }
   document.getElementById('modal-dil').classList.remove('show');
   editandoDilId = null;
@@ -880,12 +863,7 @@ async function salvarDiligencia() {
 async function excluirDiligencia() {
   const id = document.getElementById('dil-id').value;
   if (!id || !confirm('Excluir esta diligência?')) return;
-  const token = localStorage.getItem('token');
-  await fetch('/api/db', {
-    method: 'DELETE',
-    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-    body: JSON.stringify({ tabela:'diligencias', id })
-  });
+  await sbDelete('diligencias', id);
   todasDil = todasDil.filter(d=>d.id!==id);
   document.getElementById('modal-dil').classList.remove('show');
   editandoDilId = null;
