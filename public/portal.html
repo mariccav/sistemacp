@@ -356,8 +356,15 @@ main.show{display:block;}
     <!-- Projetos -->
     <div id="proj-lista"></div>
 
-    <div style="margin-top:14px;">
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-sec dest" onclick="abrirModalSub()">+ Adicionar projeto ou processo</button>
+      <button class="btn-sec" id="btn-parceiro" onclick="abrirModalParceiro()" style="display:none;">👥 Convidar parceiro</button>
+    </div>
+
+    <!-- Parceiros com acesso -->
+    <div id="parceiros-section" style="display:none;margin-top:18px;">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--texto3);margin-bottom:8px;">Parceiros com acesso</div>
+      <div id="parceiros-lista" style="display:flex;flex-direction:column;gap:6px;"></div>
     </div>
 
     <div class="footer">
@@ -510,6 +517,25 @@ main.show{display:block;}
   <div class="m-acts"><button class="btn-mc" onclick="fecharModais()">Cancelar</button><button class="btn-mok" onclick="salvarSolicDoc()">Solicitar</button></div>
 </div></div>
 
+<!-- Convidar parceiro -->
+<div class="modal-bg" id="modal-parceiro"><div class="modal-box">
+  <div class="modal-tit">Convidar Parceiro</div>
+  <p style="font-size:12px;color:var(--texto2);margin-bottom:14px;line-height:1.5;">O parceiro terá acesso completo ao portal — poderá visualizar, comentar, adicionar documentos e acompanhar todos os projetos.</p>
+  <label class="ml">Nome do parceiro *</label>
+  <input id="mp2-nome" class="mi" placeholder="Ex: João Silva">
+  <label class="ml">Email (opcional — para enviar o link automaticamente)</label>
+  <input id="mp2-email" class="mi" type="email" placeholder="email@empresa.com.br">
+  <div id="mp2-link-area" style="display:none;margin-top:14px;padding:12px;background:var(--bg2);border-radius:8px;border:1px solid var(--borda);">
+    <div style="font-size:10px;font-weight:700;color:var(--texto3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">Link de acesso gerado</div>
+    <div id="mp2-link-txt" style="font-size:12px;color:var(--v1);word-break:break-all;margin-bottom:8px;"></div>
+    <button onclick="copiarLinkParceiro()" style="background:var(--v1);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;">📋 Copiar link</button>
+  </div>
+  <div class="m-acts">
+    <button class="btn-mc" onclick="fecharModais()">Fechar</button>
+    <button class="btn-mok" id="mp2-btn-salvar" onclick="salvarParceiro()">Convidar</button>
+  </div>
+</div></div>
+
 <!-- Checklist item -->
 <div class="modal-bg" id="modal-ck"><div class="modal-box">
   <div class="modal-tit">Adicionar item ao checklist</div>
@@ -609,6 +635,14 @@ function mostrarPortal() {
   document.getElementById('h-nome').textContent = esc(dados.cliente.nome);
   document.getElementById('h-add').classList.add('show');
 
+  // Parceiro: mostra quem está acessando, não pode convidar outros parceiros
+  if (dados.isParceiro) {
+    document.getElementById('h-add').style.display = 'none'; // parceiro não cria processos
+  } else {
+    document.getElementById('btn-parceiro').style.display = '';
+    carregarParceiros();
+  }
+
   renderSaudacao();
   renderPendencias();
   renderHoje();
@@ -629,8 +663,10 @@ function renderSaudacao() {
   document.getElementById('sauda-h').textContent = sauda + ', ' + esc(nome) + '.';
 
   const ult = localStorage.getItem('cp_v_' + portalToken);
-  let sub = 'Sua área exclusiva de acompanhamento. Aqui você vê tudo, colabora e interage com a equipe.';
-  if (ult) {
+  let sub = dados.isParceiro
+    ? 'Você está acessando como parceiro de ' + esc(dados.cliente.nome) + '. Pode comentar, adicionar documentos e acompanhar tudo.'
+    : 'Sua área exclusiva de acompanhamento. Aqui você vê tudo, colabora e interage com a equipe.';
+  if (ult && !dados.isParceiro) {
     const novas = (dados.logs||[]).filter(l => l.criado_em && new Date(l.criado_em).getTime() > Number(ult) && l.subtipo === 'atualizacao').length;
     const dias = Math.floor((Date.now() - Number(ult)) / 86400000);
     if (novas > 0) {
@@ -1026,6 +1062,83 @@ async function salvarCkItem(){
   if(!txt||!etapaId){toast('Informe o item.','err');return;}
   const r=await apiPortal({action:'portal_checklist_add',etapa_id:etapaId,texto:txt});
   if (r.erro){toast(r.erro,'err');return;}if(r.item){if(!dados.checklist)dados.checklist=[];dados.checklist.push(r.item);}renderEtapas(projetoAtual.id);fecharModais();toast('Item adicionado!','ok');
+}
+
+// ── PARCEIROS ──────────────────────────────────────────────────────────
+let parceiros = [];
+let ultimoLinkParceiro = '';
+
+async function carregarParceiros() {
+  const r = await apiPortal({ action: 'portal_parceiros_lista' });
+  parceiros = Array.isArray(r) ? r : [];
+  renderParceiros();
+}
+
+function renderParceiros() {
+  const sec = document.getElementById('parceiros-section');
+  const lista = document.getElementById('parceiros-lista');
+  if (!parceiros.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  lista.innerHTML = parceiros.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--card);border:1px solid var(--borda);border-radius:var(--r);">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--bg2);border:1px solid var(--borda);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--v2);flex-shrink:0;">${(p.nome||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--v1);">${esc(p.nome)}</div>
+        ${p.email ? '<div style="font-size:11px;color:var(--texto3);">' + esc(p.email) + '</div>' : ''}
+      </div>
+      <button onclick="copiarLinkParceiroExistente('${esc(p.link)}')" title="Copiar link" style="background:none;border:1px solid var(--borda);border-radius:6px;padding:4px 9px;font-size:10px;color:var(--v2);cursor:pointer;">📋</button>
+      <button onclick="removerParceiro('${p.id}')" title="Remover acesso" style="background:none;border:1px solid rgba(181,55,55,.2);border-radius:6px;padding:4px 9px;font-size:10px;color:var(--err);cursor:pointer;">✕</button>
+    </div>`).join('');
+}
+
+function abrirModalParceiro() {
+  document.getElementById('mp2-nome').value = '';
+  document.getElementById('mp2-email').value = '';
+  document.getElementById('mp2-link-area').style.display = 'none';
+  document.getElementById('mp2-btn-salvar').style.display = '';
+  document.getElementById('mp2-btn-salvar').textContent = 'Convidar';
+  ultimoLinkParceiro = '';
+  document.getElementById('modal-parceiro').classList.add('show');
+}
+
+async function salvarParceiro() {
+  const nome = document.getElementById('mp2-nome').value.trim();
+  const email = document.getElementById('mp2-email').value.trim();
+  if (!nome) { toast('Informe o nome do parceiro.', 'err'); return; }
+  const btn = document.getElementById('mp2-btn-salvar');
+  btn.textContent = 'Convidando...'; btn.disabled = true;
+  const r = await apiPortal({ action: 'portal_add_parceiro', nome, email: email || null });
+  btn.disabled = false;
+  if (r.erro) { btn.textContent = 'Convidar'; toast(r.erro, 'err'); return; }
+  ultimoLinkParceiro = r.link || '';
+  document.getElementById('mp2-link-txt').textContent = ultimoLinkParceiro;
+  document.getElementById('mp2-link-area').style.display = 'block';
+  btn.style.display = 'none';
+  toast(email ? 'Convite enviado por email!' : 'Parceiro adicionado! Copie o link.', 'ok');
+  if (r.parceiro) parceiros.unshift({ id: r.parceiro.id, nome, email: email||null, link: ultimoLinkParceiro });
+  renderParceiros();
+}
+
+function copiarLinkParceiro() {
+  if (!ultimoLinkParceiro) return;
+  navigator.clipboard.writeText(ultimoLinkParceiro)
+    .then(() => toast('Link copiado!', 'ok'))
+    .catch(() => prompt('Copie o link:', ultimoLinkParceiro));
+}
+
+function copiarLinkParceiroExistente(link) {
+  navigator.clipboard.writeText(link)
+    .then(() => toast('Link copiado!', 'ok'))
+    .catch(() => prompt('Copie o link:', link));
+}
+
+async function removerParceiro(parceiroId) {
+  if (!confirm('Remover acesso deste parceiro?')) return;
+  const r = await apiPortal({ action: 'portal_remove_parceiro', parceiro_id: parceiroId });
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  parceiros = parceiros.filter(p => p.id !== parceiroId);
+  renderParceiros();
+  toast('Acesso removido.', 'ok');
 }
 
 // Utils

@@ -366,20 +366,34 @@ module.exports = async (req, res) => {
     const { token, verificacao } = body;
     if (!token) return res.status(400).json({ erro: 'Token obrigatório.' });
     const SHK = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+
+    // Tenta token do cliente
     const rC = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(token)}&limit=1`, { headers: SHK });
     const cArr = rC.ok ? await rC.json() : [];
-    if (!cArr.length) return res.status(404).json({ erro: 'Link inválido ou expirado.' });
-    const cli = cArr[0];
 
-    // Verificação leve
-    const doc = (cli.cpf_cnpj || '').replace(/\D/g, '');
-    if (doc.length >= 4) {
-      if (!verificacao) {
-        return res.status(200).json({ precisa_verificacao: true, nome: (cli.nome || '').split(' ')[0] });
+    let cli, isParceiro = false, parceiroNome = '';
+
+    if (cArr.length) {
+      cli = cArr[0];
+      // Verificação leve
+      const doc = (cli.cpf_cnpj || '').replace(/\D/g, '');
+      if (doc.length >= 4) {
+        if (!verificacao) return res.status(200).json({ precisa_verificacao: true, nome: (cli.nome || '').split(' ')[0] });
+        if (String(verificacao).replace(/\D/g, '') !== doc.slice(-4)) {
+          return res.status(403).json({ erro: 'Código não confere. Use os 4 últimos dígitos do seu CPF ou CNPJ.' });
+        }
       }
-      if (String(verificacao).replace(/\D/g, '') !== doc.slice(-4)) {
-        return res.status(403).json({ erro: 'Código não confere. Use os 4 últimos dígitos do seu CPF ou CNPJ.' });
-      }
+    } else {
+      // Tenta token de parceiro
+      const rParc = await fetch(`${SB_URL}/rest/v1/parceiros_portal?portal_token=eq.${encodeURIComponent(token)}&ativo=eq.true&select=id,nome,cliente_id&limit=1`, { headers: SHK });
+      const parcArr = rParc.ok ? await rParc.json() : [];
+      if (!parcArr.length) return res.status(404).json({ erro: 'Link inválido ou expirado.' });
+      isParceiro = true;
+      parceiroNome = parcArr[0].nome;
+      const rCli2 = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${parcArr[0].cliente_id}&limit=1`, { headers: SHK });
+      const cliArr2 = rCli2.ok ? await rCli2.json() : [];
+      if (!cliArr2.length) return res.status(404).json({ erro: 'Cliente não encontrado.' });
+      cli = cliArr2[0];
     }
 
     // Todos os assuntos do cliente
@@ -405,7 +419,7 @@ module.exports = async (req, res) => {
         if (d.arquivo_path) d.arquivo_url = await linkArquivo(SERVICE_KEY, d.arquivo_path);
       }));
     }
-    return res.status(200).json({ cliente: { id: cli.id, nome: cli.nome }, projetos, etapas, docs, logs, checklist: checklistReal });
+    return res.status(200).json({ cliente: { id: cli.id, nome: cli.nome }, isParceiro, parceiroNome, projetos, etapas, docs, logs, checklist: checklistReal });
   }
 
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
@@ -525,15 +539,24 @@ module.exports = async (req, res) => {
   let sessaoValida = false;
   let usuarioAtual = null;
 
-  // Opção A: portal_token no body — cliente com acesso colaborativo completo
+  // Opção A: portal_token no body — cliente ou parceiro com acesso colaborativo
   if (body.portal_token) {
     try {
       const SHKpt = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+      // Verifica como cliente
       const rCpt = await fetch(`${SB_URL}/rest/v1/clientes?portal_token=eq.${encodeURIComponent(body.portal_token)}&select=id,nome&limit=1`, { headers: SHKpt });
       const cptArr = rCpt.ok ? await rCpt.json() : [];
       if (cptArr.length) {
         sessaoValida = true;
         usuarioAtual = { id: cptArr[0].id, nome: cptArr[0].nome, cargo: 'cliente', is_admin: false, _cliente_id: cptArr[0].id };
+      } else {
+        // Verifica como parceiro
+        const rParcSess = await fetch(`${SB_URL}/rest/v1/parceiros_portal?portal_token=eq.${encodeURIComponent(body.portal_token)}&ativo=eq.true&select=id,nome,cliente_id&limit=1`, { headers: SHKpt });
+        const parcSessArr = rParcSess.ok ? await rParcSess.json() : [];
+        if (parcSessArr.length) {
+          sessaoValida = true;
+          usuarioAtual = { id: parcSessArr[0].id, nome: parcSessArr[0].nome, cargo: 'parceiro', is_admin: false, _cliente_id: parcSessArr[0].cliente_id };
+        }
       }
     } catch {}
   }
@@ -628,6 +651,56 @@ module.exports = async (req, res) => {
   // ── check_session — verificar se há sessão interna válida ───────────
   if (body.action === 'check_session') {
     return res.status(200).json({ ok: true, usuario: { nome: usuarioAtual.nome, cargo: usuarioAtual.cargo, ini: usuarioAtual.ini } });
+  }
+
+  // ── portal_add_parceiro — convidar parceiro para o portal do cliente ────
+  if (body.action === 'portal_add_parceiro') {
+    const { nome: nomeParc, email: emailParc } = body;
+    if (!nomeParc) return res.status(400).json({ erro: 'Nome do parceiro obrigatório.' });
+    const clienteIdEfetivo = usuarioAtual._cliente_id;
+    if (!clienteIdEfetivo) return res.status(400).json({ erro: 'Sem cliente vinculado à sessão.' });
+    const SHKadd = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const partnerToken = require('crypto').randomBytes(24).toString('hex');
+    const rAdd = await fetch(`${SB_URL}/rest/v1/parceiros_portal`, {
+      method: 'POST', headers: SHKadd,
+      body: JSON.stringify({ cliente_id: clienteIdEfetivo, nome: nomeParc, email: emailParc || null, portal_token: partnerToken })
+    });
+    const addData = rAdd.ok ? await rAdd.json() : null;
+    const link = `https://sistemacp.vercel.app/portal.html?t=${partnerToken}`;
+    if (emailParc) {
+      const nomeCliente = usuarioAtual.nome || 'seu parceiro';
+      await enviarEmail(emailParc,
+        `Acesso ao portal | Cavalcante Pinheiro Advocacia`,
+        `Olá, ${nomeParc}!\n\nVocê recebeu acesso ao portal de acompanhamento de ${nomeCliente}.\n\nAcesse agora:\n${link}\n\n_Cavalcante Pinheiro Advocacia_\nOAB/BA 49.675`
+      );
+    }
+    return res.status(200).json({ ok: true, parceiro: Array.isArray(addData) ? addData[0] : addData, link });
+  }
+
+  // ── portal_parceiros_lista — listar parceiros do cliente ──────────────
+  if (body.action === 'portal_parceiros_lista') {
+    const clienteIdEfetivo = usuarioAtual._cliente_id;
+    if (!clienteIdEfetivo) return res.status(400).json({ erro: 'Sem cliente vinculado.' });
+    const SHKlp = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const rLp = await fetch(`${SB_URL}/rest/v1/parceiros_portal?cliente_id=eq.${clienteIdEfetivo}&ativo=eq.true&order=criado_em.desc`, { headers: SHKlp });
+    const listaParceiros = rLp.ok ? await rLp.json() : [];
+    return res.status(200).json(listaParceiros.map(p => ({
+      id: p.id, nome: p.nome, email: p.email,
+      link: `https://sistemacp.vercel.app/portal.html?t=${p.portal_token}`,
+      criado_em: p.criado_em
+    })));
+  }
+
+  // ── portal_remove_parceiro — desativar parceiro ────────────────────────
+  if (body.action === 'portal_remove_parceiro') {
+    const { parceiro_id } = body;
+    if (!parceiro_id) return res.status(400).json({ erro: 'parceiro_id obrigatório.' });
+    const clienteIdEfetivo = usuarioAtual._cliente_id;
+    const SHKrp = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' };
+    await fetch(`${SB_URL}/rest/v1/parceiros_portal?id=eq.${parceiro_id}&cliente_id=eq.${clienteIdEfetivo}`, {
+      method: 'PATCH', headers: SHKrp, body: JSON.stringify({ ativo: false })
+    });
+    return res.status(200).json({ ok: true });
   }
 
   // ── portal_etapa_add — adicionar atividade/etapa a um processo ────────
