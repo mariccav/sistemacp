@@ -296,6 +296,19 @@ main.show{display:block;}
   <p id="erro-msg">Este link não é válido ou expirou. Entre em contato com o escritório.</p>
   <a href="https://wa.me/5571991292322" style="color:#a9cfbe;font-size:13px;">Falar com o escritório →</a>
 </div>
+
+<div id="screen-verif" style="position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:var(--v1);padding:20px;">
+  <div style="background:#fff;border-radius:16px;padding:36px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 8px 40px rgba(31,62,60,.15);">
+    <img src="/logo-cp.png" alt="CP" style="height:28px;object-fit:contain;margin:0 auto 16px;display:block;">
+    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--v1);margin-bottom:8px;">Verificação de acesso</div>
+    <p id="verif-msg" style="font-size:13px;color:var(--texto2);margin-bottom:22px;line-height:1.6;">Confirme os 4 últimos dígitos do seu CPF ou CNPJ.</p>
+    <input type="tel" id="verif-input" maxlength="4" placeholder="0000"
+      style="width:100%;background:var(--bg);border:1px solid var(--borda);border-radius:8px;padding:12px;font-size:22px;color:var(--v1);outline:none;text-align:center;letter-spacing:.3em;margin-bottom:12px;font-family:'Manrope',sans-serif;"
+      onkeydown="if(event.key==='Enter')confirmarVerif()">
+    <button onclick="confirmarVerif()" style="width:100%;background:var(--v1);color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Confirmar</button>
+    <div id="verif-err" style="font-size:12px;color:var(--err);margin-top:8px;display:none;"></div>
+  </div>
+</div>
 <header id="hdr">
   <img src="/logo-cp.png" alt="CP" class="logo" onerror="this.style.display='none'">
   <span class="h-vol" id="h-vol" onclick="voltarLista()">←</span>
@@ -555,7 +568,14 @@ async function iniciar() {
   }
 
   if (!r || r.erro) { mostrarErro(r?.erro || 'Não foi possível carregar.'); return; }
-  if (r.precisa_verificacao) { mostrarErro('Acesso verificado necessário. Use o link completo enviado pelo escritório.'); return; }
+
+  if (r.precisa_verificacao) {
+    document.getElementById('screen-load').classList.add('fade');
+    const nome = r.nome ? ', ' + esc(r.nome) : '';
+    document.getElementById('verif-msg').textContent = 'Olá' + nome + '! Por segurança, confirme os 4 últimos dígitos do seu CPF ou CNPJ.';
+    document.getElementById('screen-verif').classList.add('show');
+    return;
+  }
 
   dados = r;
   mostrarPortal();
@@ -563,8 +583,23 @@ async function iniciar() {
 
 function mostrarErro(msg) {
   document.getElementById('screen-load').classList.add('fade');
+  document.getElementById('screen-verif').style.display = 'none';
   document.getElementById('erro-msg').textContent = msg;
   document.getElementById('screen-erro').style.display = 'flex';
+}
+
+async function confirmarVerif() {
+  const v = document.getElementById('verif-input').value.trim();
+  const errEl = document.getElementById('verif-err');
+  if (v.length < 4) { errEl.textContent = 'Digite os 4 dígitos.'; errEl.style.display = 'block'; return; }
+  const r = await fetch(API, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'portal_cliente', token: portalToken, verificacao: v })
+  }).then(x => x.json()).catch(() => null);
+  if (!r || r.erro) { errEl.textContent = r?.erro || 'Código incorreto.'; errEl.style.display = 'block'; return; }
+  dados = r;
+  document.getElementById('screen-verif').style.display = 'none';
+  mostrarPortal();
 }
 
 function mostrarPortal() {
