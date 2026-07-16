@@ -441,11 +441,17 @@ async function verificarNotificacoes() {
 
   if (!Object.keys(porResponsavel).length) return;
 
-  // Enviar e-mail individualizado para cada responsável
+  // Enviar e-mail individualizado para cada responsável — máximo 1x por dia por pessoa
   if (WEBHOOK_EMAIL) {
+    const diaHoje = hoje(); // ex: "2026-07-15"
     for (const [resp, dados] of Object.entries(porResponsavel)) {
       const emailResp = EQUIPE[resp]?.email;
       if (!emailResp) continue;
+
+      // Cooldown: só envia se não enviou hoje ainda
+      const chaveLocal = `cp_notif_${resp.replace(/\s+/g,'_')}_${diaHoje}`;
+      if (localStorage.getItem(chaveLocal)) continue; // já enviou hoje
+
       const subject = `⚠️ CP Tarefas — ${dados.vencidas.length} vencida(s) e ${dados.urgentes.length} urgente(s) — ${resp}`;
       const linhas = [
         dados.vencidas.length  ? `🔴 VENCIDAS:\n${dados.vencidas.map(t=>`• ${t.titulo} — prazo fatal: ${fmtData(t.prazo_fatal)} | ${t.cliente||'sem cliente'}`).join('\n')}` : '',
@@ -457,6 +463,7 @@ async function verificarNotificacoes() {
           method:'POST', mode:'no-cors',
           body: JSON.stringify({ to: emailResp, subject, body })
         });
+        localStorage.setItem(chaveLocal, '1'); // marca como enviado hoje
       } catch {}
     }
   }
