@@ -422,6 +422,22 @@ module.exports = async (req, res) => {
     return res.status(200).json({ cliente: { id: cli.id, nome: cli.nome }, isParceiro, parceiroNome, projetos, etapas, docs, logs, checklist: checklistReal });
   }
 
+  // ── Rota especial: ALERTAS FINANCEIROS RECORRENTES ─────────────────
+  // Usado pelo Apps Script toda segunda-feira para alertas de cobrança
+  if (body.action === 'financeiro_alertas_recorrentes') {
+    const FIN_SECRET = process.env.FINANCEIRO_ALERT_SECRET || 'CP@FinanceiroAlerts2026';
+    if (body.secret !== FIN_SECRET) return res.status(401).json({ erro: 'Acesso negado.' });
+    const SHKfin = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` };
+    const agora = new Date();
+    const mesPrev  = agora.getMonth() === 0 ? 12 : agora.getMonth();
+    const anoPrev  = agora.getMonth() === 0 ? agora.getFullYear() - 1 : agora.getFullYear();
+    const [rLanc, rRep] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/lancamentos_manuais?mes=eq.${mesPrev}&ano=eq.${anoPrev}&order=data.asc`, { headers: SHKfin }).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${SB_URL}/rest/v1/repasses?mes=eq.${mesPrev}&ano=eq.${anoPrev}&order=data_pagamento.asc`, { headers: SHKfin }).then(r => r.ok ? r.json() : []).catch(() => [])
+    ]);
+    return res.status(200).json({ lancamentos: rLanc || [], repasses: rRep || [], mes_ref: mesPrev, ano_ref: anoPrev });
+  }
+
   // ── Rota especial: WEBHOOK PUBLICAÇÕES (Apps Script OAB/BA) ────────
   // Não requer sessão — usa PUBLICACAO_WEBHOOK_SECRET
   if (body.action === 'publicacao') {
