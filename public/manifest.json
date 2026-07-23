@@ -1,0 +1,18 @@
+{
+  "name": "Cavalcante Pinheiro Advocacia",
+  "short_name": "CP Advocacia",
+  "description": "Sistema de gestão interno",
+  "start_url": "/dashboard.html",
+  "display": "standalone",
+  "background_color": "#001711",
+  "theme_color": "#1f3e3c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo-cp.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

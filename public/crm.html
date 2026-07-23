@@ -5,6 +5,10 @@
 <script src="/auth.js"></script>
 <script src="/db-client.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1f3e3c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/logo-cp.png">
 <title>CRM — Cavalcante Pinheiro Advocacia</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -1733,6 +1737,7 @@ li{margin-bottom:4px;}
 @media print{@page{margin:0;} .capa{page-break-after:always;}}
 </style></head><body>
 ${conteudo}
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
 </body></html>`;
 }
 

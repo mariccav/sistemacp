@@ -5,6 +5,10 @@
 <script src="/auth.js"></script>
 <script src="/db-client.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1f3e3c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/logo-cp.png">
 <title>Publicações — Cavalcante Pinheiro</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -312,5 +316,6 @@ document.getElementById('modal-tarefa').addEventListener('click', e => {
 
 carregar();
 </script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("/sw.js");</script>
 </body>
 </html>
