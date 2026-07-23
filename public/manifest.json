@@ -4,13 +4,19 @@
   "description": "Sistema de gestão interno",
   "start_url": "/dashboard.html",
   "display": "standalone",
-  "background_color": "#001711",
+  "background_color": "#1f3e3c",
   "theme_color": "#1f3e3c",
   "orientation": "any",
   "icons": [
     {
-      "src": "/logo-cp.png",
-      "sizes": "any",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
