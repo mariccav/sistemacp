@@ -733,6 +733,15 @@ module.exports = async (req, res) => {
     });
     const etArr = rEt.ok ? await rEt.json() : null;
     await fetch(`${SB_URL}/rest/v1/projetos_logs`, { method: 'POST', headers: SHKe, body: JSON.stringify({ projeto_id: pjEt, texto: `Atividade adicionada: "${titEt}"`, autor: usuarioAtual.nome, tipo: usuarioAtual.cargo || 'equipe', subtipo: 'sistema', visivel_cliente: true }) });
+    if (usuarioAtual.cargo === 'cliente' || usuarioAtual.cargo === 'parceiro') {
+      try {
+        const rPrEt = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjEt}&select=nome,responsavel&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+        const prEtArr = rPrEt.ok ? await rPrEt.json() : [];
+        const emailDest = prEtArr.length ? (await telefoneDoUsuario(SERVICE_KEY, prEtArr[0].responsavel) || 'mariana@cavalcantepinheiroadv.com.br') : 'mariana@cavalcantepinheiroadv.com.br';
+        const nomeProj = prEtArr.length ? prEtArr[0].nome : 'um processo';
+        await enviarEmail(emailDest, `📋 Portal CP — ${usuarioAtual.nome} adicionou atividade`, `${usuarioAtual.nome} adicionou a atividade "${titEt}" no processo "${nomeProj}".\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
+      } catch {}
+    }
     return res.status(200).json({ ok: true, etapa: Array.isArray(etArr) ? etArr[0] : etArr });
   }
 
@@ -755,6 +764,11 @@ module.exports = async (req, res) => {
     const SHKck = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
     const rCk = await fetch(`${SB_URL}/rest/v1/projetos_checklist`, { method: 'POST', headers: SHKck, body: JSON.stringify({ etapa_id: etCk, texto: txtCk, concluido: false, criado_em: new Date().toISOString() }) });
     const ckArr = rCk.ok ? await rCk.json() : null;
+    if (usuarioAtual.cargo === 'cliente' || usuarioAtual.cargo === 'parceiro') {
+      try {
+        await enviarEmail('mariana@cavalcantepinheiroadv.com.br', `✅ Portal CP — ${usuarioAtual.nome} adicionou item de checklist`, `${usuarioAtual.nome} adicionou o item "${txtCk}" a uma atividade pelo portal.\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
+      } catch {}
+    }
     return res.status(200).json({ ok: true, item: Array.isArray(ckArr) ? ckArr[0] : ckArr });
   }
 
@@ -863,6 +877,11 @@ module.exports = async (req, res) => {
         method: 'POST', headers: SHW3,
         body: JSON.stringify({ projeto_id: procId, texto: `Processo criado por ${usuarioAtual.nome}.`, autor: usuarioAtual.nome, tipo: 'equipe', subtipo: 'sistema', visivel_cliente: false })
       });
+    }
+    if (usuarioAtual.cargo === 'cliente' || usuarioAtual.cargo === 'parceiro') {
+      try {
+        await enviarEmail('mariana@cavalcantepinheiroadv.com.br', `📁 Portal CP — ${usuarioAtual.nome} criou um novo assunto`, `${usuarioAtual.nome} abriu o assunto "${nomeSub}" pelo portal.\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
+      } catch {}
     }
     return res.status(200).json({ ok: true, processo: Array.isArray(criado) ? criado[0] : criado });
   }
