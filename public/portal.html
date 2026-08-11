@@ -603,7 +603,7 @@ async function iniciar() {
     document.getElementById('screen-load').classList.add('fade');
     const nome = r.nome ? ', ' + esc(r.nome) : '';
     document.getElementById('verif-msg').textContent = 'Olá' + nome + '! Por segurança, confirme os 4 últimos dígitos do seu CPF ou CNPJ.';
-    document.getElementById('screen-verif').classList.add('show');
+    document.getElementById('screen-verif').style.display = 'flex';
     return;
   }
 
