@@ -757,6 +757,28 @@ module.exports = async (req, res) => {
     return res.status(200).json({ ok: true });
   }
 
+  // ── portal_etapa_comentario — comentário em atividade específica ──────
+  if (body.action === 'portal_etapa_comentario') {
+    const { etapa_id: etComId, projeto_id: pjComId, texto: txCom } = body;
+    if (!etComId || !pjComId || !txCom) return res.status(400).json({ erro: 'Dados incompletos.' });
+    const SHKcom = { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    const rCom = await fetch(`${SB_URL}/rest/v1/projetos_logs`, {
+      method: 'POST', headers: SHKcom,
+      body: JSON.stringify({ projeto_id: pjComId, etapa_id: etComId, texto: txCom, autor: usuarioAtual.nome, tipo: usuarioAtual.cargo || 'equipe', subtipo: 'etapa_comentario', visivel_cliente: true, criado_em: new Date().toISOString() })
+    });
+    const comArr = rCom.ok ? await rCom.json() : [];
+    if (usuarioAtual.cargo === 'cliente' || usuarioAtual.cargo === 'parceiro') {
+      try {
+        const rPrCom = await fetch(`${SB_URL}/rest/v1/projetos_cp?id=eq.${pjComId}&select=nome,responsavel&limit=1`, { headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` } });
+        const prComArr = rPrCom.ok ? await rPrCom.json() : [];
+        const emailDest = prComArr.length ? (await telefoneDoUsuario(SERVICE_KEY, prComArr[0].responsavel) || 'mariana@cavalcantepinheiroadv.com.br') : 'mariana@cavalcantepinheiroadv.com.br';
+        const nomeProjCom = prComArr.length ? prComArr[0].nome : 'um processo';
+        await enviarEmail(emailDest, `💬 Portal CP — ${usuarioAtual.nome} comentou em uma atividade`, `${usuarioAtual.nome} adicionou um comentário em uma atividade do processo "${nomeProjCom}":\n\n"${String(txCom).slice(0,400)}"\n\nAcesse: https://sistemacp.vercel.app/colaborativo.html`);
+      } catch {}
+    }
+    return res.status(200).json({ ok: true, log: Array.isArray(comArr) ? comArr[0] : comArr });
+  }
+
   // ── portal_checklist_add — adicionar item de checklist ────────────────
   if (body.action === 'portal_checklist_add') {
     const { etapa_id: etCk, texto: txtCk } = body;

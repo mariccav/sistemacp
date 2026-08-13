@@ -172,6 +172,39 @@ main.show{display:block;}
 .aba-c{display:none;}
 .aba-c.on{display:block;}
 
+/* KANBAN */
+.kanban-board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;overflow-x:auto;}
+.kanban-col{background:var(--bg2);border-radius:var(--r);overflow:hidden;min-width:0;}
+.kanban-col-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+.kanban-col-hdr.pend{background:rgba(167,168,151,.18);color:var(--texto3);}
+.kanban-col-hdr.and{background:rgba(43,80,80,.14);color:var(--v2);}
+.kanban-col-hdr.done{background:rgba(45,122,94,.12);color:var(--ok);}
+.kanban-count{background:rgba(31,62,60,.1);border-radius:99px;padding:1px 7px;font-size:10px;}
+.kanban-col-body{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
+.kanban-card{background:var(--card);border-radius:8px;padding:11px 12px;box-shadow:0 1px 4px rgba(31,62,60,.06);border:1px solid var(--borda);}
+.kanban-card-nome{font-size:12px;font-weight:600;color:var(--texto);margin-bottom:3px;line-height:1.4;}
+.kanban-card-desc{font-size:11px;color:var(--texto2);line-height:1.4;margin-bottom:5px;}
+.kanban-card-ck{font-size:10px;color:var(--texto3);margin-bottom:6px;}
+.kanban-adv{background:var(--v1);color:#fff;border:none;border-radius:5px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;width:100%;}
+.kanban-adv:hover{background:var(--v2);}
+.kanban-vazio{font-size:11px;color:var(--texto3);text-align:center;padding:10px 0;font-style:italic;}
+
+/* COMENTÁRIOS DE ETAPA */
+.et-coms{margin-top:10px;border-top:1px solid var(--borda);padding-top:9px;}
+.et-coms-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texto3);margin-bottom:7px;}
+.et-com{display:flex;gap:7px;margin-bottom:7px;}
+.et-com-av{width:22px;height:22px;border-radius:50%;background:var(--v1);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.et-com-av.cli{background:var(--bege);}
+.et-com-b{flex:1;}
+.et-com-m{font-size:9px;color:var(--texto3);margin-bottom:2px;}
+.et-com-t{font-size:12px;color:var(--texto);line-height:1.5;background:var(--bg);border-radius:0 7px 7px 7px;padding:6px 9px;border:1px solid var(--borda);}
+.et-com-input{display:flex;gap:6px;align-items:flex-end;margin-top:7px;}
+.et-com-input textarea{flex:1;border:1px solid var(--borda);border-radius:8px;padding:7px 10px;font-family:'Manrope',sans-serif;font-size:12px;color:var(--texto);resize:none;outline:none;background:var(--bg);max-height:90px;min-height:34px;transition:border-color .2s;}
+.et-com-input textarea:focus{border-color:var(--v1);}
+.et-com-btn{background:var(--v1);color:#fff;border:none;border-radius:8px;width:34px;height:34px;font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.et-com-btn:hover{background:var(--v2);}
+@media(max-width:580px){.kanban-board{grid-template-columns:repeat(2,1fr);}}
+
 /* TIMELINE */
 .tl-item{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--borda);}
 .tl-item:last-child{border-bottom:none;}
@@ -411,6 +444,7 @@ main.show{display:block;}
     <div class="abas">
       <button class="aba on" onclick="setAba('tl',this)">📅 Timeline</button>
       <button class="aba" onclick="setAba('etapas',this)">✅ Atividades</button>
+      <button class="aba" onclick="setAba('kanban',this)">🗂 Kanban</button>
       <button class="aba" onclick="setAba('upd',this)">💬 Atualizações</button>
       <button class="aba" onclick="setAba('docs',this)">📄 Documentos</button>
     </div>
@@ -422,6 +456,9 @@ main.show{display:block;}
     <div class="aba-c" id="aba-etapas">
       <div id="etapas-lista"></div>
       <button class="btn-sec" onclick="abrirModalEtapa()" style="margin-top:6px;">+ Nova atividade</button>
+    </div>
+    <div class="aba-c" id="aba-kanban">
+      <div id="kanban-lista"></div>
     </div>
     <div class="aba-c" id="aba-upd">
       <div id="upd-lista"></div>
@@ -892,6 +929,16 @@ function renderEtapas(pjId) {
         ${e.descricao?`<div class="etapa-desc">${esc(e.descricao)}</div>`:''}
         ${ckItems.length?`<div class="ck-lista">${ckHtml}</div>`:''}
         <button class="btn-add-ck" onclick="abrirModalCk('${e.id}')">+ Adicionar item ao checklist</button>
+        <div class="et-coms">
+          <div class="et-coms-lbl">Comentários</div>
+          ${(dados.logs||[]).filter(l=>l.etapa_id===e.id&&l.subtipo==='etapa_comentario').sort((a,b)=>new Date(a.criado_em)-new Date(b.criado_em)).map(c=>`<div class="et-com"><div class="et-com-av${c.tipo==='cliente'||c.tipo==='parceiro'?' cli':''}">${(c.autor||'?')[0].toUpperCase()}</div><div class="et-com-b"><div class="et-com-m">${esc(c.autor)} · ${formatarData(c.criado_em)}</div><div class="et-com-t">${esc(c.texto)}</div></div></div>`).join('')}
+          <div class="et-com-input">
+            <textarea id="comin-${e.id.replace(/-/g,'')}" placeholder="Adicionar comentário…" rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();salvarComentarioEtapa('${e.id}','${pjId}','comin-${e.id.replace(/-/g,'')}');}"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button class="et-com-btn" onclick="salvarComentarioEtapa('${e.id}','${pjId}','comin-${e.id.replace(/-/g,'')}')">↑</button>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -990,7 +1037,52 @@ async function uploadDoc(docId,input) {
 }
 
 // ── ABAS / NAVEGAÇÃO ─────────────────────────────────────────────────
-function setAba(nome,btn){document.querySelectorAll('.aba').forEach(b=>b.classList.remove('on'));document.querySelectorAll('.aba-c').forEach(c=>c.classList.remove('on'));if(btn)btn.classList.add('on');const el=document.getElementById('aba-'+nome);if(el)el.classList.add('on');}
+function setAba(nome,btn){document.querySelectorAll('.aba').forEach(b=>b.classList.remove('on'));document.querySelectorAll('.aba-c').forEach(c=>c.classList.remove('on'));if(btn)btn.classList.add('on');const el=document.getElementById('aba-'+nome);if(el)el.classList.add('on');if(nome==='kanban'&&projetoAtual)renderKanbanEtapas(projetoAtual.id);}
+
+function renderKanbanEtapas(pjId) {
+  const etapas=(dados.etapas||[]).filter(e=>e.projeto_id===pjId).sort((a,b)=>(a.ordem||0)-(b.ordem||0));
+  const ckAll=dados.checklist||[];
+  const el=document.getElementById('kanban-lista');
+  if(!el)return;
+  const colunas=[
+    {key:'pendente',label:'Pendente',cls:'pend'},
+    {key:'em_andamento',label:'Em andamento',cls:'and'},
+    {key:'concluido',label:'Concluído',cls:'done'}
+  ];
+  if(!etapas.length){el.innerHTML='<div class="vazio">Nenhuma atividade ainda.</div>';return;}
+  el.innerHTML=`<div class="kanban-board">${colunas.map(col=>{
+    const cards=etapas.filter(e=>e.status===col.key||(col.key==='pendente'&&e.status==='bloqueado'));
+    return `<div class="kanban-col">
+      <div class="kanban-col-hdr ${col.cls}"><span>${col.label}</span><span class="kanban-count">${cards.length}</span></div>
+      <div class="kanban-col-body">${cards.length?cards.map(e=>{
+        const cks=ckAll.filter(c=>c.etapa_id===e.id);
+        const feitos=cks.filter(c=>c.concluido).length;
+        return `<div class="kanban-card">
+          <div class="kanban-card-nome">${esc(e.titulo)}</div>
+          ${e.descricao?`<div class="kanban-card-desc">${esc(e.descricao.slice(0,70))}${e.descricao.length>70?'…':''}</div>`:''}
+          ${cks.length?`<div class="kanban-card-ck">✅ ${feitos}/${cks.length} itens</div>`:''}
+          ${col.key!=='concluido'?`<button class="kanban-adv" onclick="ciclicStatus('${e.id}','${e.status}');setTimeout(()=>renderKanbanEtapas('${pjId}'),300)">→ Avançar</button>`:''}
+        </div>`;
+      }).join(''):'<div class="kanban-vazio">Vazio</div>'}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+async function salvarComentarioEtapa(etapaId, projetoId, inputId) {
+  const inp=document.getElementById(inputId);
+  if(!inp)return;
+  const texto=inp.value.trim();
+  if(!texto)return;
+  const r=await apiPortal({action:'portal_etapa_comentario',etapa_id:etapaId,projeto_id:projetoId,texto});
+  if(r.erro){toast(r.erro,'err');return;}
+  if(!dados.logs)dados.logs=[];
+  if(r.log)dados.logs.push(r.log);
+  inp.value='';inp.style.height='auto';
+  renderEtapas(projetoId);
+  const eid='et-'+etapaId.replace(/-/g,'');
+  const etEl=document.getElementById(eid);
+  if(etEl&&!etEl.classList.contains('show'))toggleEtapa(eid);
+}
 function setView(nome){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));const el=document.getElementById('view-'+nome);if(el)el.classList.add('on');}
 
 // ── MODAIS / AÇÕES ────────────────────────────────────────────────────
